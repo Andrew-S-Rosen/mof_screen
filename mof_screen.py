@@ -109,9 +109,9 @@ def get_kpts(cif_file,kppa):
 		gamma = None
 	return kpts_hi, gamma
 
-def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
+def choose_vasp_version(kpts,kpts_hi,n_atoms,nprocs,ppn):
 #Run the gamma pt only or regular VASP version
-	if sum(kpts) == 3:
+	if sum(kpts) == 3 and sum(kpts_hi) == 3:
 		gamma_version = True
 	else:
 		gamma_version = False
@@ -502,9 +502,11 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 	run_i += 1
 	return mof, run_i, skip_spin2
 
-def manage_wavecar(wavecar_path):
-	if os.path.isfile('WAVECAR') != True or os.stat('WAVECAR').st_size == 0:
-		copyfile(wavecar_path,os.getcwd()+'/'+'WAVECAR')
+def manage_restart(file_path):
+	files = ['WAVECAR']
+	for file in files:
+		if os.path.isfile(file) != True or os.stat(file).st_size == 0:
+			copyfile(file_path+'/'+file,os.getcwd()+'/'+file)
 	return
 
 def is_exploded(mof):
@@ -581,6 +583,7 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
+			istart=1,
 			ibrion=defaults['ibrion'],
 			isif=2,
 			nsw=300,
@@ -604,6 +607,7 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
+			istart=1,
 			ibrion=defaults['ibrion'],
 			isif=4,
 			nsw=defaults['nsw'],
@@ -630,6 +634,7 @@ def calcs(run_i):
 			lcharg=False,
 			lwave=True,
 			ibrion=defaults['ibrion'],
+			istart=1,
 			isif=3,
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
@@ -654,6 +659,7 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
+			istart=1,
 			ibrion=defaults['ibrion'],
 			isif=3,
 			nsw=defaults['nsw'],
@@ -680,6 +686,7 @@ def calcs(run_i):
 			lcharg=True,
 			laechg=True,
 			lwave=True,
+			istart=1,
 			ibrion=defaults['ibrion'],
 			isif=2,
 			nsw=30,
@@ -752,7 +759,7 @@ def run_screen(cif_files):
 				else:
 					mof = cif_to_mof(cif_file)
 				mof = set_initial_magmoms(mof,spin_level)
-				choose_vasp_version(defaults['kpts_lo'],len(mof),nprocs,ppn)
+				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None:
@@ -776,7 +783,7 @@ def run_screen(cif_files):
 					mof = cif_to_mof(cif_file)
 				mof = set_initial_magmoms(mof,spin_level)
 				converged = False
-				choose_vasp_version(defaults['kpts_lo'],len(mof),nprocs,ppn)
+				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				steps = 100
 				fmax = 5.0
@@ -811,8 +818,8 @@ def run_screen(cif_files):
 				n_runs = 10
 				loop_i = 0
 				converged = False
-				choose_vasp_version(defaults['kpts_lo'],len(mof),nprocs,ppn)
-				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
+				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
+				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
@@ -843,8 +850,8 @@ def run_screen(cif_files):
 				converged = False
 				loop_i = 0
 				n_runs = 11
-				choose_vasp_version(defaults['kpts_lo'],len(mof),nprocs,ppn)
-				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
+				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
+				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					if loop_i == n_runs - 1:
@@ -882,8 +889,8 @@ def run_screen(cif_files):
 				V_diff = np.inf
 				V_cut = 0.01
 				V0 = mof.get_volume()
-				choose_vasp_version(defaults['kpts_hi'],len(mof),nprocs,ppn)
-				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
+				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
+				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					if loop_i == n_runs - 1:
@@ -923,8 +930,8 @@ def run_screen(cif_files):
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
-				choose_vasp_version(defaults['kpts_hi'],len(mof),nprocs,ppn)
-				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
+				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
+				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof == None:
