@@ -96,8 +96,6 @@ def clean_files(remove_files):
 	for file in remove_files:
 		if os.path.isfile(file) == True:
 			os.remove(file)
-	if os.path.isfile('mof_screen.out') == True:
-		open('mof_screen.out','w').close()
 
 def get_kpts(cif_file,kppa):
 #Get kpoints for given MOF and KPPA
@@ -167,7 +165,7 @@ def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 	if not os.path.exists(success_path):
 		os.makedirs(success_path)
 	for file in vasp_files:
-		if ('AECCAR' in file or 'CHGCAR' in file or 'WAVECAR' in file) and (acc_level != 'final'):
+		if ('AECCAR' in file or 'CHGCAR' in file) and (acc_level != 'final'):
 			continue
 		if 'opt.traj' in file and acc_level != 'isif2':
 			continue
@@ -183,7 +181,7 @@ def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 	if not os.path.exists(error_path):
 		os.makedirs(error_path)
 	for file in vasp_files:
-		if 'AECCAR' in file or 'CHGCAR' in file or 'WAVECAR' in file:
+		if 'AECCAR' in file or 'CHGCAR' in file:
 			continue
 		if 'opt.traj' in file and acc_level != 'isif2':
 			continue
@@ -504,6 +502,11 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 	run_i += 1
 	return mof, run_i, skip_spin2
 
+def manage_wavecar(wavecar_path):
+	if os.path.isfile('WAVECAR') != True or os.stat('WAVECAR').st_size == 0:
+		copyfile(wavecar_path,os.getcwd()+'/'+'WAVECAR')
+	return
+
 def is_exploded(mof):
 	mof_initial = read('POSCAR')
 	dist = np.max(np.abs(mof.get_all_distances(mic=True)-mof_initial.get_all_distances(mic=True)))
@@ -713,11 +716,12 @@ def run_screen(cif_files):
 			continue
 
 		#Partial paths to write the OUTCARs
-		outcar_partial_paths = []
+		results_partial_paths = []
 		error_outcar_partial_paths = []
 		for acc_level in acc_levels:
-			outcar_partial_paths.append(basepath+'results/'+refcode+'/'+acc_level)
+			results_partial_paths.append(basepath+'results/'+refcode+'/'+acc_level)
 			error_outcar_partial_paths.append(basepath+'errors/'+refcode+'/'+acc_level)
+		spin1_final_mof_path = results_partial_paths[-1]+'/'+spin_levels[0]+'/OUTCAR'
 
 		#Get the kpoints
 		kpts_lo, gamma = get_kpts(cif_file,defaults['kppa_lo'])
@@ -735,16 +739,16 @@ def run_screen(cif_files):
 			error_outcar_paths = []
 			run_i = 0
 			clean_files(vasp_files)
-			for outcar_partial_path in outcar_partial_paths:
-				outcar_paths.append(outcar_partial_path+'/'+spin_level+'/OUTCAR')
+			for results_partial_path in results_partial_paths:
+				outcar_paths.append(results_partial_path+'/'+spin_level+'/OUTCAR')
 			for error_outcar_partial_path in error_outcar_partial_paths:
 				error_outcar_paths.append(error_outcar_partial_path+'/'+spin_level+'/OUTCAR')
 
 			#***********SCF TEST************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				if os.path.isfile(outcar_partial_paths[-1]+spin_levels[0]) == True:
-					mof = read(outcar_partial_paths[-1]+spin_levels[0])
+				if os.path.isfile(spin1_final_mof_path):
+					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
 				mof = set_initial_magmoms(mof,spin_level)
@@ -766,8 +770,8 @@ def run_screen(cif_files):
 			#***********ISIF 2 (initial)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				if os.path.isfile(outcar_partial_paths[-1]+spin_levels[0]) == True:
-					mof = read(outcar_partial_paths[-1]+spin_levels[0])
+				if os.path.isfile(spin1_final_mof_path):
+					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
 				mof = set_initial_magmoms(mof,spin_level)
@@ -808,6 +812,7 @@ def run_screen(cif_files):
 				loop_i = 0
 				converged = False
 				choose_vasp_version(defaults['kpts_lo'],len(mof),nprocs,ppn)
+				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
@@ -839,6 +844,7 @@ def run_screen(cif_files):
 				loop_i = 0
 				n_runs = 11
 				choose_vasp_version(defaults['kpts_lo'],len(mof),nprocs,ppn)
+				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					if loop_i == n_runs - 1:
@@ -877,6 +883,7 @@ def run_screen(cif_files):
 				V_cut = 0.01
 				V0 = mof.get_volume()
 				choose_vasp_version(defaults['kpts_hi'],len(mof),nprocs,ppn)
+				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
 				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					if loop_i == n_runs - 1:
@@ -917,6 +924,7 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				choose_vasp_version(defaults['kpts_hi'],len(mof),nprocs,ppn)
+				manage_wavecar(results_partial_paths[run_i-1]+'/'+spin_level+'/WAVECAR')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof == None:
@@ -941,8 +949,6 @@ def run_screen(cif_files):
 				break
 
 			#***********SAVE and CONTINUE***********
-			if os.path.isfile('mof_screen.out') == True:
-				open('mof_screen.out','w').close()
 			if os.path.isfile(outcar_paths[-1]) == True:
 				write_energy(refcode,acc_level,spin_level)
 			if skip_spin2 == True:
