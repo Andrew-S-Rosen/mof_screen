@@ -11,7 +11,7 @@ from ase.io import read
 mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS/'
 basepath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
 submit_script = 'sub_asevasp_screening_temp.job'
-skip_mofs = []
+skip_mofs = ['AVEMOE_clean_min']
 
 #Default parameters
 defaults = {
@@ -581,7 +581,7 @@ def calcs(run_i):
 			ibrion=defaults['ibrion'],
 			isif=2,
 			nsw=300,
-			ediffg=0.05,
+			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
@@ -604,7 +604,7 @@ def calcs(run_i):
 			ibrion=defaults['ibrion'],
 			isif=4,
 			nsw=defaults['nsw'],
-			ediffg=0.05,
+			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)	
