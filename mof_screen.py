@@ -219,6 +219,15 @@ def get_incar_magmoms(incarpath,poscarpath):
 		raise ValueError('Error reading INCAR magnetic moments')
 	return mag_list
 
+def read_outcar(outcarpath):
+#read OUTCAR (fixes weird error with spacing in OUTCAR)
+	try:
+		mof = read(outcarpath,format='vasp-out')
+	except ValueError:
+		os.system('sed -i -e "s/\([[:digit:]]\)-\([[:digit:]]\)/\\1 -\\2/g" '+str(outcarpath))
+		mof = read(outcarpath,format='vasp-out')
+	return mof
+
 def reset_mof():
 	mof = read('POSCAR')
 	mof.set_initial_magnetic_moments(get_incar_magmoms('INCAR','POSCAR'))	
@@ -438,7 +447,6 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 			old_error_len = error_len
 	if success == False:
 		mof = None
-	os.system('sed -i -e "s/\([[:digit:]]\)-\([[:digit:]]\)/\\1 -\\2/g" OUTCAR')
 	return mof, calc_swaps
 
 def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
@@ -472,7 +480,6 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 			old_error_len = error_len
 	if success == False:
 		mof = None
-	os.system('sed -i -e "s/\([[:digit:]]\)-\([[:digit:]]\)/\\1 -\\2/g" OUTCAR')
 	return mof, dyn, calc_swaps
 
 def prep_next_run(acc_level,run_i,refcode,spin_level):
@@ -485,7 +492,7 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 	if os.path.exists(errorpath) == True:
 		mof = None
 	else:
-		mof = read(outcarpath)
+		mof = read_outcar(outcarpath)
 		if acc_level != 'scf_test':
 			mof, abs_magmoms = continue_magmoms(mof,incarpath)
 			mag_indices = get_mag_indices(mof)
@@ -514,7 +521,7 @@ def is_exploded(mof):
 def write_energy(refcode,acc_level,spin_level):
 #Write energy to results file
 	outcarpath = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level+'/OUTCAR'
-	final_mof = read(outcarpath)
+	final_mof = read_outcar(outcarpath)
 	E = final_mof.get_potential_energy()
 	str_to_write = refcode+'_'+spin_level+': '+str(E)
 	results_file = basepath+'results/screen_results.dat'
@@ -783,7 +790,7 @@ def run_screen(cif_files):
 				mof, dyn, calc_swaps = mof_bfgs_run(mof,calcs(run_i),cif_file,calc_swaps,steps,fmax)
 				scf_converged = mof.calc.scf_converged
 				if mof != None and scf_converged == True and dyn:
-					mof = read('CONTCAR')
+					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 					converged = mof.calc.converged
@@ -819,7 +826,7 @@ def run_screen(cif_files):
 					if mof == None:
 						break
 					converged = mof.calc.converged
-					mof = read('CONTCAR')
+					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					loop_i += 1
 				if mof != None and converged == True:
@@ -855,7 +862,7 @@ def run_screen(cif_files):
 					if mof == None:
 						break
 					converged = mof.calc.converged
-					mof = read('CONTCAR')
+					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					loop_i += 1
 				if mof != None and converged == True:
@@ -895,7 +902,7 @@ def run_screen(cif_files):
 						break
 					if loop_i > 0:
 						converged = mof.calc.converged
-					mof = read('CONTCAR')
+					mof = read_outcar('OUTCAR')
 					V = mof.get_volume()
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')					
 					if loop_i > 0:
