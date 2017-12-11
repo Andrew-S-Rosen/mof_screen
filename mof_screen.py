@@ -849,22 +849,22 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
-				n_runs = 11
+				n_runs = 13
 				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
 				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-					if loop_i == n_runs - 1:
+					if loop_i == n_runs - 3:
 						calc_swaps.append('ibrion=1')
 					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-					if loop_i == n_runs - 1:
-						calc_swaps.remove('ibrion=1')
 					if mof == None:
 						break
 					converged = mof.calc.converged
 					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					loop_i += 1
+				if 'ibrion=1' in calc_swaps:
+					calc_swaps.remove('ibrion=1')
 				if mof != None and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -885,7 +885,7 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
-				n_runs = 11
+				n_runs = 13
 				V_diff = np.inf
 				V_cut = 0.01
 				V0 = mof.get_volume()
@@ -893,11 +893,9 @@ def run_screen(cif_files):
 				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-					if loop_i == n_runs - 1:
+					if loop_i == n_runs - 3:
 						calc_swaps.append('ibrion=1')
 					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-					if loop_i == n_runs - 1:
-						calc_swaps.remove('ibrion=1')
 					if mof == None:
 						break
 					if loop_i > 0:
@@ -909,6 +907,8 @@ def run_screen(cif_files):
 						V_diff = np.abs((V-V0))/V0
 					V0 = V
 					loop_i += 1
+				if 'ibrion=1' in calc_swaps:
+					calc_swaps.remove('ibrion=1')
 				if mof != None and converged == True and V_diff <= V_cut:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
