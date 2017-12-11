@@ -28,7 +28,7 @@ defaults = {
 	'ismear': 0,
 	'sigma': 0.01,
 	'ibrion': 2,
-	'nsw': 30,
+	'nsw': 20,
 	'ediffg': -0.03,
 	'lorbit': 11,
 	'kppa_lo': 100,
@@ -586,7 +586,7 @@ def calcs(run_i):
 			istart=1,
 			ibrion=defaults['ibrion'],
 			isif=2,
-			nsw=300,
+			nsw=400,
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
@@ -689,7 +689,7 @@ def calcs(run_i):
 			istart=1,
 			ibrion=defaults['ibrion'],
 			isif=2,
-			nsw=30,
+			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
@@ -822,7 +822,7 @@ def run_screen(cif_files):
 			#***********ISIF 4************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				n_runs = 10
+				n_runs = 15
 				loop_i = 0
 				converged = False
 				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
@@ -856,12 +856,12 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
-				n_runs = 13
+				n_runs = 16
 				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
 				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-					if loop_i == n_runs - 3:
+					if loop_i == n_runs - 1:
 						calc_swaps.append('ibrion=1')
 					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 					if mof == None:
@@ -892,7 +892,7 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
-				n_runs = 13
+				n_runs = 16
 				V_diff = np.inf
 				V_cut = 0.01
 				V0 = mof.get_volume()
@@ -900,7 +900,7 @@ def run_screen(cif_files):
 				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-					if loop_i == n_runs - 3:
+					if loop_i == n_runs - 1:
 						calc_swaps.append('ibrion=1')
 					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 					if mof == None:
