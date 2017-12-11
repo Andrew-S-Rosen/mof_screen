@@ -93,6 +93,9 @@ def prep_paths():
 		open(log_file, 'w').close()
 
 def clean_files(remove_files):
+	remove_files.append('CHG')
+	remove_files.append('AECCAR1')
+	remove_files.append('PROCAR')
 	for file in remove_files:
 		if os.path.isfile(file) == True:
 			os.remove(file)
