@@ -788,13 +788,14 @@ def run_screen(cif_files):
 				steps = 100
 				fmax = 5.0
 				mof, dyn, calc_swaps = mof_bfgs_run(mof,calcs(run_i),cif_file,calc_swaps,steps,fmax)
-				scf_converged = mof.calc.scf_converged
-				if mof != None and scf_converged == True and dyn:
-					mof = read_outcar('OUTCAR')
-					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
-					converged = mof.calc.converged
+				if mof != None and dyn:
 					scf_converged = mof.calc.scf_converged
+					if scf_converged == True:
+						mof = read_outcar('OUTCAR')
+						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+						converged = mof.calc.converged
+						scf_converged = mof.calc.scf_converged
 				if mof != None and scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
