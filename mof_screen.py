@@ -808,7 +808,7 @@ def run_screen(cif_files):
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
-					elif mof.calc.converged == False:
+					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
 					elif converged == False:
 						pprint('^ Convergence not reached')
