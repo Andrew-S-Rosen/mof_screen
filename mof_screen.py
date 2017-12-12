@@ -511,7 +511,8 @@ def manage_restart_files(file_path):
 	files = ['WAVECAR']
 	for file in files:
 		if os.path.isfile(file) != True or os.stat(file).st_size == 0:
-			copyfile(file_path+'/'+file,os.getcwd()+'/'+file)
+			if os.path.isfile(file_path+'/'+file) == True:
+				copyfile(file_path+'/'+file,os.getcwd()+'/'+file)
 	return
 
 def write_energy(refcode,acc_level,spin_level):
