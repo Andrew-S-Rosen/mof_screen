@@ -28,7 +28,7 @@ defaults = {
 	'ismear': 0,
 	'sigma': 0.01,
 	'ibrion': 2,
-	'nsw': 20,
+	'nsw': 30,
 	'ediffg': -0.03,
 	'lorbit': 11,
 	'kppa_lo': 100,
@@ -822,7 +822,7 @@ def run_screen(cif_files):
 			#***********ISIF 4************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				n_runs = 15
+				n_runs = 10
 				loop_i = 0
 				converged = False
 				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
@@ -856,7 +856,7 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
-				n_runs = 16
+				n_runs = 11
 				choose_vasp_version(kpts_lo,kpts_hi,len(mof),nprocs,ppn)
 				manage_restart(results_partial_paths[run_i-1]+'/'+spin_level)
 				while converged == False and loop_i < n_runs:
@@ -892,7 +892,7 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
-				n_runs = 16
+				n_runs = 11
 				V_diff = np.inf
 				V_cut = 0.01
 				V0 = mof.get_volume()
