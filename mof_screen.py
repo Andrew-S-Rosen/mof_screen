@@ -785,14 +785,13 @@ def run_screen(cif_files):
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 					converged = mof.calc.converged 
-					if mof != None and converged == False and mof.calc.scf_converged == True:
+					if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
 						calc_swaps.append('ibrion=1')
 						calc_swaps.append('nsw=90')
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 						converged = mof.calc.converged
-						calc_swaps.remove('ibrion=1')
 						calc_swaps.remove('nsw=90')
 				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
@@ -853,7 +852,7 @@ def run_screen(cif_files):
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-					if loop_i == n_runs - 1:
+					if loop_i == n_runs - 1 and 'ibrion=1' not in calc_swaps:
 						calc_swaps.append('ibrion=1')
 					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 					if mof == None:
@@ -862,8 +861,6 @@ def run_screen(cif_files):
 					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					loop_i += 1
-				if 'ibrion=1' in calc_swaps:
-					calc_swaps.remove('ibrion=1')
 				if mof != None and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -896,7 +893,7 @@ def run_screen(cif_files):
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-					if loop_i == n_runs - 1:
+					if loop_i == n_runs - 1 and 'ibrion=1' not in calc_swaps:
 						calc_swaps.append('ibrion=1')
 					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 					if mof == None:
@@ -910,8 +907,6 @@ def run_screen(cif_files):
 						V_diff = np.abs((V-V0))/V0
 					V0 = V
 					loop_i += 1
-				if 'ibrion=1' in calc_swaps:
-					calc_swaps.remove('ibrion=1')
 				if mof != None and converged == True and V_diff <= V_cut:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
