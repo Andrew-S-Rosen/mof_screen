@@ -731,7 +731,7 @@ def run_screen(cif_files):
 
 		#Make sure it has C and H
 		mof = read(cif_file)
-		if 'H' not in mof or 'C' not in mof:
+		if 'H' not in mof.get_chemical_symbols() or 'C' not in mof.get_chemical_symbols():
 			pprint(refcode+' is not a MOF')
 			continue
 
