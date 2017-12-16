@@ -729,6 +729,12 @@ def run_screen(cif_files):
 		defaults['kpts_lo'] = kpts_lo
 		defaults['kpts_hi'] = kpts_hi
 
+		#Make sure it has C and H
+		mof = read(cif_file)
+		if 'H' not in mof or 'C' not in mof:
+			pprint(refcode+' is not a MOF')
+			continue
+
 		#for each spin level, optimize the structure
 		for spin_level in spin_levels:
 
@@ -818,6 +824,8 @@ def run_screen(cif_files):
 				converged = False
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				if os.path.isfile('opt.traj') == True:
+					os.remove('opt.traj')
 				while converged == False and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
