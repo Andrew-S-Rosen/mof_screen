@@ -729,12 +729,6 @@ def run_screen(cif_files):
 		defaults['kpts_lo'] = kpts_lo
 		defaults['kpts_hi'] = kpts_hi
 
-		#Make sure it has C and H
-		mof = read(mofpath+cif_file)
-		if 'H' not in mof.get_chemical_symbols() or 'C' not in mof.get_chemical_symbols():
-			pprint(refcode+' is not a MOF')
-			continue
-
 		#for each spin level, optimize the structure
 		for spin_level in spin_levels:
 
