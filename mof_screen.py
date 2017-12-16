@@ -812,7 +812,7 @@ def run_screen(cif_files):
 			if spin_level == 'spin2':
 				mag_indices = get_mag_indices(mof)
 				old_mof = read(spin1_final_mof_path)
-				if np.sum(np.abs(mof.get_magnetic_moments(mag_indices) -  old_mof.get_magnetic_moments(mag_indices)) < 0.01) == 0:
+				if np.sum(np.abs(mof.get_magnetic_moments()[mag_indices] -  old_mof.get_magnetic_moments()[mag_indices]) >= 0.05) == 0:
 					pprint('Skipping rest because SPIN2 converged to SPIN1')
 					continue
 
