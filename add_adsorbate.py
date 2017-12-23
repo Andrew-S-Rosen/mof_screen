@@ -79,17 +79,14 @@ for cif_file in cif_files:
 			#sum up NN vectors from OMS
 			dist_orig = sum(mof.get_distances(ase_cus_idx[i],ase_idx,mic=True,vector=True))
 
-			#fit equation of plane to OMS + NNs
+			#fit equation of plane to OMS
 			x = coords[:,0][np.newaxis].T
 			y = coords[:,1][np.newaxis].T
 			z = coords[:,2][np.newaxis].T
 			onevec = np.ones((len(x),1))
 			A = np.hstack((x,y,onevec))
 			B = z
-			try:
-				fit = np.squeeze(np.dot(np.linalg.inv(np.dot(A.T,A)),np.dot(A.T,B)))
-			except:
-				fit = np.squeeze(np.dot(np.linalg.pinv(np.dot(A.T,A)),np.dot(A.T,B)))
+			fit = np.squeeze(np.dot(np.linalg.pinv(np.dot(A.T,A)),np.dot(A.T,B)))
 			z_fit = fit[0]*x+fit[1]*y+fit[2]
 			rmse = (sum((z_fit-z)**2)[0]/len(z))**0.5
 
@@ -97,7 +94,16 @@ for cif_file in cif_files:
 			if np.linalg.norm(dist_orig) < 0.5 or rmse < rmse_tol:
 
 				#calculate unit normal and scale to guess_length
-				normal_vec = np.array([fit[0],fit[1],-1])
+				if rmse >= rmse_tol*10:
+					vec_norm = 0
+					for k in range(2,np.shape(coords)[0]):
+						vec_temp = np.cross(coords[1,:]-coords[0,:],coords[k,:]-coords[0,:])
+						vec_norm_temp = np.linalg.norm(vec_temp)
+						if vec_norm_temp > vec_norm:
+							normal_vec = vec_temp
+							vec_norm = vec_norm_temp
+				else:
+					normal_vec = np.array([fit[0],fit[1],-1])
 				unit_normal = normal_vec/np.linalg.norm(normal_vec)
 				dist = unit_normal * guess_length
 				NN_temp = np.zeros(2)
@@ -122,7 +128,7 @@ for cif_file in cif_files:
 
 			#otherwise scale sum of vectors to 2 
 			else:
-				dist = 2.0*dist_orig/np.linalg.norm(dist_orig)
+				dist = guess_length*dist_orig/np.linalg.norm(dist_orig)
 				ads_site[i,:] =  cus_coord[i,:] - dist
 
 	#get number of NN for each OMS in MOF
