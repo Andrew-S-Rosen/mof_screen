@@ -28,6 +28,9 @@ for cif_file in cif_files:
 
 	#read in MOF as an ASE Atoms object
 	refcode = cif_file.split('.cif')[0]
+	if os.path.isfile(newmofs_path+refcode+'_'+ads_species+'.cif') == True:
+		print('Completed '+refcode)
+		continue
 	mof = read(coremof_path+cif_file)
 
 	#read .oms file to get CN
