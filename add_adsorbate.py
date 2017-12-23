@@ -4,9 +4,9 @@ import os
 from ase import Atoms, Atom
 
 #Paths for files
-coremof_path = 'C:/Users/asros/OneDrive/PhD Research/CoRE_MOF_database/minimized_structures/cleaner_cifs/OMS_CIFs/' #path for MOFs to oxygenate
-newmofs_path = 'C:/Users/asros/OneDrive/PhD Research/CoRE_MOF_database/minimized_structures/oxygenated/oxygenated_cifs/' #path to generate oxygenated MOFs
-omsdata = 'C:/Users/asros/OneDrive/PhD Research/CoRE_MOF_database/minimized_structures/cleaner_cifs/OMS_data/' #path to .omsex and .oms files
+coremof_path = #path of CIF files to oxygenate
+newmofs_path = #path to store oxygenated MOFs
+omsdata = #path to .omsex and .oms files from zeo++
 
 #Parameters
 guess_length = 2.0 #M-adsorbate bond distance
