@@ -4,9 +4,9 @@ import os
 from ase import Atoms, Atom
 
 #Paths for files
-coremof_path = #path of CIF files to oxygenate
-newmofs_path = #path to store oxygenated MOFs
-omsdata = #path to .omsex and .oms files from zeo++
+coremof_path = 'C:/Users/asros/Desktop/coremof_path/' #path for MOFs to oxygenate
+newmofs_path = 'C:/Users/asros/Desktop/newmof_path/' #path to generate oxygenated MOFs
+omsdata = 'C:/Users/asros/Desktop/oms_data/' #path to .omsex and .oms files
 
 #Parameters
 guess_length = 2.0 #M-adsorbate bond distance
@@ -23,13 +23,21 @@ for filename in os.listdir(coremof_path):
 	if len(filename.split('.cif')) == 2:
 		cif_files.append(filename)
 
+if not os.path.exists(newmofs_path):
+	os.makedirs(newmofs_path)
+if not os.path.exists(newmofs_path+'errors/'):
+	os.makedirs(newmofs_path+'errors/')
+
 #for each CIF file, add the adsorbate and write the file
 for cif_file in cif_files:
 
 	#read in MOF as an ASE Atoms object
 	refcode = cif_file.split('.cif')[0]
 	if os.path.isfile(newmofs_path+refcode+'_'+ads_species+'.cif') == True:
-		print('Completed '+refcode)
+		print('Previously completed: '+refcode)
+		continue
+	if os.path.isfile(newmofs_path+'errors/'+refcode+'_'+ads_species+'.cif') == True:
+		print('Previously completed w/ overlapping NNs: '+refcode)
 		continue
 	mof = read(coremof_path+cif_file)
 
@@ -80,12 +88,13 @@ for cif_file in cif_files:
 				print('WARNING with '+refcode+': a zeo++ OMS (#'+str(i)+') is not in same spot as in ASE CIF')
 
 			#sum up NN vectors from OMS
-			dist_orig = sum(mof.get_distances(ase_cus_idx[i],ase_idx,mic=True,vector=True))
+			mic_coords = mof.get_distances(ase_cus_idx[i],ase_idx,mic=True,vector=True)
+			dist_orig = sum(mic_coords)
 
 			#fit equation of plane to OMS
-			x = coords[:,0][np.newaxis].T
-			y = coords[:,1][np.newaxis].T
-			z = coords[:,2][np.newaxis].T
+			x = mic_coords[:,0][np.newaxis].T
+			y = mic_coords[:,1][np.newaxis].T
+			z = mic_coords[:,2][np.newaxis].T
 			onevec = np.ones((len(x),1))
 			A = np.hstack((x,y,onevec))
 			B = z
@@ -98,10 +107,10 @@ for cif_file in cif_files:
 
 				#calculate unit normal and scale to guess_length
 				if rmse >= rmse_tol*10:
-					print('Vertical plane. Taking cross-product instead of planar fit')
+					print('NOTE with '+refcode+': NN form vertical plane. Taking cross-product instead of planar fit')
 					vec_norm = 0
 					for k in range(2,np.shape(coords)[0]):
-						vec_temp = np.cross(mof.get_distance(ase_idx[1],ase_idx[0],mic=True,vector=True),mof.get_distance(ase_idx[k],ase_idx[0],mic=True,vector=True))
+						vec_temp = np.cross(mic_coords[1,:]-mic_coords[0,:],mic_coords[k,:]-mic_coords[0,:])
 						vec_norm_temp = np.linalg.norm(vec_temp)
 						if vec_norm_temp > vec_norm:
 							normal_vec = vec_temp
@@ -153,6 +162,7 @@ for cif_file in cif_files:
 	mof.extend(adsorbate)
 	dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 	if sum(dist_mat <= overlap_tol) > 0:
+		write(newmofs_path+'errors/'+refcode+'_'+ads_species+'.cif',mof)
 		print('ERROR with '+refcode+' (CNUM = '+str(cnum[best_idx])+'): adsorbate overlaps with NN')
 	else:
 		write(newmofs_path+refcode+'_'+ads_species+'.cif',mof)
