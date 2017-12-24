@@ -98,9 +98,10 @@ for cif_file in cif_files:
 
 				#calculate unit normal and scale to guess_length
 				if rmse >= rmse_tol*10:
+					print('Vertical plane. Taking cross-product instead of planar fit')
 					vec_norm = 0
 					for k in range(2,np.shape(coords)[0]):
-						vec_temp = np.cross(coords[1,:]-coords[0,:],coords[k,:]-coords[0,:])
+						vec_temp = np.cross(mof.get_distance(ase_idx[1],ase_idx[0],mic=True,vector=True),mof.get_distance(ase_idx[k],ase_idx[0],mic=True,vector=True))
 						vec_norm_temp = np.linalg.norm(vec_temp)
 						if vec_norm_temp > vec_norm:
 							normal_vec = vec_temp
