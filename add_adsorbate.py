@@ -144,6 +144,7 @@ def get_nonplanar_ads_site(dist_orig,cus_coord):
 	return ads_site
 
 def get_bi_ads_site(cif_file,normal_vec,cus_coord,mic_coords,ase_cus_idx):
+	try_angles = np.linspace(0,360,37)
 	dist = get_dist_planar(normal_vec)
 	ads_site_temp_unrotated = cus_coord + dist
 	for i, angle in enumerate(try_angles):
@@ -163,10 +164,7 @@ def get_bi_ads_site(cif_file,normal_vec,cus_coord,mic_coords,ase_cus_idx):
 	return ads_site
 
 cif_files = get_cif_files()
-try_angles = np.linspace(0,360,37)
 for cif_file in cif_files:
-
-	#read in MOF as an ASE Atoms object
 	refcode = cif_file.split('.cif')[0]
 	if os.path.isfile(newmofs_path+refcode+'_'+ads_species+'.cif') == True:
 		print('Previously completed: '+refcode)
@@ -175,56 +173,35 @@ for cif_file in cif_files:
 		print('Previously completed w/ overlapping NNs: '+refcode)
 		continue
 	mof = read(coremof_path+cif_file)
-
-	#read .oms file to get CN
 	n_OMS = get_CN(omsdata+refcode+'.oms')
-
-	#initialize variables
 	cnum = np.zeros(n_OMS)
 	ads_site = np.zeros((n_OMS,3))
 	cus_coord = np.zeros((n_OMS,3))
 	ase_cus_idx = np.empty(n_OMS)
 	ase_cus_idx = []
-
-	#open .omsex file for MOF
 	with open(omsdata+refcode+'.omsex','r') as rf:
-
-		#for each OMS, generate location for adsorbate
 		for i, line in enumerate(rf):
 			ase_idx = []
 			cnum[i], cus_coord[i,:], coords = get_omsex_data(line)
 			ase_idx = get_ase_idx(mof,coords)
-
-			#for each OMS in .omsex, get the corresponding ASE index
 			for j, element in enumerate(mof):
 				if sum(cus_coord[i,:] > element.position-zeo_tol) == 3 and sum(cus_coord[i,:] < element.position+zeo_tol) == 3:
 					ase_cus_idx.append(j)
 					break
 			if len(ase_cus_idx) < i+1:
 				print('WARNING with '+refcode+': a zeo++ OMS (#'+str(i)+') is not in same spot as in ASE CIF')
-
-			#sum up NN vectors from OMS
 			mic_coords = mof.get_distances(ase_cus_idx[i],ase_idx,mic=True,vector=True)
 			dist_orig = sum(mic_coords)
 			fit, rmse, normal_vec = fit_plane(mic_coords)
-
-			#handle special case of 2 coordinate
 			if cnum[i] == 2:
 				ads_site[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coord[i,:],mic_coords,ase_cus_idx[i])
-
-			#if M-O bond is very small or planar fit RMSE is small, assume planar
 			elif np.linalg.norm(dist_orig) < 0.5 or rmse < rmse_tol:
-
-				#calculate unit normal and scale to guess_length
 				if rmse >= rmse_tol*10:
 					vec_norm = get_vert_vec_norm(refcode,mic_coords)
 				dist = get_dist_planar(normal_vec)
 				ads_site[i,:] = get_planar_ads_site(cif_file,cus_coord[i,:],dist)
-
-			#otherwise scale sum of vectors to 2 
 			else:
 				ads_site[i,:] = get_nonplanar_ads_site(dist_orig,cus_coord[i,:])
-
 	best_idx = get_best_idx(cif_file,n_OMS,ads_site)
 	mof = add_ads_species(cif_file,ads_site,best_idx)
 	write_files(refcode,mof,cnum,best_idx)
