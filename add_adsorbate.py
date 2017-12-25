@@ -4,9 +4,9 @@ import os
 from ase import Atoms, Atom
 
 #Paths for files
-coremof_path = 'C:/Users/asros/OneDrive/Working/coremof_path/' #path for MOFs to oxygenate
-newmofs_path = 'C:/Users/asros/OneDrive/Working/newmof_path/' #path to generate oxygenated MOFs
-omsdata = 'C:/Users/asros/OneDrive/Working/oms_data/' #path to .omsex and .oms files
+coremof_path = '/projects/p30148/vasp_jobs/structures/CoRE1/OMS_CIFs/' #path for MOFs to oxygenate
+newmofs_path = '/projects/p30148/vasp_jobs/structures/CoRE1/oxygenated/oxygenated_cifs/' #path to generate oxygenated MOFs
+omsdata = '/projects/p30148/vasp_jobs/structures/CoRE1/OMS_data/' #path to .omsex and .oms files
 
 #Parameters
 guess_length = 2.0 #M-adsorbate bond distance
@@ -112,6 +112,14 @@ def write_files(refcode,mof,cnum,best_idx):
 	else:
 		write(newmofs_path+refcode+'_'+ads_species+'.cif',mof)
 		print('SUCCESS: '+refcode +' (CNUM = '+str(cnum[best_idx])+')')
+
+def check_vertical_plane(mic_coords):
+	vertical = False
+	for i in range(2,np.shape(mic_coords)[0]):
+		vec_temp = np.cross(mic_coords[1,:]-mic_coords[0,:],mic_coords[i,:]-mic_coords[0,:])
+		if vec_temp[2] == 0:
+			vertical = True
+	return vertical
 
 def get_vert_vec_norm(refcode,mic_coords):
 #Get normal vector if plane is vertical in z
@@ -227,8 +235,8 @@ for cif_file in cif_files:
 			if cnum[i] == 3 and np.linalg.norm(dist_orig) >= sum_cutoff:
 				ads_site[i,:] = get_tri_ads_site(cif_file,normal_vec,cus_coord[i,:])
 			elif r2 > r2_tol and rmse < rmse_tol:
-				if fit[2] >= 1e10:
-					print('Doing cross-product for vertical plane')
+				vertical = check_vertical_plane(mic_coords)
+				if fit[2] >= 1e10 or vertical == True:
 					vec_norm = get_vert_vec_norm(refcode,mic_coords)
 				dist = get_dist_planar(normal_vec)
 				ads_site[i,:] = get_planar_ads_site(cif_file,cus_coord[i,:],dist)
