@@ -227,9 +227,9 @@ for cif_file in cif_files:
 			if cnum[i] == 3 and np.linalg.norm(dist_orig) >= sum_cutoff:
 				ads_site[i,:] = get_tri_ads_site(cif_file,normal_vec,cus_coord[i,:])
 			elif r2 > r2_tol and rmse < rmse_tol:
-				#THIS IS BAD
-#				if rmse >= rmse_tol*10:
-#					vec_norm = get_vert_vec_norm(refcode,mic_coords)
+				if fit[2] >= 1e10:
+					print('Doing cross-product for vertical plane')
+					vec_norm = get_vert_vec_norm(refcode,mic_coords)
 				dist = get_dist_planar(normal_vec)
 				ads_site[i,:] = get_planar_ads_site(cif_file,cus_coord[i,:],dist)
 			else:
