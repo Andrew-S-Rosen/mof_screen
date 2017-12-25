@@ -4,17 +4,19 @@ import os
 from ase import Atoms, Atom
 
 #Paths for files
-coremof_path = 'C:/Users/asros/Desktop/coremof_path/' #path for MOFs to oxygenate
-newmofs_path = 'C:/Users/asros/Desktop/newmof_path/' #path to generate oxygenated MOFs
-omsdata = 'C:/Users/asros/Desktop/oms_data/' #path to .omsex and .oms files
+coremof_path = 'C:/Users/asros/OneDrive/Working/coremof_path/' #path for MOFs to oxygenate
+newmofs_path = 'C:/Users/asros/OneDrive/Working/newmof_path/' #path to generate oxygenated MOFs
+omsdata = 'C:/Users/asros/OneDrive/Working/oms_data/' #path to .omsex and .oms files
 
 #Parameters
 guess_length = 2.0 #M-adsorbate bond distance
 ads_species = 'O' #adsorbate
 rcut = 2.5 #cutoff for nearest neighbors
 zeo_tol = 0.1 #tolerance for difference between zeo++ coordinates and ASE
-rmse_tol = 0.05 #RMSE tolerance for if a geometry is planar-like
-overlap_tol = 1.0 #tolerance for overlapping atoms
+sum_cutoff = 0.5 #cutoff for sum of vectors to be planar
+rmse_tol = 0.25 #rmse tolerance for if a geometry is planar-like
+r2_tol = 0.95 #r^2 tolerance for if a geometry is planar-like
+overlap_tol = 1.3 #tolerance for overlapping atoms
 
 def get_cif_files():
 #read in the CIF files for the MOFs from coremof_path
@@ -40,9 +42,12 @@ def fit_plane(mic_coords):
 	B = z
 	fit = np.squeeze(np.dot(np.linalg.pinv(np.dot(A.T,A)),np.dot(A.T,B)))
 	z_fit = fit[0]*x+fit[1]*y+fit[2]
-	rmse = (sum((z_fit-z)**2)[0]/len(z))**0.5
+	ss_res = sum((z_fit-z)**2)[0]
+	rmse = (ss_res/len(z))**0.5
+	ss_tot = sum((z-np.mean(z))**2)[0]
+	r2 = 1-ss_res/ss_tot
 	normal_vec = np.array([fit[0],fit[1],-1])
-	return fit, rmse, normal_vec
+	return fit, rmse, r2, normal_vec
 
 def get_CN(oms_path):
 #read OMS file for n_OMS
@@ -91,14 +96,15 @@ def get_best_idx(cif_file,n_OMS,ads_site):
 	best_idx = np.argmin(NN)
 	return best_idx
 
-def add_ads_species(cif_file,ads_site,best_idx):
+def add_ads_species(cif_file,ads_site):
 #add adsorbate to original CIF and save new CIF
 	mof = read(coremof_path+cif_file)
-	adsorbate = Atoms([Atom(ads_species,ads_site[best_idx,:])])
+	adsorbate = Atoms([Atom(ads_species,ads_site)])
 	mof.extend(adsorbate)
 	return mof
 
 def write_files(refcode,mof,cnum,best_idx):
+#Write adsorbed CIF
 	dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 	if sum(dist_mat <= overlap_tol) > 0:
 		write(newmofs_path+'errors/'+refcode+'_'+ads_species+'.cif',mof)
@@ -108,6 +114,7 @@ def write_files(refcode,mof,cnum,best_idx):
 		print('SUCCESS: '+refcode +' (CNUM = '+str(cnum[best_idx])+')')
 
 def get_vert_vec_norm(refcode,mic_coords):
+#Get normal vector if plane is vertical in z
 	print('NOTE with '+refcode+': NN form vertical plane. Taking cross-product instead of planar fit')
 	vec_norm = 0
 	for i in range(2,np.shape(mic_coords)[0]):
@@ -118,7 +125,14 @@ def get_vert_vec_norm(refcode,mic_coords):
 			vec_norm = vec_norm_temp
 	return normal_vec
 
+def get_NNs(mof):
+#Get number of NNs from last atom (presumably adsorbate)
+	neighbor_dist_temp = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
+	NN = sum(neighbor_dist_temp < rcut)
+	return NN
+
 def get_planar_ads_site(cif_file,cus_coord,dist):
+#Get adsorption site for planar structure
 	NN_temp = np.zeros(2)
 	for i in range(2):
 		mof_temp = read(coremof_path+cif_file)
@@ -128,9 +142,7 @@ def get_planar_ads_site(cif_file,cus_coord,dist):
 			ads_site_temp = cus_coord - dist
 		adsorbate_temp = Atoms([Atom(ads_species,ads_site_temp)])
 		mof_temp.extend(adsorbate_temp)
-		neighbor_dist_temp = mof_temp.get_distances(len(mof_temp)-1,np.arange(0,len(mof_temp)-1).tolist(),mic=True)
-		NN_temp[i] = sum(neighbor_dist_temp < rcut)
-
+		NN_temp[i] = get_NNs(mof_temp)
 	#take the +/- sign of unit normal based on fewest number of NN
 	if NN_temp[0] <= NN_temp[1]:
 		ads_site = cus_coord + dist
@@ -139,11 +151,13 @@ def get_planar_ads_site(cif_file,cus_coord,dist):
 	return ads_site
 
 def get_nonplanar_ads_site(dist_orig,cus_coord):
+#Get adsorption site for nonplanar structure
 	dist = guess_length*dist_orig/np.linalg.norm(dist_orig)
 	ads_site =  cus_coord - dist
 	return ads_site
 
 def get_bi_ads_site(cif_file,normal_vec,cus_coord,mic_coords,ase_cus_idx):
+#Get adsorption site for 2-coordinate
 	try_angles = np.linspace(0,360,37)
 	dist = get_dist_planar(normal_vec)
 	ads_site_temp_unrotated = cus_coord + dist
@@ -161,6 +175,21 @@ def get_bi_ads_site(cif_file,normal_vec,cus_coord,mic_coords,ase_cus_idx):
 		elif sum(dist_mat <= overlap_tol) == 0 and NNs < old_min_NNs:
 			ads_site = mof_temp[-1].position
 			old_min_NNs = NNs
+	return ads_site
+
+def get_tri_ads_site(cif_file,normal_vec,cus_coord):
+#Get adsorption site for 3-coordinate (not trigonal planar)
+	dist = get_dist_planar(normal_vec)
+	ads_site_planar = get_planar_ads_site(cif_file,cus_coord,dist)
+	mof_planar = add_ads_species(cif_file,ads_site_planar)
+	NN_planar = get_NNs(mof_planar)
+	ads_site_nonplanar = get_nonplanar_ads_site(dist_orig,cus_coord)
+	mof_nonplanar = add_ads_species(cif_file,ads_site_nonplanar)
+	NN_nonplanar = get_NNs(mof_nonplanar)
+	if NN_planar <= NN_nonplanar:
+		ads_site = ads_site_planar
+	else:
+		ads_site = ads_site_nonplanar
 	return ads_site
 
 cif_files = get_cif_files()
@@ -192,16 +221,19 @@ for cif_file in cif_files:
 				print('WARNING with '+refcode+': a zeo++ OMS (#'+str(i)+') is not in same spot as in ASE CIF')
 			mic_coords = mof.get_distances(ase_cus_idx[i],ase_idx,mic=True,vector=True)
 			dist_orig = sum(mic_coords)
-			fit, rmse, normal_vec = fit_plane(mic_coords)
+			fit, rmse, r2, normal_vec = fit_plane(mic_coords)
 			if cnum[i] == 2:
 				ads_site[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coord[i,:],mic_coords,ase_cus_idx[i])
-			elif np.linalg.norm(dist_orig) < 0.5 or rmse < rmse_tol:
-				if rmse >= rmse_tol*10:
-					vec_norm = get_vert_vec_norm(refcode,mic_coords)
+			if cnum[i] == 3 and np.linalg.norm(dist_orig) >= sum_cutoff:
+				ads_site[i,:] = get_tri_ads_site(cif_file,normal_vec,cus_coord[i,:])
+			elif r2 > r2_tol and rmse < rmse_tol:
+				#THIS IS BAD
+#				if rmse >= rmse_tol*10:
+#					vec_norm = get_vert_vec_norm(refcode,mic_coords)
 				dist = get_dist_planar(normal_vec)
 				ads_site[i,:] = get_planar_ads_site(cif_file,cus_coord[i,:],dist)
 			else:
 				ads_site[i,:] = get_nonplanar_ads_site(dist_orig,cus_coord[i,:])
 	best_idx = get_best_idx(cif_file,n_OMS,ads_site)
-	mof = add_ads_species(cif_file,ads_site,best_idx)
+	mof = add_ads_species(cif_file,ads_site[best_idx,:])
 	write_files(refcode,mof,cnum,best_idx)
