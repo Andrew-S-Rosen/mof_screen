@@ -114,6 +114,7 @@ def write_files(refcode,mof,cnum,best_idx):
 		print('SUCCESS: '+refcode +' (CNUM = '+str(cnum[best_idx])+')')
 
 def check_vertical_plane(mic_coords):
+#Check if the plane is vertical
 	vertical = False
 	for i in range(2,np.shape(mic_coords)[0]):
 		vec_temp = np.cross(mic_coords[1,:]-mic_coords[0,:],mic_coords[i,:]-mic_coords[0,:])
