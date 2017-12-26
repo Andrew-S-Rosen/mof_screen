@@ -4,9 +4,9 @@ import os
 from ase import Atoms, Atom
 
 #Paths for files
-coremof_path = '/projects/p30148/vasp_jobs/structures/CoRE1/OMS_CIFs/' #path for MOFs to oxygenate
-newmofs_path = '/projects/p30148/vasp_jobs/structures/CoRE1/oxygenated/oxygenated_cifs/' #path to generate oxygenated MOFs
-omsdata = '/projects/p30148/vasp_jobs/structures/CoRE1/OMS_data/' #path to .omsex and .oms files
+coremof_path = 'C:/Users/asros/OneDrive/Working/coremof_path/' #path for MOFs to oxygenate
+newmofs_path = 'C:/Users/asros/OneDrive/Working/newmof_path/' #path to generate oxygenated MOFs
+omsdata = 'C:/Users/asros/OneDrive/Working/oms_data/' #path to .omsex and .oms files
 
 #Parameters
 guess_length = 2.0 #M-adsorbate bond distance
@@ -113,9 +113,8 @@ def write_files(refcode,mof,cnum,best_idx):
 		write(newmofs_path+refcode+'_'+ads_species+'.cif',mof)
 		print('SUCCESS: '+refcode +' (CNUM = '+str(cnum[best_idx])+')')
 
-def get_vert_vec_norm(refcode,mic_coords):
+def get_vert_vec_norm(mic_coords):
 #Get normal vector if plane is vertical in z
-	print('NOTE with '+refcode+': NN form vertical plane. Taking cross-product instead of planar fit')
 	vec_norm = np.inf
 	for i in range(2,np.shape(mic_coords)[0]):
 		vec_temp = np.cross(mic_coords[1,:]-mic_coords[0,:],mic_coords[i,:]-mic_coords[0,:])
@@ -150,9 +149,9 @@ def get_planar_ads_site(cif_file,cus_coord,dist):
 		ads_site = cus_coord - dist
 	return ads_site
 
-def get_nonplanar_ads_site(dist_orig,cus_coord):
+def get_nonplanar_ads_site(sum_dist,cus_coord):
 #Get adsorption site for nonplanar structure
-	dist = guess_length*dist_orig/np.linalg.norm(dist_orig)
+	dist = guess_length*sum_dist/np.linalg.norm(sum_dist)
 	ads_site =  cus_coord - dist
 	return ads_site
 
@@ -177,13 +176,13 @@ def get_bi_ads_site(cif_file,normal_vec,cus_coord,mic_coords,ase_cus_idx):
 			old_min_NNs = NNs
 	return ads_site
 
-def get_tri_ads_site(cif_file,normal_vec,cus_coord):
+def get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coord):
 #Get adsorption site for 3-coordinate (not trigonal planar)
 	dist = get_dist_planar(normal_vec)
 	ads_site_planar = get_planar_ads_site(cif_file,cus_coord,dist)
 	mof_planar = add_ads_species(cif_file,ads_site_planar)
 	NN_planar = get_NNs(mof_planar)
-	ads_site_nonplanar = get_nonplanar_ads_site(dist_orig,cus_coord)
+	ads_site_nonplanar = get_nonplanar_ads_site(sum_dist,cus_coord)
 	mof_nonplanar = add_ads_species(cif_file,ads_site_nonplanar)
 	NN_nonplanar = get_NNs(mof_nonplanar)
 	if NN_planar <= NN_nonplanar:
@@ -220,19 +219,21 @@ for cif_file in cif_files:
 			if len(ase_cus_idx) < i+1:
 				print('WARNING with '+refcode+': a zeo++ OMS (#'+str(i)+') is not in same spot as in ASE CIF')
 			mic_coords = mof.get_distances(ase_cus_idx[i],ase_idx,mic=True,vector=True)
-			dist_orig = sum(mic_coords)
+			scaled_mic_coords = mic_coords*guess_length/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
+			scaled_sum_dist = sum(scaled_mic_coords)
+			sum_dist = sum(mic_coords)
 			fit, rmse, r2, normal_vec = fit_plane(mic_coords)
 			if cnum[i] == 2:
 				ads_site[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coord[i,:],mic_coords,ase_cus_idx[i])
-			if cnum[i] == 3 and np.linalg.norm(dist_orig) >= sum_cutoff:
-				ads_site[i,:] = get_tri_ads_site(cif_file,normal_vec,cus_coord[i,:])
-			elif np.linalg.norm(dist_orig) < sum_cutoff or (r2 > r2_tol and rmse < rmse_tol):
+			if cnum[i] == 3 and np.linalg.norm(scaled_sum_dist) >= sum_cutoff:
+				ads_site[i,:] = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coord[i,:])
+			elif np.linalg.norm(scaled_sum_dist) < sum_cutoff or (r2 > r2_tol and rmse < rmse_tol):
 				if fit[2] >= 1e10 or rmse >= rmse_tol:
-					normal_vec = get_vert_vec_norm(refcode,mic_coords)
+					normal_vec = get_vert_vec_norm(mic_coords)
 				dist = get_dist_planar(normal_vec)
 				ads_site[i,:] = get_planar_ads_site(cif_file,cus_coord[i,:],dist)
 			else:
-				ads_site[i,:] = get_nonplanar_ads_site(dist_orig,cus_coord[i,:])
+				ads_site[i,:] = get_nonplanar_ads_site(sum_dist,cus_coord[i,:])
 	best_idx = get_best_idx(cif_file,n_OMS,ads_site)
 	mof = add_ads_species(cif_file,ads_site[best_idx,:])
 	write_files(refcode,mof,cnum,best_idx)
