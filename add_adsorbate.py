@@ -279,7 +279,9 @@ for cif_file in cif_files:
 			v += 1
 			if success == True:
 				ref_success = True
-	with open(newmofs_path+'results.dat','a') as txtfile:
-		txtfile.write(refcode+'\n')
-	with open(newmofs_path+'errors.dat','a') as txtfile:
-		txtfile.write(refcode+'\n')
+	if ref_success == True:
+		with open(newmofs_path+'results.dat','a') as txtfile:
+			txtfile.write(refcode+'\n')
+	else:
+		with open(newmofs_path+'errors.dat','a') as txtfile:
+			txtfile.write(refcode+'\n')
