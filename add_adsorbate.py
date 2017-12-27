@@ -25,7 +25,6 @@ def get_cif_files():
 		filename = filename.strip()
 		if len(filename.split('.cif')) == 2:
 			cif_files.append(filename)
-
 	if not os.path.exists(newmofs_path):
 		os.makedirs(newmofs_path)
 	if not os.path.exists(newmofs_path+'errors/'):
@@ -135,16 +134,16 @@ def write_files(refcode,mof,oms_sym,cnum,best_idx,i):
 	dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 	basename = refcode+'_'+ads_species
 	if sum(dist_mat <= overlap_tol) > 0:
-		error_path = newmofs_path+'errors/'+basename+'/'+basename+'_v'+str(i)
+		error_path = newmofs_path+'errors/'+basename
 		if not os.path.exists(error_path):
 			os.makedirs(error_path)
-		write(error_path+'.cif',mof)
+		write(error_path+'/'+basename+'_v'+str(i)+'.cif',mof)
 		print('ERROR with '+refcode+'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
 	else:
-		result_path = newmofs_path+'results/'+basename+'/'+basename+'_v'+str(i)
+		result_path = newmofs_path+'results/'+basename
 		if not os.path.exists(result_path):
 			os.makedirs(result_path)
-		write(result_path+'.cif',mof)
+		write(result_path+'/'+basename+'_v'+str(i)+'.cif',mof)
 		print('SUCCESS: '+refcode +'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
 
 def get_vert_vec_norm(mic_coords):
@@ -242,7 +241,7 @@ for cif_file in cif_files:
 	v = 0
 	for oms_sym in unique_oms_sym:
 		oms_idx = np.where(oms_sym_all == oms_sym)			
-		unique_cnums = np.unique(np.array(cnums_all))
+		unique_cnums = np.unique(np.array(cnums_all)[oms_idx])
 		for cnum in unique_cnums:
 			cnum_idx = np.where(cnums_all == cnum)
 			intersect_idx = np.intersect1d(oms_idx,cnum_idx)
