@@ -41,6 +41,9 @@ defaults = {
 dblock_list = np.concatenate((np.arange(21,30,1),np.arange(39,48,1),np.arange(71,80,1),np.arange(103,112,1)),axis=0).tolist()
 fblock_list = np.concatenate((np.arange(57,71,1),np.arange(89,103,1)),axis=0).tolist()
 nonmetal_list = [1,2,6,7,8,9,10,15,16,17,18,34,35,36,53,54,86]
+metal_list = [val for val in np.arange(1,119,1) if val not in nonmetal_list]
+TM_list = np.concatenate((dblock_list,fblock_list),axis=0).tolist()
+nonTM_list = [val for val in np.arange(1,119,1) if val not in TM_list]
 
 #-------------FUNCTION DECLARATION-------------
 def get_nprocs():
@@ -140,7 +143,6 @@ def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
 def get_mag_indices(mof):
 #Get indices of d- and f-block atoms
 	mag_indices = []
-	metal_list = [val for val in np.arange(1,119,1) if val not in nonmetal_list]
 	for i, atom in enumerate(mof):
 		for num in metal_list:
 			if atom.number == num:
@@ -506,8 +508,6 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 			mof, abs_magmoms = continue_magmoms(mof,incarpath)
 			mag_indices = get_mag_indices(mof)
 			mag_nums = mof[mag_indices].get_atomic_numbers()
-			TM_list = np.concatenate((dblock_list,fblock_list),axis=0).tolist()
-			nonTM_list = [val for val in np.arange(1,119,1) if val not in TM_list]
 			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in nonTM_list for num in mag_nums) == True:
 				skip_spin2 = True
 	run_i += 1
