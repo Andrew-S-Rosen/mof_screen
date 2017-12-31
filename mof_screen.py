@@ -8,10 +8,10 @@ from ase.optimize import BFGSLineSearch
 from ase.io import read
 
 #-------------SET PATHS-------------
-mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS/'
+mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
 basepath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
 submit_script = 'sub_asevasp_screening_temp.job'
-skip_mofs = ['AVEMOE_clean_min']
+skip_mofs = []
 
 #-------------DEFAULT PARAMETERS-------------
 defaults = {
@@ -36,6 +36,13 @@ defaults = {
 	'isym': 0
 	}
 
+#Define blocks for elements for spin polarization assignments
+#Note: Zn, Cd, Hg treated as non-TMs
+dblock_list = np.concatenate((np.arange(21,30,1),np.arange(39,48,1),np.arange(71,80,1),np.arange(103,112,1)),axis=0).tolist()
+fblock_list = np.concatenate((np.arange(57,71,1),np.arange(89,103,1)),axis=0).tolist()
+TM_list = np.concatenate((dblock_list,fblock_list),axis=0).tolist()
+nonTM_list = [val for val in np.arange(1,119,1) if val not in TM_list]
+
 #-------------FUNCTION DECLARATION-------------
 def get_nprocs():
 #Get the number of CPUs (modify for each computing environment)
@@ -45,7 +52,7 @@ def get_nprocs():
 				line = line.strip().replace(' ','')
 				nodes = int(line.split('nodes=')[1].split(':ppn=')[0])
 				ppn = int(line.split('nodes=')[1].split(':ppn=')[1])
-				nprocs = nodes*ppn
+	nprocs = nodes*ppn
 	return nprocs, ppn
 
 def pprint(printstr):
@@ -150,12 +157,12 @@ def set_initial_magmoms(mof,spin_level):
 		if i in mag_indices:
 			mag_number = atom.number
 			if spin_level == 'spin1':
-				if (mag_number >= 57 and mag_number <= 70) or (mag_number >= 89 and mag_number <= 102):
-					atom.magmom = 7.0
-				if mag_number == 30:
-					atom.magmom = 0.1
-				else:
+				if mag_number in dblock_list:
 					atom.magmom = 5.0
+				elif mag_number in fblock_list:
+					atom.magmom = 7.0
+				else:
+					atom.magmom = 0.1
 			elif spin_level == 'spin2':
 				atom.magmom = 0.1
 			else:
@@ -500,8 +507,8 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 		if acc_level != 'scf_test':
 			mof, abs_magmoms = continue_magmoms(mof,incarpath)
 			mag_indices = get_mag_indices(mof)
-			mag_symbols = mof[mag_indices].get_chemical_symbols()
-			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(symbol == 'Zn' for symbol in mag_symbols) == True:
+			mag_nums = mof[mag_indices].get_atomic_numbers()
+			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in nonTM_list for num in mag_nums) == True:
 				skip_spin2 = True
 	run_i += 1
 	return mof, run_i, skip_spin2
@@ -792,6 +799,7 @@ def run_screen(cif_files):
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 						converged = mof.calc.converged
+						calc_swaps.remove('ibrion=1')
 						calc_swaps.remove('nsw=90')
 				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
@@ -869,6 +877,8 @@ def run_screen(cif_files):
 					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					loop_i += 1
+				if 'ibrion=1' in calc_swaps:
+					calc_swaps.remove('ibrion=1')
 				if mof != None and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -915,6 +925,8 @@ def run_screen(cif_files):
 						V_diff = np.abs((V-V0))/V0
 					V0 = V
 					loop_i += 1
+				if 'ibrion=1' in calc_swaps:
+					calc_swaps.remove('ibrion=1')
 				if mof != None and converged == True and V_diff <= V_cut:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
