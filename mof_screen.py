@@ -206,7 +206,7 @@ def continue_magmoms(mof,incarpath):
 
 def get_incar_magmoms(incarpath,poscarpath):
 #get the magnetic moments from the POSCAR
-	mag_list = []
+	mof_mag_list = []
 	init_mof = read(poscarpath)
 	with open(incarpath,'r') as incarfile:
 		for line in incarfile:
@@ -216,12 +216,12 @@ def get_incar_magmoms(incarpath,poscarpath):
 				for val in mag_line:
 					mag = float(val.split('*')[1])
 					num = int(val.split('*')[0])
-					mag_list.extend([mag]*num)
-	if bool(mag_list) == False:
-		mag_list = np.zeros(len(init_mof))
-	if len(mag_list) != len(mag_list):
+					mof_mag_list.extend([mag]*num)
+	if bool(mof_mag_list) == False:
+		mof_mag_list = np.zeros(len(init_mof))
+	if len(mof_mag_list) != len(mof_mag_list):
 		raise ValueError('Error reading INCAR magnetic moments')
-	return mag_list
+	return mof_mag_list
 
 def read_outcar(outcarpath):
 #read OUTCAR and fixes weird fortran I/O errors
