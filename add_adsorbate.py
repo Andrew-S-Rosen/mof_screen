@@ -4,9 +4,9 @@ import os
 from ase import Atoms, Atom
 
 #Paths for files
-coremof_path = '/projects/p30148/vasp_jobs/structures/CoRE1/OMS_CIFs/' #path for MOFs to oxygenate
-newmofs_path = '/projects/p30148/vasp_jobs/structures/CoRE1/oxygenated/oxygenated_cifs/' #path to generate oxygenated MOFs
-omsdata = '/projects/p30148/vasp_jobs/structures/CoRE1/OMS_data/' #path to .omsex and .oms files
+coremof_path = 'C:/Users/asros/OneDrive/Working/coremof_path/' #path for MOFs to oxygenate
+newmofs_path = 'C:/Users/asros/OneDrive/Working/newmof_path/' #path to generate oxygenated MOFs
+omsdata = 'C:/Users/asros/OneDrive/Working/oms_data/' #path to .omsex and .oms files
 
 #Parameters
 guess_length = 2.0 #M-adsorbate bond distance
@@ -29,12 +29,6 @@ def get_cif_files():
 		os.makedirs(newmofs_path)
 	if not os.path.exists(newmofs_path+'errors/'):
 		os.makedirs(newmofs_path+'errors/')
-	if not os.path.exists(newmofs_path+'results/'):
-		os.makedirs(newmofs_path+'results/')
-	if not os.path.isfile(newmofs_path+'results.dat') == True:
-		open(newmofs_path+'results.dat','w').close()
-	if not os.path.isfile(newmofs_path+'errors.dat') == True:
-		open(newmofs_path+'errors.dat','w').close()
 	return cif_files
 
 def fit_plane(mic_coords):
@@ -140,14 +134,15 @@ def write_files(refcode,mof,oms_sym,cnum,best_idx,i):
 	dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 	basename = refcode+'_'+ads_species
 	if sum(dist_mat <= overlap_tol) > 0:
-		write(newmofs_path+'errors/'+basename+'_v'+str(i)+'.cif',mof)
+		error_path = newmofs_path+'errors/'+basename
+		if not os.path.exists(error_path):
+			os.makedirs(error_path)
+		write(error_path+'/'+basename+'_v'+str(i)+'.cif',mof)
 		print('ERROR with '+refcode+'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
-		success = False
 	else:
-		write(newmofs_path+'results/'+basename+'_v'+str(i)+'.cif',mof)
+		result_path = newmofs_path+basename
+		write(result_path+'/'+basename+'_v'+str(i)+'.cif',mof)
 		print('SUCCESS: '+refcode +'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
-		success = True
-	return success
 
 def get_vert_vec_norm(mic_coords):
 #Get normal vector if plane is vertical in z
@@ -235,7 +230,6 @@ for cif_file in cif_files:
 	n_OMS = get_CN(omsdata+refcode+'.oms')
 	cnums_all, cus_coords_all, ase_cus_idx_all, oms_sym_all, NN_coords_all = get_omsex_data(refcode)
 	unique_oms_sym = np.unique(oms_sym_all)
-	ref_success = False
 	v = 0
 	for oms_sym in unique_oms_sym:
 		oms_idx = np.where(oms_sym_all == oms_sym)			
@@ -246,7 +240,7 @@ for cif_file in cif_files:
 			ads_sites = np.zeros((len(intersect_idx),3))
 			for i, omsex_idx in enumerate(intersect_idx):
 				file = basename+'_v'+str(v)+'.cif'
-				if os.path.isfile(newmofs_path+'results/'+file) == True:
+				if os.path.isfile(newmofs_path+file) == True:
 					print('Previously completed: '+file)
 					continue
 				if os.path.isfile(newmofs_path+'errors/'+file) == True:
@@ -275,13 +269,5 @@ for cif_file in cif_files:
 					ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
 			best_idx = get_best_idx(cif_file,ads_sites)
 			mof = add_ads_species(cif_file,ads_sites[best_idx,:])
-			success = write_files(refcode,mof,oms_sym,cnum,best_idx,v)
+			write_files(refcode,mof,oms_sym,cnum,best_idx,v)
 			v += 1
-			if success == True:
-				ref_success = True
-	if ref_success == True:
-		with open(newmofs_path+'results.dat','a') as txtfile:
-			txtfile.write(refcode+'\n')
-	else:
-		with open(newmofs_path+'errors.dat','a') as txtfile:
-			txtfile.write(refcode+'\n')
