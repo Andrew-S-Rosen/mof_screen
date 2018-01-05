@@ -11,7 +11,7 @@ from ase.io import read
 mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
 basepath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
 submit_script = 'sub_asevasp_screening_temp.job'
-skip_mofs = []
+skip_mofs = ['QQQGTA01_clean_min','QQQGTA02_clean_min']
 
 #-------------DEFAULT PARAMETERS-------------
 defaults = {
@@ -38,12 +38,13 @@ defaults = {
 
 #Define blocks for elements for spin polarization assignments
 #Note: Zn, Cd, Hg treated as non-TMs
-dblock_list = np.concatenate((np.arange(21,30,1),np.arange(39,48,1),np.arange(71,80,1),np.arange(103,112,1)),axis=0).tolist()
-fblock_list = np.concatenate((np.arange(57,71,1),np.arange(89,103,1)),axis=0).tolist()
+sblock_metals = [3,4,11,12,19,20,37,38,55,56,87,88]
+dblock_metals = np.concatenate((np.arange(21,30,1),np.arange(39,48,1),np.arange(71,80,1),np.arange(103,112,1)),axis=0).tolist()
+fblock_metals = np.concatenate((np.arange(57,71,1),np.arange(89,103,1)),axis=0).tolist()
 nonmetal_list = [1,2,6,7,8,9,10,15,16,17,18,34,35,36,53,54,86]
 metal_list = [val for val in np.arange(1,119,1) if val not in nonmetal_list]
-TM_list = np.concatenate((dblock_list,fblock_list),axis=0).tolist()
-nonTM_list = [val for val in np.arange(1,119,1) if val not in TM_list]
+mag_list = [metal for metal in metal_list if metal not in sblock_metals]
+nomag_list = [val for val in np.arange(1,119,1) if val not in mag_list]
 
 #-------------FUNCTION DECLARATION-------------
 def get_nprocs():
@@ -141,12 +142,11 @@ def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
 	runvasp_file.close()
 
 def get_mag_indices(mof):
-#Get indices of d- and f-block atoms
+#Get indices of d-block, f-block, and semimetal atoms
 	mag_indices = []
 	for i, atom in enumerate(mof):
-		for num in metal_list:
-			if atom.number == num:
-				mag_indices.append(i)
+		if atom.number in mag_metals_list:
+			mag_indices.append(i)
 	return mag_indices
 
 def set_initial_magmoms(mof,spin_level):
@@ -157,9 +157,9 @@ def set_initial_magmoms(mof,spin_level):
 		if i in mag_indices:
 			mag_number = atom.number
 			if spin_level == 'spin1':
-				if mag_number in dblock_list:
+				if mag_number in dblock_metals:
 					atom.magmom = 5.0
-				elif mag_number in fblock_list:
+				elif mag_number in fblock_metals:
 					atom.magmom = 7.0
 				else:
 					atom.magmom = 0.1
@@ -508,7 +508,7 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 			mof, abs_magmoms = continue_magmoms(mof,incarpath)
 			mag_indices = get_mag_indices(mof)
 			mag_nums = mof[mag_indices].get_atomic_numbers()
-			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in nonTM_list for num in mag_nums) == True:
+			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in nomag_list for num in mag_nums) == True:
 				skip_spin2 = True
 	run_i += 1
 	return mof, run_i, skip_spin2
