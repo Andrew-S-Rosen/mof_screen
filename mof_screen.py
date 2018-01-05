@@ -44,6 +44,7 @@ nonmetal_list = [1,2,6,7,8,9,10,15,16,17,18,34,35,36,53,54,86]
 metal_list = [val for val in np.arange(1,119,1) if val not in nonmetal_list]
 mag_list = [metal for metal in metal_list if metal not in sblock_metals]
 nomag_list = [val for val in np.arange(1,119,1) if val not in mag_list]
+poor_metals = [metal for metal in metal_list if metal not in dblock_metals+fblock_metals+sblock_metals]
 
 #-------------FUNCTION DECLARATION-------------
 def get_nprocs():
@@ -160,8 +161,10 @@ def set_initial_magmoms(mof,spin_level):
 					atom.magmom = 5.0
 				elif mag_number in fblock_metals:
 					atom.magmom = 7.0
-				else:
+				elif mag_number in poor_metals:
 					atom.magmom = 0.1
+				else:
+					raise ValueError('Metal not properly classified')
 			elif spin_level == 'spin2':
 				atom.magmom = 0.1
 			else:
@@ -195,13 +198,17 @@ def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 def continue_magmoms(mof,incarpath):
 #Read in the old magmoms
 	mag_indices = get_mag_indices(mof)
+	ispin = False
 	with open(incarpath,'r') as incarfile:
-		if 'ISPIN' in incarfile.read():
-			mof_magmoms = mof.get_magnetic_moments()
-			mof.set_initial_magnetic_moments(mof_magmoms)
-			abs_magmoms = np.abs(mof_magmoms[mag_indices])
-		else:
-			abs_magmoms = np.zeros(len(mag_indices))
+		for line in incarfile:
+			line = line.strip()
+			if 'ISPIN' in line:
+				ispin = True
+				mof_magmoms = mof.get_magnetic_moments()
+				mof.set_initial_magnetic_moments(mof_magmoms)
+				abs_magmoms = np.abs(mof_magmoms[mag_indices])
+	if ispin == False:
+		abs_magmoms = np.zeros(len(mag_indices))
 	return mof, abs_magmoms
 
 def get_incar_magmoms(incarpath,poscarpath):
@@ -507,7 +514,7 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 			mof, abs_magmoms = continue_magmoms(mof,incarpath)
 			mag_indices = get_mag_indices(mof)
 			mag_nums = mof[mag_indices].get_atomic_numbers()
-			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in dblock_metals+fblock_metals for num in mag_nums) == True:
+			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in sblock_metals+poor_metals for num in mag_nums) == True:
 				skip_spin2 = True
 	run_i += 1
 	return mof, run_i, skip_spin2
