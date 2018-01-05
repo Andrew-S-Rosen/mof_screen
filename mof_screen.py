@@ -145,7 +145,7 @@ def get_mag_indices(mof):
 #Get indices of d-block, f-block, and semimetal atoms
 	mag_indices = []
 	for i, atom in enumerate(mof):
-		if atom.number in mag_metals_list:
+		if atom.number in mag_list:
 			mag_indices.append(i)
 	return mag_indices
 
