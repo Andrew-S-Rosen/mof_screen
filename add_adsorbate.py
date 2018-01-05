@@ -141,6 +141,8 @@ def write_files(refcode,mof,oms_sym,cnum,best_idx,i):
 		print('ERROR with '+refcode+'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
 	else:
 		result_path = newmofs_path+basename
+		if not os.path.exists(result_path):
+			os.makedirs(result_path)
 		write(result_path+'/'+basename+'_v'+str(i)+'.cif',mof)
 		print('SUCCESS: '+refcode +'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
 
