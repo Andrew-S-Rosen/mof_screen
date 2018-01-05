@@ -508,7 +508,7 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 			mof, abs_magmoms = continue_magmoms(mof,incarpath)
 			mag_indices = get_mag_indices(mof)
 			mag_nums = mof[mag_indices].get_atomic_numbers()
-			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in nomag_list for num in mag_nums) == True:
+			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in dblock_metals+fblock_metals for num in mag_nums) == True:
 				skip_spin2 = True
 	run_i += 1
 	return mof, run_i, skip_spin2
