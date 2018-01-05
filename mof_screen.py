@@ -608,7 +608,7 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=1e-4,
+			ediff=1e-6,
 			nelm=defaults['nelm'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
