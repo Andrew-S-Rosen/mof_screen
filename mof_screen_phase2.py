@@ -8,9 +8,11 @@ from ase.optimize import BFGSLineSearch
 from ase.io import read
 
 #-------------SET PATHS-------------
+old_mofpath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results/'
 mofpath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs/'
 basepath = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/'
 submit_script = 'sub_asevasp_screening2_temp.job'
+ads_species = 'O'
 skip_mofs = []
 
 #-------------DEFAULT PARAMETERS-------------
@@ -44,6 +46,7 @@ nonmetal_list = [1,2,6,7,8,9,10,15,16,17,18,34,35,36,53,54,86]
 metal_list = [val for val in np.arange(1,119,1) if val not in nonmetal_list]
 mag_list = [metal for metal in metal_list if metal not in sblock_metals]
 nomag_list = [val for val in np.arange(1,119,1) if val not in mag_list]
+poor_metals = [metal for metal in metal_list if metal not in dblock_metals+fblock_metals+sblock_metals]
 
 #-------------FUNCTION DECLARATION-------------
 def get_nprocs():
@@ -148,24 +151,40 @@ def get_mag_indices(mof):
 			mag_indices.append(i)
 	return mag_indices
 
-def set_initial_magmoms(mof,spin_level):
+def set_initial_magmoms(mof,spin_level,oms_idx,refcode):
 #Add initial magnetic moments to atoms object
-	mag_indices = get_mag_indices(mof)
-	mof.set_initial_magnetic_moments(np.zeros(len(mof)))
-	for i, atom in enumerate(mof):
-		if i in mag_indices:
-			mag_number = atom.number
-			if spin_level == 'spin1':
-				if mag_number in dblock_metals:
-					atom.magmom = 5.0
-				elif mag_number in fblock_metals:
-					atom.magmom = 7.0
-				else:
-					atom.magmom = 0.1
-			elif spin_level == 'spin2':
-				atom.magmom = 0.1
+	if mof[-1].symbol != ads_species:
+		raise ValueError('Last atom in MOF should be adsorbate')
+	old_refcode = refcode.split('_spin')[0]
+	old_spin = refcode.split('_spin')[1].split('_O')[0]
+	with open(old_mofpath+old_refcode+'/final/'+old_spin+'/INCAR','r') as incarfile:
+		for line in incarfile:
+			line = line.strip()
+			if 'ISPIN' in line:
+				mof_temp = read(old_mofpath+old_refcode+'/final/'+old_spin+'/OUTCAR')
+				old_magmoms = np.append(mof_temp.get_magnetic_moments(),0.0)
+				if len(old_magmoms) != len(mof):
+					raise ValueError('Improprer number of magmoms for MOF')
+				mof.set_initial_magnetic_moments(old_magmoms)
+	mag_number = mof[oms_idx].number
+	if mag_number not in metal_list:
+		raise ValueError('OMS is not even a metal')
+	if mag_number in sblock_metals:
+		mof[oms_idx].magmom = 0.0
+	else:
+		if spin_level == 'spin1':
+			if mag_number in dblock_metals:
+				mof[oms_idx].magmom = 5.0
+			elif mag_number in fblock_metals:
+				mof[oms_idx].magmom = 7.0
+			elif mag_number in poor_metals:
+				mof[oms_idx].magmom = 0.1
 			else:
-				raise ValueError('Spin iteration out of range')
+				raise ValueError('Metal not properly classified')
+		elif spin_level == 'spin2':
+			mof[oms_idx].magmom = 0.1
+		else:
+			raise ValueError('Spin iteration out of range')
 	return mof
 
 def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
@@ -195,13 +214,17 @@ def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 def continue_magmoms(mof,incarpath):
 #Read in the old magmoms
 	mag_indices = get_mag_indices(mof)
+	ispin = False
 	with open(incarpath,'r') as incarfile:
-		if 'ISPIN' in incarfile.read():
-			mof_magmoms = mof.get_magnetic_moments()
-			mof.set_initial_magnetic_moments(mof_magmoms)
-			abs_magmoms = np.abs(mof_magmoms[mag_indices])
-		else:
-			abs_magmoms = np.zeros(len(mag_indices))
+		for line in incarfile:
+			line = line.strip()
+			if 'ISPIN' in line:
+				ispin = True
+				mof_magmoms = mof.get_magnetic_moments()
+				mof.set_initial_magnetic_moments(mof_magmoms)
+				abs_magmoms = np.abs(mof_magmoms[mag_indices])
+	if ispin == False:
+		abs_magmoms = np.zeros(len(mag_indices))
 	return mof, abs_magmoms
 
 def get_incar_magmoms(incarpath,poscarpath):
@@ -507,7 +530,7 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 			mof, abs_magmoms = continue_magmoms(mof,incarpath)
 			mag_indices = get_mag_indices(mof)
 			mag_nums = mof[mag_indices].get_atomic_numbers()
-			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in dblock_metals+fblock_metals for num in mag_nums) == True:
+			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in sblock_metals+poor_metals for num in mag_nums) == True:
 				skip_spin2 = True
 	run_i += 1
 	return mof, run_i, skip_spin2
@@ -683,7 +706,7 @@ def run_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
-				mof = set_initial_magmoms(mof,spin_level)
+				mof = set_initial_magmoms(mof,spin_level,oms_idx,refcode)
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
@@ -706,7 +729,7 @@ def run_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
-				mof = set_initial_magmoms(mof,spin_level)
+				mof = set_initial_magmoms(mof,spin_level,oms_idx,refcode)
 				converged = False
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
