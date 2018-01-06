@@ -155,14 +155,14 @@ def set_initial_magmoms(mof,spin_level,refcode):
 #Add initial magnetic moments to atoms object
 	if mof[-1].symbol != ads_species:
 		raise ValueError('Last atom in MOF should be adsorbate')
-	oms_idx = refcode.split('_OMS')[1]
+	oms_idx = int(refcode.split('_OMS')[1])
 	old_refcode = refcode.split('_spin')[0]
 	old_spin = refcode.split('_spin')[1].split('_'+ads_species)[0]
-	with open(old_mofpath+old_refcode+'/final/'+old_spin+'/INCAR','r') as incarfile:
+	with open(old_mofpath+old_refcode+'/final/spin'+old_spin+'/INCAR','r') as incarfile:
 		for line in incarfile:
 			line = line.strip()
 			if 'ISPIN' in line:
-				mof_temp = read(old_mofpath+old_refcode+'/final/'+old_spin+'/OUTCAR')
+				mof_temp = read(old_mofpath+old_refcode+'/final/spin'+old_spin+'/OUTCAR')
 				old_magmoms = np.append(mof_temp.get_magnetic_moments(),0.0)
 				if len(old_magmoms) != len(mof):
 					raise ValueError('Improprer number of magmoms for MOF')
