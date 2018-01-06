@@ -757,9 +757,11 @@ def run_screen(cif_files):
 		results_partial_paths = []
 		error_outcar_partial_paths = []
 		for acc_level in acc_levels:
-			results_partial_paths.append(basepath+'results/'+refcode+'/'+acc_level)
+			result_partial_temp_path = basepath+'results/'+refcode+'/'+acc_level
+			results_partial_paths.append(result_partial_temp_path)
 			error_outcar_partial_paths.append(basepath+'errors/'+refcode+'/'+acc_level)
-		spin1_final_mof_path = results_partial_paths[-1]+'/'+spin_levels[0]+'/OUTCAR'
+			if acc_level == 'final':
+				spin1_final_mof_path = result_partial_temp_path+'/'+spin_levels[0]+'/OUTCAR'
 
 		#Get the kpoints
 		kpts_lo, gamma = get_kpts(cif_file,defaults['kppa_lo'])
