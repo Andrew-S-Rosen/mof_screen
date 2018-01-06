@@ -130,16 +130,16 @@ def add_ads_species(cif_file,ads_site):
 	mof.extend(adsorbate)
 	return mof
 
-def write_files(refcode,mof,oms_sym,cnum,best_idx,i):
+def write_files(refcode,mof,oms_sym,cnum,best_idx):
 #Write adsorbed CIF
 	dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 	basename = refcode+'_'+ads_species
 	if sum(dist_mat <= overlap_tol) > 0:
-		write(error_path+basename+'_v'+str(i)+'.cif',mof)
-		print('ERROR with '+refcode+'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
+		write(error_path+basename+'_OMS'+str(best_idx)+'.cif',mof)
+		print('ERROR with '+refcode+'_OMS'+str(best_idx)+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
 	else:
-		write(newmofs_path+basename+'_v'+str(i)+'.cif',mof)
-		print('SUCCESS: '+refcode +'_v'+str(i)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
+		write(newmofs_path+basename+'_OMS'+str(best_idx)+'.cif',mof)
+		print('SUCCESS: '+refcode +'_OMS'+str(best_idx)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
 
 def get_vert_vec_norm(mic_coords):
 #Get normal vector if plane is vertical in z
@@ -227,7 +227,6 @@ for cif_file in cif_files:
 	n_OMS = get_CN(omsdata+refcode+'.oms')
 	cnums_all, cus_coords_all, ase_cus_idx_all, oms_sym_all, NN_coords_all = get_omsex_data(refcode)
 	unique_oms_sym = np.unique(oms_sym_all)
-	v = 0
 	for oms_sym in unique_oms_sym:
 		oms_idx = np.where(oms_sym_all == oms_sym)			
 		unique_cnums = np.unique(np.array(cnums_all)[oms_idx])
@@ -236,13 +235,6 @@ for cif_file in cif_files:
 			intersect_idx = np.intersect1d(oms_idx,cnum_idx)
 			ads_sites = np.zeros((len(intersect_idx),3))
 			for i, omsex_idx in enumerate(intersect_idx):
-				file = basename+'_v'+str(v)+'.cif'
-				if os.path.isfile(newmofs_path+file) == True:
-					print('Previously completed: '+file)
-					continue
-				if os.path.isfile(newmofs_path+'errors/'+file) == True:
-					print('Previously completed w/ overlapping NNs: '+file)
-					continue
 				sum_prior_cnums = sum(cnums_all[0:i])
 				NN_coords = NN_coords_all[sum_prior_cnums:sum_prior_cnums+cnum,:]
 				cus_coords = cus_coords_all[omsex_idx,:]
@@ -266,5 +258,4 @@ for cif_file in cif_files:
 					ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
 			best_idx = get_best_idx(cif_file,ads_sites)
 			mof = add_ads_species(cif_file,ads_sites[best_idx,:])
-			write_files(refcode,mof,oms_sym,cnum,best_idx,v)
-			v += 1
+			write_files(refcode,mof,oms_sym,cnum,best_idx)
