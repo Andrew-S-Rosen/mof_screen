@@ -19,11 +19,10 @@ skip_mofs = []
 defaults = {
 	'xc': 'PBE',
 	'ivdw': 12,
-	'encut': 520,
+	'encut': 400,
 	'prec': 'Accurate',
 	'algo': 'All',
 	'nelm': 250,
-	'nelmin': 6,
 	'lreal': False,
 	'ncore': 24,
 	'ismear': 0,
@@ -617,7 +616,7 @@ def calcs(run_i):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 5:
+	elif run_i == 2:
 		calc = Vasp(
 			xc=defaults['xc'],
 			encut=defaults['encut'],
@@ -628,7 +627,6 @@ def calcs(run_i):
 			algo=defaults['algo'],
 			ediff=1e-4,
 			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
