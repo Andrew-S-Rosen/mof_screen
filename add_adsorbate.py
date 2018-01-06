@@ -111,8 +111,8 @@ def get_dist_planar(normal_vec):
 	dist = unit_normal*guess_length
 	return dist
 
-def get_best_idx(cif_file,ads_sites):
-#get best OMS with smallest NNs
+def get_best_to_worst_idx(cif_file,ads_sites):
+#sort the OMS by smallest NNs
 	NN = np.zeros(np.shape(ads_sites)[0])
 	for i in range(len(NN)):
 		mof = read(coremof_path+cif_file)
@@ -120,8 +120,8 @@ def get_best_idx(cif_file,ads_sites):
 		mof.extend(adsorbate)
 		neighbor_dist = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 		NN[i] = sum(neighbor_dist < rcut)
-	best_idx = np.argmin(NN)
-	return best_idx
+	best_to_worst_idx = np.argsort(NN)
+	return best_to_worst_idx
 
 def add_ads_species(cif_file,ads_site):
 #add adsorbate to original CIF and save new CIF
@@ -130,16 +130,23 @@ def add_ads_species(cif_file,ads_site):
 	mof.extend(adsorbate)
 	return mof
 
-def write_files(refcode,mof,oms_sym,cnum,best_idx):
+def write_files(refcode,mof,oms_sym,cnum,best_to_worst_idx):
 #Write adsorbed CIF
-	dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 	basename = refcode+'_'+ads_species
-	if sum(dist_mat <= overlap_tol) > 0:
-		write(error_path+basename+'_OMS'+str(best_idx)+'.cif',mof)
-		print('ERROR with '+refcode+'_OMS'+str(best_idx)+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
-	else:
-		write(newmofs_path+basename+'_OMS'+str(best_idx)+'.cif',mof)
-		print('SUCCESS: '+refcode +'_OMS'+str(best_idx)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
+	success = False
+	for idx in best_to_worst_idx:
+		mof = add_ads_species(cif_file,ads_sites[idx,:])
+		dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
+		if sum(dist_mat <= overlap_tol) == 0:
+			print('SUCCESS: '+refcode +'_OMS'+str(idx)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
+			write(newmofs_path+basename+'_OMS'+str(idx)+'.cif',mof)
+			success = True
+			break
+		else:
+			del mof[-1]
+	if success == False:
+		print('ERROR with '+refcode+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
+		write(error_path+basename+'.cif',mof)
 
 def get_vert_vec_norm(mic_coords):
 #Get normal vector if plane is vertical in z
@@ -256,6 +263,5 @@ for cif_file in cif_files:
 					ads_sites[i,:] = get_planar_ads_site(cif_file,cus_coords,dist)
 				else:
 					ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
-			best_idx = get_best_idx(cif_file,ads_sites)
-			mof = add_ads_species(cif_file,ads_sites[best_idx,:])
-			write_files(refcode,mof,oms_sym,cnum,best_idx)
+			best_to_worst_idx = get_best_to_worst_idx(cif_file,ads_sites)
+			write_files(refcode,mof,oms_sym,cnum,best_to_worst_idx)
