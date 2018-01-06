@@ -19,7 +19,7 @@ skip_mofs = []
 defaults = {
 	'xc': 'PBE',
 	'ivdw': 12,
-	'encut': 400,
+	'encut': 520,
 	'prec': 'Accurate',
 	'algo': 'All',
 	'nelm': 250,
@@ -619,6 +619,7 @@ def calcs(run_i):
 	elif run_i == 2:
 		calc = Vasp(
 			xc=defaults['xc'],
+			encut=400,
 			kpts=defaults['kpts_hi'],
 			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
@@ -657,10 +658,6 @@ def calcs(run_i):
 			lcharg=True,
 			laechg=True,
 			lwave=True,
-			ibrion=defaults['ibrion'],
-			isif=2,
-			nsw=defaults['nsw'],
-			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
@@ -677,7 +674,7 @@ def run_screen(cif_files):
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
 	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
-	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc']
+	acc_levels = ['scf_test','isif2_lowacc','isif2_highacc','final']
 	nprocs, ppn = get_nprocs()
 
 	#for each CIF file, optimize the structure
@@ -795,7 +792,7 @@ def run_screen(cif_files):
 					pprint('Skipping rest because SPIN2 converged to SPIN1')
 					continue
 
-			#***********ISIF 2 (medacc)************
+			#***********ISIF 2 (highacc)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
@@ -824,7 +821,7 @@ def run_screen(cif_files):
 				pprint('Skipping rest because of errors')
 				break
 
-			#***********ISIF 2 (highacc)************
+			#***********Final SCF************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
