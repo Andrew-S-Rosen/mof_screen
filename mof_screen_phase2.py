@@ -22,13 +22,16 @@ defaults = {
 	'encut': 520,
 	'prec': 'Accurate',
 	'algo': 'All',
+	'ediff': 1e-4,
 	'nelm': 250,
+	'nelmin': 4,
 	'lreal': False,
 	'ncore': 24,
 	'ismear': 0,
 	'sigma': 0.01,
 	'ibrion': 2,
 	'nsw': 400,
+	'isif': 2,
 	'ediffg': -0.03,
 	'lorbit': 11,
 	'kppa_lo': 100,
@@ -582,8 +585,9 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=1e-4,
+			ediff=defaults['ediff'],
 			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -601,8 +605,9 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=1e-4,
+			ediff=defaults['ediff'],
 			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -610,7 +615,7 @@ def calcs(run_i):
 			lcharg=False,
 			lwave=True,
 			ibrion=defaults['ibrion'],
-			isif=2,
+			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
@@ -619,14 +624,39 @@ def calcs(run_i):
 	elif run_i == 2:
 		calc = Vasp(
 			xc=defaults['xc'],
+			kpts=defaults['kpts_hi'],
+			gamma=defaults['gamma'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=defaults['ediff'],
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			ibrion=defaults['ibrion'],
+			isif=defaults['isif'],
+			nsw=defaults['nsw'],
+			ediffg=defaults['ediffg'],
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym']
+			)
+	elif run_i == 3:
+		calc = Vasp(
+			xc=defaults['xc'],
 			encut=defaults['encut'],
 			kpts=defaults['kpts_hi'],
 			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=1e-4,
+			ediff=defaults['ediff'],
 			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -635,7 +665,7 @@ def calcs(run_i):
 			laechg=True,
 			lwave=True,
 			ibrion=defaults['ibrion'],
-			isif=2,
+			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
@@ -654,7 +684,7 @@ def run_screen(cif_files):
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
 	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
-	acc_levels = ['scf_test','isif2_lowacc','isif2_highacc']
+	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','final']
 	nprocs, ppn = get_nprocs()
 
 	#for each CIF file, optimize the structure
@@ -772,7 +802,36 @@ def run_screen(cif_files):
 					pprint('Skipping rest because SPIN2 converged to SPIN1')
 					continue
 
-			#***********ISIF 2 (highacc)************
+			#***********ISIF 2 (medacc)************
+			acc_level = acc_levels[run_i]
+			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
+				converged = False
+				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
+				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				pprint('Running '+spin_level+', '+acc_level)
+				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+				if mof == None:
+					break
+				converged = mof.calc.converged
+				scf_converged = mof.calc.scf_converged
+				if mof != None and converged == True and scf_converged == True:
+					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+				else:
+					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
+					if mof == None:
+						pprint('^ VASP crashed')
+					elif converged == False:
+						pprint('^ Convergence not reached')
+					elif scf_converged == False:
+						pprint('^ SCF did not converge')
+			elif os.path.isfile(outcar_paths[run_i]) == True:
+				pprint('COMPLETED: '+spin_level+', '+acc_level)
+			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
+			if mof == None:
+				pprint('Skipping rest because of errors')
+				break
+
+			#***********ISIF 2 (final)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
