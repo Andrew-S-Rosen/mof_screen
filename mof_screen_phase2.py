@@ -151,12 +151,13 @@ def get_mag_indices(mof):
 			mag_indices.append(i)
 	return mag_indices
 
-def set_initial_magmoms(mof,spin_level,oms_idx,refcode):
+def set_initial_magmoms(mof,spin_level,refcode):
 #Add initial magnetic moments to atoms object
 	if mof[-1].symbol != ads_species:
 		raise ValueError('Last atom in MOF should be adsorbate')
+	oms_idx = refcode.split('_OMS')[1]
 	old_refcode = refcode.split('_spin')[0]
-	old_spin = refcode.split('_spin')[1].split('_O')[0]
+	old_spin = refcode.split('_spin')[1].split('_'+ads_species)[0]
 	with open(old_mofpath+old_refcode+'/final/'+old_spin+'/INCAR','r') as incarfile:
 		for line in incarfile:
 			line = line.strip()
@@ -706,7 +707,7 @@ def run_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
-				mof = set_initial_magmoms(mof,spin_level,oms_idx,refcode)
+				mof = set_initial_magmoms(mof,spin_level,refcode)
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
@@ -729,7 +730,7 @@ def run_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
-				mof = set_initial_magmoms(mof,spin_level,oms_idx,refcode)
+				mof = set_initial_magmoms(mof,spin_level,refcode)
 				converged = False
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
