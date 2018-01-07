@@ -64,6 +64,7 @@ def get_nprocs():
 
 def pprint(printstr):
 #Redirect print commands to log file
+	print(printstr)
 	with open('screening.log','a') as txtfile:
 		txtfile.write(printstr+'\n')
 
@@ -767,18 +768,25 @@ def run_screen(cif_files):
 				mof, dyn, calc_swaps = mof_bfgs_run(mof,calcs(run_i),cif_file,calc_swaps,steps,fmax)
 				if mof != None and dyn and mof.calc.scf_converged == True:
 					mof = read_outcar('OUTCAR')
+					calc_swaps.append('nsw=20')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
-					converged = mof.calc.converged 
-					if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
-						calc_swaps.append('ibrion=1')
-						calc_swaps.append('nsw=90')
+					converged = mof.calc.converged
+					calc_swaps.remove('nsw=20')
+					if mof != None and converged == False and mof.calc.scf_converged == True:
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 						converged = mof.calc.converged
-						calc_swaps.remove('ibrion=1')
-						calc_swaps.remove('nsw=90')
+						if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
+							calc_swaps.append('ibrion=1')
+							calc_swaps.append('nsw=90')
+							mof = read_outcar('OUTCAR')
+							mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+							mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+							converged = mof.calc.converged
+							calc_swaps.remove('ibrion=1')
+							calc_swaps.remove('nsw=90')
 				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -810,11 +818,17 @@ def run_screen(cif_files):
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-				if mof == None:
-					break
 				converged = mof.calc.converged
-				scf_converged = mof.calc.scf_converged
-				if mof != None and converged == True and scf_converged == True:
+				if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
+					calc_swaps.append('ibrion=1')
+					calc_swaps.append('nsw=90')
+					mof = read_outcar('OUTCAR')
+					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+					converged = mof.calc.converged
+					calc_swaps.remove('ibrion=1')
+					calc_swaps.remove('nsw=90')
+				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
@@ -822,7 +836,7 @@ def run_screen(cif_files):
 						pprint('^ VASP crashed')
 					elif converged == False:
 						pprint('^ Convergence not reached')
-					elif scf_converged == False:
+					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
@@ -839,11 +853,17 @@ def run_screen(cif_files):
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-				if mof == None:
-					break
 				converged = mof.calc.converged
-				scf_converged = mof.calc.scf_converged
-				if mof != None and converged == True and scf_converged == True:
+				if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
+					calc_swaps.append('ibrion=1')
+					calc_swaps.append('nsw=90')
+					mof = read_outcar('OUTCAR')
+					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+					converged = mof.calc.converged
+					calc_swaps.remove('ibrion=1')
+					calc_swaps.remove('nsw=90')
+				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
@@ -851,7 +871,7 @@ def run_screen(cif_files):
 						pprint('^ VASP crashed')
 					elif converged == False:
 						pprint('^ Convergence not reached')
-					elif scf_converged == False:
+					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
