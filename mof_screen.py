@@ -60,6 +60,7 @@ def get_nprocs():
 
 def pprint(printstr):
 #Redirect print commands to log file
+	print(prinstr)
 	with open('screening.log','a') as txtfile:
 		txtfile.write(printstr+'\n')
 
