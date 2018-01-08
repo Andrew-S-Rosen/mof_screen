@@ -29,7 +29,6 @@ defaults = {
 	'ncore': 24,
 	'ismear': 0,
 	'sigma': 0.01,
-	'ibrion': 2,
 	'nsw': 400,
 	'isif': 2,
 	'ediffg': -0.03,
@@ -615,9 +614,9 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			ibrion=defaults['ibrion'],
+			ibrion=2,
 			isif=defaults['isif'],
-			nsw=defaults['nsw'],
+			nsw=100,
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
@@ -639,7 +638,7 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			ibrion=defaults['ibrion'],
+			ibrion=1,
 			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
@@ -665,7 +664,7 @@ def calcs(run_i):
 			lcharg=True,
 			laechg=True,
 			lwave=True,
-			ibrion=defaults['ibrion'],
+			ibrion=1,
 			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
@@ -774,19 +773,24 @@ def run_screen(cif_files):
 					converged = mof.calc.converged
 					calc_swaps.remove('nsw=20')
 					if mof != None and converged == False and mof.calc.scf_converged == True:
-						mof = read_outcar('OUTCAR')
-						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
-						converged = mof.calc.converged
-						if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
-							calc_swaps.append('ibrion=1')
-							calc_swaps.append('nsw=90')
+						loop_i = 0
+						avg_F = np.inf
+						while mof != None and avg_F > 0.025 and loop_i < 4 and converged == False and mof.calc.scf_converged == True:
 							mof = read_outcar('OUTCAR')
 							mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 							mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 							converged = mof.calc.converged
+							avg_F = np.mean(np.linalg.norm(mof.get_forces(),axis=1))
+							loop_i += 1
+						if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
+							calc_swaps.append('ibrion=1')
+							calc_swaps.append('nsw=300')
+							mof = read_outcar('OUTCAR')
+							mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+							mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+							converged = mof.calc.converged
+							calc_swaps.remove('nsw=300')
 							calc_swaps.remove('ibrion=1')
-							calc_swaps.remove('nsw=90')
 				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -815,19 +819,14 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
-				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
+					files_to_clean = ['WAVECAR']
+					clean_files(files_to_clean)
+				else:
+					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				converged = mof.calc.converged
-				if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
-					calc_swaps.append('ibrion=1')
-					calc_swaps.append('nsw=90')
-					mof = read_outcar('OUTCAR')
-					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-					converged = mof.calc.converged
-					calc_swaps.remove('ibrion=1')
-					calc_swaps.remove('nsw=90')
 				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -854,15 +853,6 @@ def run_screen(cif_files):
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				converged = mof.calc.converged
-				if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
-					calc_swaps.append('ibrion=1')
-					calc_swaps.append('nsw=90')
-					mof = read_outcar('OUTCAR')
-					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-					converged = mof.calc.converged
-					calc_swaps.remove('ibrion=1')
-					calc_swaps.remove('nsw=90')
 				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
