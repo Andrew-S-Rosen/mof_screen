@@ -334,8 +334,6 @@ def get_error_msgs(outcarfile,refcode):
 				start = True
 			if start == True:
 				errormsg = check_line_for_error(line,errormsg)
-			if 'spin' in line:
-				break
 	return errormsg
 
 def update_calc(calc,calc_swaps):
@@ -861,10 +859,10 @@ def run_screen(cif_files):
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
-					elif mof.calc.converged == False:
-						pprint('^ Convergence not reached')
 					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
+					elif mof.calc.converged == False:
+						pprint('^ Convergence not reached')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
 			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
@@ -885,10 +883,10 @@ def run_screen(cif_files):
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
-					elif mof.calc.converged == False:
-						pprint('^ Convergence not reached')
 					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
+					elif mof.calc.converged == False:
+						pprint('^ Convergence not reached')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
 			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
