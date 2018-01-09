@@ -459,6 +459,14 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 			ValueError('Wrong error message')
 	return calc, calc_swaps
 
+def get_niter(outcarfile):
+	with open(outcarfile,'r') as rf:
+		for line in rf:
+			if '- Iteration' in line:
+				niter = line.split('(')[0].split('n')[-1].strip()
+	niter = int(niter)
+	return niter
+
 def mof_run(mof,calc,cif_file,calc_swaps):
 #Get the optimized structure of the MOF
 	copyfile(mofpath+cif_file,basepath+'working/'+cif_file)
@@ -467,6 +475,9 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 	mof.set_calculator(calc)
 	try:
 		mof.get_potential_energy()
+		niter = get_niter('OUTCAR')
+		if niter < mof.calc.int_params['nsw'] and mof.calc.converged == False:
+			raise SystemError('VASP stopped but did not crash and burn')
 		success = True
 	except:
 		pprint('Original run failed. Trying to auto-solve issue.')
@@ -483,6 +494,9 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 			try:				
 				mof.set_calculator(calc)
 				mof.get_potential_energy()
+				niter = get_niter('OUTCAR')
+				if niter < mof.calc.int_params['nsw'] and mof.calc.converged == False:
+					raise SystemError('VASP stopped but did not crash and burn')
 				success = True
 			except:
 				pass
@@ -766,7 +780,6 @@ def run_screen(cif_files):
 				else:
 					mof = cif_to_mof(cif_file)
 				mof = set_initial_magmoms(mof,spin_level,refcode)
-				converged = False
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				steps = 100
@@ -777,33 +790,38 @@ def run_screen(cif_files):
 					calc_swaps.append('nsw=20')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
-					converged = mof.calc.converged
 					calc_swaps.remove('nsw=20')
-					if mof != None and converged == False and mof.calc.scf_converged == True:
+					if mof != None and mof.calc.converged == False and mof.calc.scf_converged == True:
 						loop_i = 0
+						converged = False
 						avg_F = np.inf
 						while mof != None and avg_F > 0.025 and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 							mof = read_outcar('OUTCAR')
 							mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 							mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+							if mof == None:
+								break
 							converged = mof.calc.converged
 							avg_F = np.mean(np.linalg.norm(mof.get_forces(),axis=1))
 							loop_i += 1
-						if mof != None and converged == False and mof.calc.scf_converged == True:
+						if mof != None and mof.calc.converged == False and mof.calc.scf_converged == True:
 							if 'ibrion=1' not in calc_swaps:
 								calc_swaps.append('ibrion=1')
+							converged = False
 							while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 								E_prior = mof.get_potential_energy()
 								mof = read_outcar('OUTCAR')
 								mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 								mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+								if mof == None:
+									break
 								converged = mof.calc.converged
 								E_current = mof.get_potential_energy()
 								if E_current >= E_prior:
 									break
 							if 'ibrion=1' in calc_swaps:
 								calc_swaps.remove('ibrion=1')
-				if mof != None and mof.calc.scf_converged == True and converged == True:
+				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
@@ -811,7 +829,7 @@ def run_screen(cif_files):
 						pprint('^ VASP crashed')
 					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
-					elif converged == False:
+					elif mof.calc.converged == False:
 						pprint('^ Convergence not reached')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
@@ -829,7 +847,6 @@ def run_screen(cif_files):
 			#***********ISIF 2 (medacc)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				converged = False
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 					files_to_clean = ['WAVECAR']
@@ -838,14 +855,13 @@ def run_screen(cif_files):
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-				converged = mof.calc.converged
-				if mof != None and mof.calc.scf_converged == True and converged == True:
+				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
-					elif converged == False:
+					elif mof.calc.converged == False:
 						pprint('^ Convergence not reached')
 					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
@@ -859,19 +875,17 @@ def run_screen(cif_files):
 			#***********ISIF 2 (final)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				converged = False
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
-				converged = mof.calc.converged
-				if mof != None and mof.calc.scf_converged == True and converged == True:
+				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
-					elif converged == False:
+					elif mof.calc.converged == False:
 						pprint('^ Convergence not reached')
 					elif mof.calc.scf_converged == False:
 						pprint('^ SCF did not converge')
