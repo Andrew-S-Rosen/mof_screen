@@ -11,6 +11,7 @@ from ase.io import read
 mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
 basepath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
 submit_script = 'sub_asevasp_screening_temp.job'
+stdout_file = 'mof_screen.out'
 skip_mofs = ['QQQGTA01_clean_min','QQQGTA02_clean_min']
 
 #-------------DEFAULT PARAMETERS-------------
@@ -60,7 +61,7 @@ def get_nprocs():
 
 def pprint(printstr):
 #Redirect print commands to log file
-	print(prinstr)
+	print(printstr)
 	with open('screening.log','a') as txtfile:
 		txtfile.write(printstr+'\n')
 
@@ -264,55 +265,68 @@ def get_warning_msgs(outcarfile):
 				warningmsg.append('overlap')
 	return warningmsg
 
-def get_error_msgs(outcarfile):
+def check_line_for_error(line,errormsg):
+	if 'inverse of rotation matrix was not found (increase SYMPREC)' in line:
+		errormsg.append('inv_rot_mat')
+	if 'WARNING: Sub-Space-Matrix is not hermitian in DAV' in line:
+		errormsg.append('subspacematrix')
+	if 'Routine TETIRR needs special values' in line:
+		errormsg.append('tetirr')
+	if 'Could not get correct shifts' in line:
+		errormsg.append('incorrect_shift')
+	if 'REAL_OPTLAY: internal error' in line or 'REAL_OPT: internal ERROR' in line:
+		errormsg.append('real_optlay')
+	if 'ERROR RSPHER' in line:
+		errormsg.append('rspher')
+	if 'DENTET' in line:
+		errormsg.append('dentet')
+	if 'TOO FEW BANDS' in line:
+		errormsg.append('too_few_bands')
+	if 'Found some non-integer element in rotation matrix' in line:
+		errormsg.append('rot_matrix')
+	if 'BRIONS problems: POTIM should be increased' in line:
+		errormsg.append('brions')
+	if 'internal error in subroutine PRICEL' in line:
+		errormsg.append('pricel')
+	if 'One of the lattice vectors is very long (>50 A), but AMIN' in line:
+		errormsg.append('amin')
+	if 'ZBRENT: fatal internal in' in line or 'ZBRENT: fatal error in bracketing' in line:
+		errormsg.append('zbrent')
+	if 'ERROR in subspace rotation PSSYEVX' in line:
+		errormsg.append('pssyevx')
+	if 'WARNING in EDDRMM: call to ZHEGV failed' in line:
+		errormsg.append('eddrmm')
+	if 'Error EDDDAV: Call to ZHEGV failed' in line:
+		errormsg.append('edddav')
+	if 'EDWAV: internal error, the gradient is not orthogonal' in line:
+		errormsg.append('grad_not_orth')
+	if 'ERROR: SBESSELITER : nicht konvergent' in line:
+		errormsg.append('nicht_konv')
+	if 'ERROR EDDIAG: Call to routine ZHEEV failed!' in line:
+		errormsg.append('zheev')
+	if 'ELF: KPAR>1 not implemented' in line:
+		errormsg.append('elf_kpar')
+	if 'RHOSYG internal error' in line:
+		errormsg.append('rhosyg')
+	if 'POSMAP internal error: symmetry equivalent atom not found' in line:
+		errormsg.append('posmap')
+	return errormsg
+
+def get_error_msgs(outcarfile,refcode):
 #read in any error messages
 	errormsg = []
+	start = False
 	with open(outcarfile,'r') as rf:
 		for line in rf:
-			if 'inverse of rotation matrix was not found (increase SYMPREC)' in line:
-				errormsg.append('inv_rot_mat')
-			if 'WARNING: Sub-Space-Matrix is not hermitian in DAV' in line:
-				errormsg.append('subspacematrix')
-			if 'Routine TETIRR needs special values' in line:
-				errormsg.append('tetirr')
-			if 'Could not get correct shifts' in line:
-				errormsg.append('incorrect_shift')
-			if 'REAL_OPTLAY: internal error' in line or 'REAL_OPT: internal ERROR' in line:
-				errormsg.append('real_optlay')
-			if 'ERROR RSPHER' in line:
-				errormsg.append('rspher')
-			if 'DENTET' in line:
-				errormsg.append('dentet')
-			if 'TOO FEW BANDS' in line:
-				errormsg.append('too_few_bands')
-			if 'Found some non-integer element in rotation matrix' in line:
-				errormsg.append('rot_matrix')
-			if 'BRIONS problems: POTIM should be increased' in line:
-				errormsg.append('brions')
-			if 'internal error in subroutine PRICEL' in line:
-				errormsg.append('pricel')
-			if 'One of the lattice vectors is very long (>50 A), but AMIN' in line:
-				errormsg.append('amin')
-			if 'ZBRENT: fatal internal in' in line or 'ZBRENT: fatal error in bracketing' in line:
-				errormsg.append('zbrent')
-			if 'ERROR in subspace rotation PSSYEVX' in line:
-				errormsg.append('pssyevx')
-			if 'WARNING in EDDRMM: call to ZHEGV failed' in line:
-				errormsg.append('eddrmm')
-			if 'Error EDDDAV: Call to ZHEGV failed' in line:
-				errormsg.append('edddav')
-			if 'EDWAV: internal error, the gradient is not orthogonal' in line:
-				errormsg.append('grad_not_orth')
-			if 'ERROR: SBESSELITER : nicht konvergent' in line:
-				errormsg.append('nicht_konv')
-			if 'ERROR EDDIAG: Call to routine ZHEEV failed!' in line:
-				errormsg.append('zheev')
-			if 'ELF: KPAR>1 not implemented' in line:
-				errormsg.append('elf_kpar')
-			if 'RHOSYG internal error' in line:
-				errormsg.append('rhosyg')
-			if 'POSMAP internal error: symmetry equivalent atom not found' in line:
-				errormsg.append('posmap')
+			errormsg = check_line_for_error(line,errormsg)
+	with open(stdout_file,'r') as rf:
+		for line in rf:
+			if 'STARTING '+refcode in line:
+				start = True
+			if start == True:
+				errormsg = check_line_for_error(line,errormsg)
+			if 'spin' in line:
+				break
 	return errormsg
 
 def update_calc(calc,calc_swaps):
@@ -357,6 +371,7 @@ def update_calc(calc,calc_swaps):
 			calc.float_params['amin'] = 0.01
 		elif swap == 'zbrent':
 			calc.int_params['ibrion'] = 1
+			calc.bool_params['addgrid'] = True
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
 		elif swap == 'zheev':
@@ -375,8 +390,7 @@ def update_calc(calc,calc_swaps):
 def update_calc_after_errors(calc,calc_swaps,errormsg):
 #make a calc swap based on errors
 	for msg in errormsg:
-		if msg not in calc_swaps and msg != 'brions' and msg != 'too_few_bands':
-			calc_swaps.append(msg)
+		calc_swaps.append(msg)
 		if msg == 'edddav':
 			calc.string_params['algo'] = 'All'
 		elif msg == 'inv_rot_mat':
@@ -448,13 +462,14 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 	except:
 		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
+		refcode = cif_file.split('.cif')[0]
 		while True:
-			errormsg = get_error_msgs('OUTCAR')
+			errormsg = get_error_msgs('OUTCAR',refcode)
 			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
 			error_len = len(errormsg)
 			if error_len == old_error_len:
 				break
-			pprint('VASP failed with error(s). Trying to auto-solve issue.',errormsg)
+			print('VASP failed with error(s). Trying to auto-solve issue.',errormsg)
 			mof = continue_mof()
 			try:				
 				mof.set_calculator(calc)
@@ -480,13 +495,14 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 	except:
 		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
+		refcode = cif_file.split('.cif')[0]
 		while True:
-			errormsg = get_error_msgs('OUTCAR')
+			errormsg = get_error_msgs('OUTCAR',refcode)
 			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
 			error_len = len(errormsg)
 			if error_len == old_error_len:
 				break
-			pprint('VASP failed with error(s). Trying to auto-solve issue.',errormsg)
+			print('VASP failed with error(s). Trying to auto-solve issue.',errormsg)
 			mof = continue_mof()
 			try:				
 				mof.set_calculator(calc)
@@ -801,15 +817,17 @@ def run_screen(cif_files):
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 					converged = mof.calc.converged 
-					if mof != None and converged == False and mof.calc.scf_converged == True and 'ibrion=1' not in calc_swaps:
-						calc_swaps.append('ibrion=1')
+					if mof != None and converged == False and mof.calc.scf_converged == True:
 						calc_swaps.append('nsw=90')
+						if 'ibrion=1' not in calc_swaps:
+							calc_swaps.append('ibrion=1')
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 						converged = mof.calc.converged
-						calc_swaps.remove('ibrion=1')
 						calc_swaps.remove('nsw=90')
+						if 'ibrion=1' in calc_swaps:
+							calc_swaps.remove('ibrion=1')
 				if mof != None and mof.calc.scf_converged == True and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
