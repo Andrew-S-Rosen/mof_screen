@@ -14,7 +14,7 @@ basepath = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/'
 submit_script = 'sub_asevasp_screening2_temp.job'
 stdout_file = 'mof_screen_phase2.out'
 ads_species = 'O'
-skip_mofs = []
+skip_mofs = ['AVIMOI_clean_min_spin1_O_OMS0','AZIXUD_clean_min_spin1_O_OMS0']
 
 #-------------DEFAULT PARAMETERS-------------
 defaults = {
@@ -85,10 +85,7 @@ def get_cif_files():
 def cif_to_mof(cif_file):
 #Save MOF file as reduced unit cell and read in ASE
 	cifpath = mofpath+cif_file
-	parser = CifParser(cifpath)
-	pm_mof = parser.get_structures()[0]
-	pm_mof.to(filename='POSCAR')
-	mof = read('POSCAR')
+	mof = read(cifpath)
 	return mof
 
 def prep_paths():
