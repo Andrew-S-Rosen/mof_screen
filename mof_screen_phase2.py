@@ -376,6 +376,7 @@ def update_calc(calc,calc_swaps):
 		elif swap == 'zbrent':
 			calc.int_params['ibrion'] = 1
 			calc.bool_params['addgrid'] = True
+			calc.float_params['ediff'] = 1e-6
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
 		elif swap == 'zheev':
@@ -471,7 +472,7 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 	try:
 		mof.get_potential_energy()
 		niter = get_niter('OUTCAR')
-		if niter < mof.calc.int_params['nsw'] and mof.calc.converged == False:
+		if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
 			raise SystemError('VASP stopped but did not crash and burn')
 		success = True
 	except:
@@ -490,7 +491,7 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 				mof.set_calculator(calc)
 				mof.get_potential_energy()
 				niter = get_niter('OUTCAR')
-				if niter < mof.calc.int_params['nsw'] and mof.calc.converged == False:
+				if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
 					raise SystemError('VASP stopped but did not crash and burn')
 				success = True
 			except:
@@ -632,7 +633,31 @@ def calcs(run_i):
 			lwave=True,
 			ibrion=2,
 			isif=defaults['isif'],
-			nsw=100,
+			nsw=50,
+			ediffg=-0.05,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym']
+			)
+	elif run_i == 1.6:
+		calc = Vasp(
+			xc=defaults['xc'],
+			kpts=defaults['kpts_lo'],
+			gamma=defaults['gamma'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=defaults['ediff']*0.1,
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			ibrion=1,
+			isif=defaults['isif'],
+			nsw=200,
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
@@ -645,7 +670,7 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff'],
+			ediff=defaults['ediff']*0.1,
 			nelm=defaults['nelm'],
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
@@ -670,7 +695,7 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff'],
+			ediff=defaults['ediff']*0.1,
 			nelm=defaults['nelm'],
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
@@ -698,7 +723,8 @@ def run_screen(cif_files):
 
 	#Files, spin levels, and accuracy levels to iterate over
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
-	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
+	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj',
+	'vasprun.xml']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','final']
 	nprocs, ppn = get_nprocs()
@@ -781,41 +807,31 @@ def run_screen(cif_files):
 				fmax = 5.0
 				mof, dyn, calc_swaps = mof_bfgs_run(mof,calcs(run_i),cif_file,calc_swaps,steps,fmax)
 				if mof != None and dyn and mof.calc.scf_converged == True:
-					mof = read_outcar('OUTCAR')
-					calc_swaps.append('nsw=20')
-					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
-					calc_swaps.remove('nsw=20')
+					loop_i = 0
+					converged = False
+					avg_F = np.inf
+					while mof != None and avg_F > 0.05 and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
+						mof = read_outcar('OUTCAR')
+						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+						if mof == None:
+							break
+						converged = mof.calc.converged
+						avg_F = np.mean(np.linalg.norm(mof.get_forces(),axis=1))
+						loop_i += 1
 					if mof != None and mof.calc.converged == False and mof.calc.scf_converged == True:
-						loop_i = 0
 						converged = False
-						avg_F = np.inf
-						while mof != None and avg_F > 0.025 and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
+						while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
+							E_prior = mof.get_potential_energy()
 							mof = read_outcar('OUTCAR')
 							mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-							mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+							mof, calc_swaps = mof_run(mof,calcs(1.6),cif_file,calc_swaps)
 							if mof == None:
 								break
 							converged = mof.calc.converged
-							avg_F = np.mean(np.linalg.norm(mof.get_forces(),axis=1))
-							loop_i += 1
-						if mof != None and mof.calc.converged == False and mof.calc.scf_converged == True:
-							if 'ibrion=1' not in calc_swaps:
-								calc_swaps.append('ibrion=1')
-							converged = False
-							while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
-								E_prior = mof.get_potential_energy()
-								mof = read_outcar('OUTCAR')
-								mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-								mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
-								if mof == None:
-									break
-								converged = mof.calc.converged
-								E_current = mof.get_potential_energy()
-								if E_current >= E_prior:
-									break
-							if 'ibrion=1' in calc_swaps:
-								calc_swaps.remove('ibrion=1')
+							E_current = mof.get_potential_energy()
+							if E_current >= E_prior:
+								break
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
