@@ -204,7 +204,7 @@ def continue_magmoms(mof,incarpath):
 	with open(incarpath,'r') as incarfile:
 		for line in incarfile:
 			line = line.strip()
-			if 'ISPIN' in line:
+			if 'ISPIN = 2' in line:
 				ispin = True
 				mof_magmoms = mof.get_magnetic_moments()
 				mof.set_initial_magnetic_moments(mof_magmoms)
@@ -212,6 +212,34 @@ def continue_magmoms(mof,incarpath):
 	if ispin == False:
 		abs_magmoms = np.zeros(len(mag_indices))
 	return mof, abs_magmoms
+
+def continue_failed_magmoms(mof):
+	self_resort = []
+	file = open('ase-sort.dat', 'r')
+	lines = file.readlines()
+	file.close()
+	for line in lines:
+	    data = line.split()
+	    self_resort.append(int(data[1]))
+	magnetic_moments = np.zeros(len(mof))
+	n = 0
+	lines = open('OUTCAR', 'r').readlines()
+	for line in lines:
+	    if line.rfind('magnetization (x)') > -1:
+	        for m in range(len(mof)):
+	            magnetic_moments[m] = float(lines[n + m + 4].split()[4])
+	    n += 1
+	sorted_magmoms = np.array(magnetic_moments)[self_resort]
+	ispin = False
+	with open('INCAR','r') as incarfile:
+		for line in incarfile:
+			line = line.strip()
+			if 'ISPIN = 2' in line:
+				ispin = True
+	if ispin == True and all(sorted_magmoms == 0.0) == True:
+		raise ValueError('Error reading magmoms from failed OUTCAR')
+	mof.set_initial_magnetic_moments(sorted_magmoms)
+	return mof
 
 def get_incar_magmoms(incarpath,poscarpath):
 #get the magnetic moments from the POSCAR
@@ -251,7 +279,10 @@ def continue_mof():
 #decide if the MOF object should be continued or restarted
 	try:
 		mof = read('CONTCAR')
-		mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+		try:
+			mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+		except:
+			mof = continue_failed_magmoms(mof)
 	except:
 		mof = reset_mof()
 	return mof
