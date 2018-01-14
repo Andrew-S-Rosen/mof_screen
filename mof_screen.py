@@ -402,6 +402,7 @@ def update_calc(calc,calc_swaps):
 		elif swap == 'zbrent':
 			calc.int_params['ibrion'] = 1
 			calc.exp_params['ediff'] = 1e-6
+			calc.int_params['nelmin'] = 8
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
 		elif swap == 'zheev':
@@ -472,6 +473,8 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
 		refcode = cif_file.split('.cif')[0]
+		if os.path.isfile('WAVECAR'):
+			os.remove('WAVECAR')
 		while True:
 			errormsg = get_error_msgs('OUTCAR',refcode)
 			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
@@ -508,6 +511,8 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
 		refcode = cif_file.split('.cif')[0]
+		if os.path.isfile('WAVECAR'):
+			os.remove('WAVECAR')
 		while True:
 			errormsg = get_error_msgs('OUTCAR',refcode)
 			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
