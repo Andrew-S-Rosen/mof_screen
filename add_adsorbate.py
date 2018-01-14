@@ -252,7 +252,7 @@ for cif_file in cif_files:
 				scaled_sum_dist = sum(scaled_mic_coords)
 				sum_dist = sum(mic_coords)
 				fit, rmse, r2, normal_vec = fit_plane(mic_coords)
-				if cnum <= 2:
+				if cnum == 2:
 					ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,mic_coords,ase_cus_idx)
 				if cnum == 3 and np.linalg.norm(scaled_sum_dist) >= sum_cutoff:
 					ads_sites[i,:] = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords)
