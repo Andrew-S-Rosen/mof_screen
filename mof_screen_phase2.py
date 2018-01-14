@@ -14,7 +14,7 @@ basepath = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/'
 submit_script = 'sub_asevasp_screening2_temp.job'
 stdout_file = 'mof_screen_phase2.out'
 ads_species = 'O'
-skip_mofs = ['AVIMOI_clean_min_spin1_O_OMS0','AZIXUD_clean_min_spin1_O_OMS0']
+skip_mofs = []
 
 #-------------DEFAULT PARAMETERS-------------
 defaults = {
@@ -633,7 +633,7 @@ def calcs(run_i):
 			lwave=True,
 			ibrion=2,
 			isif=defaults['isif'],
-			nsw=50,
+			nsw=100,
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
@@ -646,9 +646,9 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff']*0.1,
+			ediff=defaults['ediff']*0.01,
 			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
+			nelmin=8,
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -657,7 +657,7 @@ def calcs(run_i):
 			lwave=True,
 			ibrion=1,
 			isif=defaults['isif'],
-			nsw=200,
+			nsw=100,
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
@@ -670,9 +670,9 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff']*0.1,
+			ediff=defaults['ediff']*0.01,
 			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
+			nelmin=8,
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -695,9 +695,9 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff']*0.1,
+			ediff=defaults['ediff']*0.01,
 			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
+			nelmin=8,
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -810,7 +810,7 @@ def run_screen(cif_files):
 					loop_i = 0
 					converged = False
 					avg_F = np.inf
-					while mof != None and avg_F > 0.05 and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
+					while mof != None and avg_F >= 0.05 and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
