@@ -151,42 +151,64 @@ def get_mag_indices(mof):
 			mag_indices.append(i)
 	return mag_indices
 
-def set_initial_magmoms(mof,spin_level,refcode):
+def set_initial_magmoms(mof,spin_level):
 #Add initial magnetic moments to atoms object
-	if mof[-1].symbol != ads_species:
-		raise ValueError('Last atom in MOF should be adsorbate')
-	oms_idx = int(refcode.split('_OMS')[1])
-	old_refcode = refcode.split('_spin')[0]
-	old_spin = refcode.split('_spin')[1].split('_'+ads_species)[0]
-	with open(old_mofpath+old_refcode+'/final/spin'+old_spin+'/INCAR','r') as incarfile:
-		for line in incarfile:
-			line = line.strip()
-			if 'ISPIN = 2' in line:
-				mof_temp = read(old_mofpath+old_refcode+'/final/spin'+old_spin+'/OUTCAR')
-				old_magmoms = np.append(mof_temp.get_magnetic_moments(),0.0)
-				if len(old_magmoms) != len(mof):
-					raise ValueError('Improprer number of magmoms for MOF')
-				mof.set_initial_magnetic_moments(old_magmoms)
-	mag_number = mof[oms_idx].number
-	if mag_number not in metal_list:
-		raise ValueError('OMS is not even a metal')
-	if mag_number in sblock_metals:
-		mof[oms_idx].magmom = 0.0
-	else:
-		if spin_level == 'spin1':
-			if mag_number in dblock_metals:
-				mof[oms_idx].magmom = 5.0
-			elif mag_number in fblock_metals:
-				mof[oms_idx].magmom = 7.0
-			elif mag_number in poor_metals:
-				mof[oms_idx].magmom = 0.1
+	mag_indices = get_mag_indices(mof)
+	mof.set_initial_magnetic_moments(np.zeros(len(mof)))
+	for i, atom in enumerate(mof):
+		if i in mag_indices:
+			mag_number = atom.number
+			if spin_level == 'spin1':
+				if mag_number in dblock_metals:
+					atom.magmom = 5.0
+				elif mag_number in fblock_metals:
+					atom.magmom = 7.0
+				elif mag_number in poor_metals:
+					atom.magmom = 0.1
+				else:
+					raise ValueError('Metal not properly classified')
+			elif spin_level == 'spin2':
+				atom.magmom = 0.1
 			else:
-				raise ValueError('Metal not properly classified')
-		elif spin_level == 'spin2':
-			mof[oms_idx].magmom = 0.1
-		else:
-			raise ValueError('Spin iteration out of range')
+				raise ValueError('Spin iteration out of range')
 	return mof
+
+# def set_initial_magmoms(mof,spin_level,refcode):
+# #Add initial magnetic moments to atoms object
+# 	if mof[-1].symbol != ads_species:
+# 		raise ValueError('Last atom in MOF should be adsorbate')
+# 	oms_idx = int(refcode.split('_OMS')[1])
+# 	old_refcode = refcode.split('_spin')[0]
+# 	old_spin = refcode.split('_spin')[1].split('_'+ads_species)[0]
+# 	with open(old_mofpath+old_refcode+'/final/spin'+old_spin+'/INCAR','r') as incarfile:
+# 		for line in incarfile:
+# 			line = line.strip()
+# 			if 'ISPIN = 2' in line:
+# 				mof_temp = read(old_mofpath+old_refcode+'/final/spin'+old_spin+'/OUTCAR')
+# 				old_magmoms = np.append(mof_temp.get_magnetic_moments(),0.0)
+# 				if len(old_magmoms) != len(mof):
+# 					raise ValueError('Improprer number of magmoms for MOF')
+# 				mof.set_initial_magnetic_moments(old_magmoms)
+# 	mag_number = mof[oms_idx].number
+# 	if mag_number not in metal_list:
+# 		raise ValueError('OMS is not even a metal')
+# 	if mag_number in sblock_metals:
+# 		mof[oms_idx].magmom = 0.0
+# 	else:
+# 		if spin_level == 'spin1':
+# 			if mag_number in dblock_metals:
+# 				mof[oms_idx].magmom = 5.0
+# 			elif mag_number in fblock_metals:
+# 				mof[oms_idx].magmom = 7.0
+# 			elif mag_number in poor_metals:
+# 				mof[oms_idx].magmom = 0.1
+# 			else:
+# 				raise ValueError('Metal not properly classified')
+# 		elif spin_level == 'spin2':
+# 			mof[oms_idx].magmom = 0.1
+# 		else:
+# 			raise ValueError('Spin iteration out of range')
+# 	return mof
 
 def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 #Write success files
@@ -408,6 +430,7 @@ def update_calc(calc,calc_swaps):
 		elif swap == 'zbrent':
 			calc.int_params['ibrion'] = 1
 			calc.exp_params['ediff'] = 1e-6
+			calc.int_params['nelmin'] = 8
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
 		elif swap == 'zheev':
@@ -478,6 +501,8 @@ def mof_run(mof,calc,cif_file,calc_swaps):
 		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
 		refcode = cif_file.split('.cif')[0]
+		if os.path.isfile('WAVECAR'):
+			os.remove('WAVECAR')
 		while True:
 			errormsg = get_error_msgs('OUTCAR',refcode)
 			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
@@ -514,6 +539,8 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
 		refcode = cif_file.split('.cif')[0]
+		if os.path.isfile('WAVECAR'):
+			os.remove('WAVECAR')
 		while True:
 			errormsg = get_error_msgs('OUTCAR',refcode)
 			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
@@ -776,7 +803,7 @@ def run_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
-				mof = set_initial_magmoms(mof,spin_level,refcode)
+				mof = set_initial_magmoms(mof,spin_level)
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
@@ -799,7 +826,7 @@ def run_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
-				mof = set_initial_magmoms(mof,spin_level,refcode)
+				mof = set_initial_magmoms(mof,spin_level)
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				steps = 100
