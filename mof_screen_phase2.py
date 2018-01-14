@@ -361,6 +361,7 @@ def update_calc(calc,calc_swaps):
 			calc.exp_params['symprec'] = 1e-8
 		elif swap == 'subspacematrix' or swap == 'real_optlay' or swap == 'rspher' or swap == 'nicht_konv':
 			calc.special_params['lreal'] = False
+			calc.string_params['prec'] = 'Accurate'
 		elif swap == 'tetirr' or swap == 'incorrect_shift':
 			calc.input_params['gamma'] = True
 		elif swap == 'dentet' or swap == 'grad_not_orth':
@@ -375,8 +376,7 @@ def update_calc(calc,calc_swaps):
 			calc.float_params['amin'] = 0.01
 		elif swap == 'zbrent':
 			calc.int_params['ibrion'] = 1
-			calc.bool_params['addgrid'] = True
-			calc.float_params['ediff'] = 1e-6
+			calc.exp_params['ediff'] = 1e-6
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
 		elif swap == 'zheev':
@@ -388,25 +388,16 @@ def update_calc(calc,calc_swaps):
 			calc.int_params['isym'] = 0
 		elif swap == 'posmap':
 			calc.exp_params['symprec'] = 1e-6
-		else:
-			ValueError('Wrong calc swap')
 	return calc
 
 def update_calc_after_errors(calc,calc_swaps,errormsg):
 #make a calc swap based on errors
 	for msg in errormsg:
-		calc_swaps.append(msg)
-		if msg == 'edddav':
-			calc.string_params['algo'] = 'All'
-		elif msg == 'inv_rot_mat':
-			calc.exp_params['symprec'] = 1e-8
-		elif msg == 'subspacematrix' or msg == 'real_optlay' or msg == 'rspher' or msg == 'nicht_konv':
-			calc.special_params['lreal'] = False
-		elif msg == 'tetirr' or msg == 'incorrect_shift':
-			calc.input_params['gamma'] = True
-		elif msg == 'dentet' or msg == 'grad_not_orth':
-			calc.int_params['ismear'] = 0
-		elif msg == 'too_few_bands':
+		if msg not in calc_swaps:
+			calc_swaps.append(msg)
+	calc = update_calc(calc,calc_swaps)
+	for swap in calc_swaps:
+		if msg == 'too_few_bands':
 			with open('OUTCAR','r') as outcarfile:
 				for line in outcarfile:
 					if "NBANDS" in line:
@@ -419,9 +410,6 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 			nbands = int(1.1*nbands)
 			calc_swaps.append('nbands='+nbands)
 			calc.int_params['nbands'] = nbands
-		elif msg == 'rot_matrix':
-			calc.input_params['gamma'] = True
-			calc.int_params['isym'] = 0
 		elif msg == 'brions':
 			with open('OUTCAR','r') as outcarfile:
 				for line in outcarfile:
@@ -433,26 +421,6 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 							pass
 			calc_swaps.append('potim='+potim)
 			calc.float_params['potim'] = potim
-		elif msg == 'pricel':
-			calc.exp_params['symprec'] = 1e-8
-			calc.int_params['isym'] = 0
-		elif msg == 'amin':
-			calc.float_params['amin'] = 0.01
-		elif msg == 'zbrent':
-			calc.int_params['ibrion'] = 1
-		elif msg == 'pssyevx' or msg == 'eddrmm':
-			calc.string_params['algo'] = 'Normal'
-		elif msg == 'zheev':
-			calc.string_params['algo'] = 'Exact'
-		elif msg == 'elf_kpar':
-			calc.int_params['kpar'] = 1
-		elif msg == 'rhosyg':
-			calc.exp_params['symprec'] = 1e-4
-			calc.int_params['isym'] = 0
-		elif msg == 'posmap':
-			calc.exp_params['symprec'] = 1e-6
-		else:
-			ValueError('Wrong error message')
 	return calc, calc_swaps
 
 def get_niter(outcarfile):
