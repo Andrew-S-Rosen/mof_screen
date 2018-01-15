@@ -5,7 +5,7 @@ from ase import Atoms, Atom
 
 #Paths for files
 coremof_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_oms_cifs/' #path for MOFs to oxygenate
-newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs/' #path to generate oxygenated MOFs
+newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs_v2/' #path to generate oxygenated MOFs
 omsdata = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_cifs/OMS_data/' #path to .omsex and .oms files
 error_path = newmofs_path+'errors/'
 
@@ -59,22 +59,22 @@ def get_CN(oms_path):
 
 def get_omsex_line(line):
 #read line in OMSEX file
-	oms_symbol = line.split(' |')[0]
+	cus_symbol = line.split(' |')[0]
 	cnum = int(line.split('CNUM: ')[1].split('|')[0])
 	cus_coord = np.asarray(np.matrix(line.split('COORD: ')[1].split('|')[0][0:-1]))
 	coords = np.asarray(np.matrix(line.split('NN: ')[1][0:-4]))
-	return oms_symbol, cnum, cus_coord, coords
+	return cus_symbol, cnum, cus_coord, coords
 
 def get_omsex_data(refcode):
 #Get all OMSEX data
 	cus_coords_all = np.zeros((n_OMS,3))
 	ase_cus_idx_all = []
-	oms_sym_all = []
+	cus_sym_all = []
 	cnums_all = []
 	with open(omsdata+refcode+'.omsex','r') as rf:
 		for i, line in enumerate(rf):
-			oms_sym_temp, cnum_temp, cus_coords_all[i,:], NN_coords_temp = get_omsex_line(line)
-			oms_sym_all.append(oms_sym_temp)
+			cus_sym_temp, cnum_temp, cus_coords_all[i,:], NN_coords_temp = get_omsex_line(line)
+			cus_sym_all.append(cus_sym_temp)
 			cnums_all.append(cnum_temp)
 			if i == 0:
 				NN_coords_all = NN_coords_temp
@@ -86,9 +86,7 @@ def get_omsex_data(refcode):
 					break
 			if len(ase_cus_idx_all) < i+1:
 				print('WARNING with '+refcode+': a zeo++ OMS (#'+str(i)+') is not in same spot as in ASE CIF')
-		ase_cus_idx_all = np.array(ase_cus_idx_all)
-		oms_sym_all = np.array(oms_sym_all)
-	return cnums_all, cus_coords_all, ase_cus_idx_all, oms_sym_all, NN_coords_all
+	return cnums_all, cus_coords_all, ase_cus_idx_all, cus_sym_all, NN_coords_all
 
 def get_ase_NN_idx(mof,coords):
 #get ASE indices for NN
@@ -102,8 +100,7 @@ def get_ase_NN_idx(mof,coords):
 				break
 		if nn_fail == False:
 			print('WARNING with '+refcode+': a zeo++ NN (#'+str(i)+') is not in same spot as in ASE CIF')
-	ase_idx_asarray = np.asarray(ase_NN_idx)	
-	return ase_idx_asarray
+	return ase_NN_idx
 
 def get_dist_planar(normal_vec):
 #get distance vector of adsorbate from planar CUS site
@@ -130,7 +127,7 @@ def add_ads_species(cif_file,ads_site):
 	mof.extend(adsorbate)
 	return mof
 
-def write_files(refcode,mof,oms_sym,cnum,best_to_worst_idx):
+def write_files(refcode,mof,best_to_worst_idx):
 #Write adsorbed CIF
 	basename = refcode+'_'+ads_species
 	success = False
@@ -138,14 +135,14 @@ def write_files(refcode,mof,oms_sym,cnum,best_to_worst_idx):
 		mof = add_ads_species(cif_file,ads_sites[idx,:])
 		dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 		if sum(dist_mat <= overlap_tol) == 0:
-			print('SUCCESS: '+refcode +'_OMS'+str(idx)+' (M = '+oms_sym+', CNUM = '+str(cnum)+')')
+			print('SUCCESS: '+refcode+'_OMS'+str(idx))
 			write(newmofs_path+basename+'_OMS'+str(idx)+'.cif',mof)
 			success = True
 			break
 		else:
 			del mof[-1]
 	if success == False:
-		print('ERROR with '+refcode+' (M = '+oms_sym+', CNUM = '+str(cnum)+'): adsorbate overlaps with NN')
+		print('ERROR with '+refcode)
 		write(error_path+basename+'.cif',mof)
 
 def get_vert_vec_norm(mic_coords):
@@ -232,38 +229,61 @@ for cif_file in cif_files:
 	basename = refcode+'_'+ads_species
 	mof = read(coremof_path+cif_file)
 	n_OMS = get_CN(omsdata+refcode+'.oms')
-	cnums_all, cus_coords_all, ase_cus_idx_all, oms_sym_all, NN_coords_all = get_omsex_data(refcode)
-	unique_oms_sym = np.unique(oms_sym_all)
-	for oms_sym in unique_oms_sym:
-		oms_idx = np.where(oms_sym_all == oms_sym)			
-		unique_cnums = np.unique(np.array(cnums_all)[oms_idx])
-		for cnum in unique_cnums:
-			cnum_idx = np.where(cnums_all == cnum)
-			intersect_idx = np.intersect1d(oms_idx,cnum_idx)
-			ads_sites = np.zeros((len(intersect_idx),3))
-			for i, omsex_idx in enumerate(intersect_idx):
-				sum_prior_cnums = sum(cnums_all[0:i])
-				NN_coords = NN_coords_all[sum_prior_cnums:sum_prior_cnums+cnum,:]
-				cus_coords = cus_coords_all[omsex_idx,:]
-				ase_cus_idx = ase_cus_idx_all[omsex_idx]
-				ase_NN_idx = get_ase_NN_idx(mof,NN_coords)
-				mic_coords = mof.get_distances(ase_cus_idx,ase_NN_idx,mic=True,vector=True)
-				scaled_mic_coords = mic_coords*guess_length/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
-				scaled_sum_dist = sum(scaled_mic_coords)
-				sum_dist = sum(mic_coords)
-				fit, rmse, r2, normal_vec = fit_plane(mic_coords)
-				if cnum <= 2:
-					if cnum == 1:
-						print('WARNING (cnum = 1 not tested): '+refcode)
-					ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,mic_coords,ase_cus_idx)
-				if cnum == 3 and np.linalg.norm(scaled_sum_dist) >= sum_cutoff:
-					ads_sites[i,:] = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords)
-				elif np.linalg.norm(scaled_sum_dist) < sum_cutoff or (r2 > r2_tol and rmse < rmse_tol):
-					if fit[2] >= 1e10 or rmse >= rmse_tol*2:
-						normal_vec = get_vert_vec_norm(mic_coords)
-					dist = get_dist_planar(normal_vec)
-					ads_sites[i,:] = get_planar_ads_site(cif_file,cus_coords,dist)
-				else:
-					ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
-			best_to_worst_idx = get_best_to_worst_idx(cif_file,ads_sites)
-			write_files(refcode,mof,oms_sym,cnum,best_to_worst_idx)
+	cnums_all, cus_coords_all, ase_cus_idx_all, cus_sym_all, NN_coords_all = get_omsex_data(refcode)
+	cluster_sym = []
+	for i, ase_cus_idx in enumerate(ase_cus_idx_all):
+		if mof[ase_cus_idx].symbol != cus_sym_all[i]:
+			raise ValueError('Reading wrong element')
+		sum_prior_cnums = sum(cnums_all[0:i])
+		NN_coords = NN_coords_all[sum_prior_cnums:sum_prior_cnums+cnums_all[i],:]
+		ase_NN_idx = get_ase_NN_idx(mof,NN_coords)
+		if len(ase_NN_idx) != cnums_all[i]:
+			raise ValueError('Reading wrong indices')
+		if len(ase_NN_idx) == 1:
+			NN_atnum_temp = [mof[ase_NN_idx].number]
+		else:
+			NN_atnum_temp = mof[ase_NN_idx].get_atomic_numbers().tolist()
+		oms_atnum_temp = [mof[ase_cus_idx].number]
+		NN_atnum_temp.sort()
+		cluster_sym.append(oms_atnum_temp+NN_atnum_temp)
+	if len(cluster_sym) != len(cus_sym_all):
+			raise ValueError('Read wrong indices')
+	unique_cluster_sym_all = []
+	for entry in cluster_sym:
+		if entry not in unique_cluster_sym_all:
+			unique_cluster_sym_all.append(entry)
+	indices_tot = 0
+	for unique_cluster_sym in unique_cluster_sym_all:
+		omsex_indices = [idx for idx, entry in enumerate(cluster_sym) if entry == unique_cluster_sym]
+		ads_sites = np.zeros((len(omsex_indices),3))
+		for i, omsex_idx in enumerate(omsex_indices):
+			cnum = cnums_all[omsex_idx]
+			cus_sym = cus_sym_all[omsex_idx]
+			sum_prior_cnums = sum(cnums_all[0:i])
+			NN_coords = NN_coords_all[sum_prior_cnums:sum_prior_cnums+cnum,:]
+			cus_coords = cus_coords_all[omsex_idx,:]
+			ase_cus_idx = ase_cus_idx_all[omsex_idx]
+			ase_NN_idx = get_ase_NN_idx(mof,NN_coords)
+			mic_coords = mof.get_distances(ase_cus_idx,ase_NN_idx,mic=True,vector=True)
+			scaled_mic_coords = mic_coords*guess_length/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
+			scaled_sum_dist = sum(scaled_mic_coords)
+			sum_dist = sum(mic_coords)
+			fit, rmse, r2, normal_vec = fit_plane(mic_coords)
+			if cnum <= 2:
+				if cnum == 1:
+					print('WARNING (cnum = 1 not tested): '+refcode)
+				ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,mic_coords,ase_cus_idx)
+			if cnum == 3 and np.linalg.norm(scaled_sum_dist) >= sum_cutoff:
+				ads_sites[i,:] = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords)
+			elif np.linalg.norm(scaled_sum_dist) < sum_cutoff or (r2 > r2_tol and rmse < rmse_tol):
+				if fit[2] >= 1e10 or rmse >= rmse_tol*2:
+					normal_vec = get_vert_vec_norm(mic_coords)
+				dist = get_dist_planar(normal_vec)
+				ads_sites[i,:] = get_planar_ads_site(cif_file,cus_coords,dist)
+			else:
+				ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
+		best_to_worst_idx = get_best_to_worst_idx(cif_file,ads_sites)
+		write_files(refcode,mof,best_to_worst_idx)
+		indices_tot += len(omsex_indices)
+	if indices_tot != len(cus_sym_all):
+		raise ValueError('Did not run through all OMS')
