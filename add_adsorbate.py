@@ -5,7 +5,7 @@ from ase import Atoms, Atom
 
 #Paths for files
 coremof_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_oms_cifs/' #path for MOFs to oxygenate
-newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs_v2/' #path to generate oxygenated MOFs
+newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs/' #path to generate oxygenated MOFs
 omsdata = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_cifs/OMS_data/' #path to .omsex and .oms files
 error_path = newmofs_path+'errors/'
 
