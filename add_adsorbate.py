@@ -5,7 +5,7 @@ from ase import Atoms, Atom
 
 #Paths for files
 coremof_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_oms_cifs/' #path for MOFs to oxygenate
-newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs/' #path to generate oxygenated MOFs
+newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs_v2/' #path to generate oxygenated MOFs
 omsdata = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_cifs/OMS_data/' #path to .omsex and .oms files
 error_path = newmofs_path+'errors/'
 
@@ -127,7 +127,7 @@ def add_ads_species(cif_file,ads_site):
 	mof.extend(adsorbate)
 	return mof
 
-def write_files(refcode,mof,best_to_worst_idx):
+def write_files(refcode,mof,best_to_worst_idx,cluster):
 #Write adsorbed CIF
 	basename = refcode+'_'+ads_species
 	success = False
@@ -135,15 +135,15 @@ def write_files(refcode,mof,best_to_worst_idx):
 		mof = add_ads_species(cif_file,ads_sites[idx,:])
 		dist_mat = mof.get_distances(len(mof)-1,np.arange(0,len(mof)-1).tolist(),mic=True)
 		if sum(dist_mat <= overlap_tol) == 0:
-			print('SUCCESS: '+refcode+'_OMS'+str(idx))
+			print('SUCCESS: '+refcode+' ('+str(cluster)+')')
 			write(newmofs_path+basename+'_OMS'+str(idx)+'.cif',mof)
 			success = True
 			break
 		else:
 			del mof[-1]
 	if success == False:
-		print('ERROR with '+refcode)
-		write(error_path+basename+'.cif',mof)
+		print('ERROR: '+refcode+' ('+str(cluster)+')')
+		write(error_path+basename+'_'+str(cluster)+'.cif',mof)
 
 def get_vert_vec_norm(mic_coords):
 #Get normal vector if plane is vertical in z
@@ -283,7 +283,7 @@ for cif_file in cif_files:
 			else:
 				ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
 		best_to_worst_idx = get_best_to_worst_idx(cif_file,ads_sites)
-		write_files(refcode,mof,best_to_worst_idx)
+		write_files(refcode,mof,best_to_worst_idx,unique_cluster_sym)
 		indices_tot += len(omsex_indices)
 	if indices_tot != len(cus_sym_all):
 		raise ValueError('Did not run through all OMS')
