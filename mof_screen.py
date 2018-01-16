@@ -59,6 +59,37 @@ def get_nprocs():
 	nprocs = nodes*ppn
 	return nprocs, ppn
 
+def get_kpts(cif_file,kppa):
+#Get kpoint grid at a given KPPA
+	parser = CifParser(mofpath+cif_file)
+	pm_mof = parser.get_structures()[0]
+	pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
+	kpts = pm_kpts.kpts[0]
+	if pm_kpts.style.name == 'Gamma':
+		gamma = True
+	else:
+		gamma = None
+	return kpts, gamma
+
+def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
+#Run the gamma pt only or regular VASP version
+	if sum(kpts) == 3:
+		gamma_version = True
+	else:
+		gamma_version = False
+	while n_atoms < nprocs/2:
+		nprocs = nprocs - ppn
+		if nprocs == ppn:
+			break
+	gamvasp_cmd = 'mpirun -n '+str(nprocs)+' vasp_gam'
+	vasp_cmd =  'mpirun -n '+str(nprocs)+' vasp_std'
+	runvasp_file = open('run_vasp.py','w')
+	if gamma_version == True:
+		runvasp_file.write("import os\nexitcode = os.system("+"'"+gamvasp_cmd+"'"+')')
+	else:
+		runvasp_file.write("import os\nexitcode = os.system("+"'"+vasp_cmd+"'"+')')
+	runvasp_file.close()
+
 def pprint(printstr):
 #Redirect print commands to log file
 	print(printstr)
@@ -111,37 +142,6 @@ def clean_files(remove_files):
 	for file in remove_files:
 		if os.path.isfile(file) == True:
 			os.remove(file)
-
-def get_kpts(cif_file,kppa):
-#Get kpoint grid at a given KPPA
-	parser = CifParser(mofpath+cif_file)
-	pm_mof = parser.get_structures()[0]
-	pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
-	kpts_hi = pm_kpts.kpts[0]
-	if pm_kpts.style.name == 'Gamma':
-		gamma = True
-	else:
-		gamma = None
-	return kpts_hi, gamma
-
-def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
-#Run the gamma pt only or regular VASP version
-	if sum(kpts) == 3:
-		gamma_version = True
-	else:
-		gamma_version = False
-	while n_atoms < nprocs/2:
-		nprocs = nprocs - ppn
-		if nprocs == ppn:
-			break
-	gamvasp_cmd = 'mpirun -n '+str(nprocs)+' vasp_gam'
-	vasp_cmd =  'mpirun -n '+str(nprocs)+' vasp_std'
-	runvasp_file = open('run_vasp.py','w')
-	if gamma_version == True:
-		runvasp_file.write("import os\nexitcode = os.system("+"'"+gamvasp_cmd+"'"+')')
-	else:
-		runvasp_file.write("import os\nexitcode = os.system("+"'"+vasp_cmd+"'"+')')
-	runvasp_file.close()
 
 def get_mag_indices(mof):
 #Get indices of d-block, f-block, and semimetal atoms
