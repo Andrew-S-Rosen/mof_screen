@@ -184,43 +184,6 @@ def set_initial_magmoms(mof,spin_level):
 				raise ValueError('Spin iteration out of range')
 	return mof
 
-# def set_initial_magmoms(mof,spin_level,refcode):
-# #Add initial magnetic moments to atoms object
-# 	if mof[-1].symbol != ads_species:
-# 		raise ValueError('Last atom in MOF should be adsorbate')
-# 	oms_idx = int(refcode.split('_OMS')[1])
-# 	old_refcode = refcode.split('_spin')[0]
-# 	old_spin = refcode.split('_spin')[1].split('_'+ads_species)[0]
-# 	with open(old_mofpath+old_refcode+'/final/spin'+old_spin+'/INCAR','r') as incarfile:
-# 		for line in incarfile:
-# 			line = line.strip()
-# 			if 'ISPIN = 2' in line:
-# 				mof_temp = read(old_mofpath+old_refcode+'/final/spin'+old_spin+'/OUTCAR')
-# 				old_magmoms = np.append(mof_temp.get_magnetic_moments(),0.0)
-# 				if len(old_magmoms) != len(mof):
-# 					raise ValueError('Improprer number of magmoms for MOF')
-# 				mof.set_initial_magnetic_moments(old_magmoms)
-# 	mag_number = mof[oms_idx].number
-# 	if mag_number not in metal_list:
-# 		raise ValueError('OMS is not even a metal')
-# 	if mag_number in sblock_metals:
-# 		mof[oms_idx].magmom = 0.0
-# 	else:
-# 		if spin_level == 'spin1':
-# 			if mag_number in dblock_metals:
-# 				mof[oms_idx].magmom = 5.0
-# 			elif mag_number in fblock_metals:
-# 				mof[oms_idx].magmom = 7.0
-# 			elif mag_number in poor_metals:
-# 				mof[oms_idx].magmom = 0.1
-# 			else:
-# 				raise ValueError('Metal not properly classified')
-# 		elif spin_level == 'spin2':
-# 			mof[oms_idx].magmom = 0.1
-# 		else:
-# 			raise ValueError('Spin iteration out of range')
-# 	return mof
-
 def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 #Write success files
 	pprint('SUCCESS: '+spin_level+', '+acc_level)
