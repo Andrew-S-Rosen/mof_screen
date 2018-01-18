@@ -12,7 +12,7 @@ error_path = newmofs_path+'errors/'
 #Parameters
 guess_length = 2.0 #M-adsorbate bond distance
 ads_species = 'O' #adsorbate
-rcut = 2.5 #cutoff for nearest neighbors
+rcut = 3.0 #cutoff for nearest neighbors
 zeo_tol = 0.1 #tolerance for difference between zeo++ coordinates and ASE
 sum_cutoff = 0.5 #cutoff for sum of vectors to be planar
 rmse_tol = 0.25 #rmse tolerance for if a geometry is planar-like
@@ -189,22 +189,26 @@ def get_nonplanar_ads_site(sum_dist,cus_coord):
 
 def get_bi_ads_site(cif_file,normal_vec,cus_coord,mic_coords,ase_cus_idx):
 #Get adsorption site for 2-coordinate
-	try_angles = np.linspace(0,360,37)
+	try_angles = np.linspace(0,360,16)
 	dist = get_dist_planar(normal_vec)
-	ads_site_temp_unrotated = cus_coord + dist
+	ads_site_temp_unrotated1 = cus_coord + dist
+	ads_site_temp_unrotated2 = cus_coord - dist
+	ads_temp1 = Atoms([Atom(ads_species,ads_site_temp_unrotated1)])
+	ads_temp2 = Atoms([Atom(ads_species,ads_site_temp_unrotated2)])
 	for i, angle in enumerate(try_angles):
 		mof_temp = read(coremof_path+cif_file)
-		adsorbate_temp = Atoms([Atom(ads_species,ads_site_temp_unrotated)])
-		adsorbate_temp.rotate(angle,mic_coords[1,:]-mic_coords[0,:])
-		mof_temp.extend(adsorbate_temp)
-		mof_temp.set_distance(ase_cus_idx,len(mof_temp)-1,guess_length,fix=0,mic=False)
-		dist_mat = mof_temp.get_distances(len(mof_temp)-1,np.arange(0,len(mof_temp)-1).tolist(),mic=True)
+		mof_temp.extend(ads_temp1)
+		mof_temp.extend(ads_temp2)
+		mof_temp.set_distance(ase_cus_idx,len(mof_temp)-1,guess_length,fix=0,mic=True)
+		mof_temp.set_distance(ase_cus_idx,len(mof_temp)-2,guess_length,fix=0,mic=True)	
+		mof_temp.set_angle(len(mof_temp)-1,ase_cus_idx,len(mof_temp)-2,angle)
+		dist_mat = mof_temp.get_distances(len(mof_temp)-2,np.arange(0,len(mof_temp)-2).tolist(),mic=True)
 		NNs = sum(dist_mat < rcut)
 		if i == 0:
-			ads_site = mof_temp[-1].position
+			ads_site = mof_temp[-2].position
 			old_min_NNs = NNs
 		elif sum(dist_mat <= overlap_tol) == 0 and NNs < old_min_NNs:
-			ads_site = mof_temp[-1].position
+			ads_site = mof_temp[-2].position
 			old_min_NNs = NNs
 	return ads_site
 
