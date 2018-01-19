@@ -287,15 +287,6 @@ def continue_mof():
 		mof = reset_mof()
 	return mof
 
-def get_warning_msgs(outcarfile):
-#read in any warning messages
-	warningmsg = []
-	with open(outcarfile,'r') as rf:
-		for line in rf:
-			if 'The distance between some ions is very small' in line:
-				warningmsg.append('overlap')
-	return warningmsg
-
 def check_line_for_error(line,errormsg):
 	if 'inverse of rotation matrix was not found (increase SYMPREC)' in line:
 		errormsg.append('inv_rot_mat')
@@ -358,12 +349,21 @@ def get_error_msgs(outcarfile,refcode):
 				errormsg = check_line_for_error(line,errormsg)
 	return errormsg
 
+def get_warning_msgs(outcarfile):
+#read in any warning messages
+	warningmsg = []
+	with open(outcarfile,'r') as rf:
+		for line in rf:
+			if 'You have a (more or less)' in line:
+				warningmsg.append('large_supercell')
+	return warningmsg
+
 def update_calc(calc,calc_swaps):
 #update calculator based on calc swaps
 	for swap in calc_swaps:
 		swap.replace(' ','')
-		if swap == 'edddav':
-			calc.string_params['algo'] = 'All'
+		if swap == 'large_supercell':
+			calc.special_params['lreal'] = 'Auto'
 		elif 'sigma=' in swap:
 			calc.float_params['sigma'] = float(swap.split('=')[-1])
 		elif 'nbands=' in swap:
@@ -381,7 +381,9 @@ def update_calc(calc,calc_swaps):
 		elif 'algo=' in swap:
 			calc.string_params['algo'] = swap.split('=')[-1]
 		elif 'isif=' in swap:
-			calc.int_params['isif'] = int(swap.split('=')[-1])			
+			calc.int_params['isif'] = int(swap.split('=')[-1])	
+		elif swap == 'edddav':
+			calc.string_params['algo'] = 'All'		
 		elif swap == 'inv_rot_mat':
 			calc.exp_params['symprec'] = 1e-8
 		elif swap == 'subspacematrix' or swap == 'real_optlay' or swap == 'rspher' or swap == 'nicht_konv':
@@ -815,6 +817,8 @@ def run_screen(cif_files):
 			if mof == None:
 				pprint('Skipping rest because of errors')
 				break
+			warnings = get_warning_msgs(outcar_paths[run_i-1])
+			calc_swaps.extend(warnings)
 
 			#***********ISIF 2 (initial)************
 			acc_level = acc_levels[run_i]
@@ -953,6 +957,8 @@ def run_screen(cif_files):
 					clean_files(files_to_clean)
 				else:
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				if 'large_supercell' in calc_swaps:
+					calc_swaps.remove('large_supercell')
 				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					if loop_i == n_runs - 1 and 'ibrion=1' not in calc_swaps:
@@ -993,6 +999,8 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				if 'large_supercell' in calc_swaps:
+					calc_swaps.remove('large_supercell')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof == None:
