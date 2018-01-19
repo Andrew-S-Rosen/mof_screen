@@ -1,8 +1,6 @@
 import os
 from shutil import copyfile
 import numpy as np
-from pymatgen.io.vasp.inputs import Kpoints
-from pymatgen.io.cif import CifParser
 from ase.calculators.vasp import Vasp
 from ase.optimize import BFGSLineSearch
 from ase.io import read
@@ -62,6 +60,50 @@ def get_nprocs():
 	nprocs = nodes*ppn
 	return nprocs, ppn
 
+def get_kpts(cif_file,kppa):
+#Get kpoint grid at a given KPPA
+	cif_split1 = cif_file.split('_'+ads_species+'_OMS')[0]
+	old_cif_name = cif_split1.split('_spin')[0]
+	spin = 'spin'+cif_split1.split('_spin')[1]
+	if kppa == 100:
+		kpts_path = old_mofpath+old_cif_name+'/isif2/'+spin+'/KPOINTS'
+	elif kppa == 1000:
+		kpts_path = old_mofpath+old_cif_name+'/final/'+spin+'/KPOINTS'
+	else:
+		raise ValueError('Incompatible KPPA with prior runs')
+	with open(kpts_path,'r') as rf:
+		for i, line in enumerate(rf):
+			line = line.strip()
+			if i == 2:
+				if 'gamma' in line.lower():
+					gamma = True
+				else:
+					gamma = False
+			if i == 3:
+				kpts = np.squeeze(np.asarray(np.matrix(line))).tolist()
+	if len(kpts) != 3:
+		raise ValueError('Error parsing KPOINTS file')
+	return kpts, gamma
+
+def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
+#Run the gamma pt only or regular VASP version
+	if sum(kpts) == 3:
+		gamma_version = True
+	else:
+		gamma_version = False
+	while n_atoms < nprocs/2:
+		nprocs = nprocs - ppn
+		if nprocs == ppn:
+			break
+	gamvasp_cmd = 'mpirun -n '+str(nprocs)+' vasp_gam'
+	vasp_cmd =  'mpirun -n '+str(nprocs)+' vasp_std'
+	runvasp_file = open('run_vasp.py','w')
+	if gamma_version == True:
+		runvasp_file.write("import os\nexitcode = os.system("+"'"+gamvasp_cmd+"'"+')')
+	else:
+		runvasp_file.write("import os\nexitcode = os.system("+"'"+vasp_cmd+"'"+')')
+	runvasp_file.close()
+
 def pprint(printstr):
 #Redirect print commands to log file
 	print(printstr)
@@ -112,37 +154,6 @@ def clean_files(remove_files):
 		if os.path.isfile(file) == True:
 			os.remove(file)
 
-def get_kpts(cif_file,kppa):
-#Get kpoint grid at a given KPPA
-	parser = CifParser(mofpath+cif_file)
-	pm_mof = parser.get_structures()[0]
-	pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
-	kpts_hi = pm_kpts.kpts[0]
-	if pm_kpts.style.name == 'Gamma':
-		gamma = True
-	else:
-		gamma = None
-	return kpts_hi, gamma
-
-def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
-#Run the gamma pt only or regular VASP version
-	if sum(kpts) == 3:
-		gamma_version = True
-	else:
-		gamma_version = False
-	while n_atoms < nprocs/2:
-		nprocs = nprocs - ppn
-		if nprocs == ppn:
-			break
-	gamvasp_cmd = 'mpirun -n '+str(nprocs)+' vasp_gam'
-	vasp_cmd =  'mpirun -n '+str(nprocs)+' vasp_std'
-	runvasp_file = open('run_vasp.py','w')
-	if gamma_version == True:
-		runvasp_file.write("import os\nexitcode = os.system("+"'"+gamvasp_cmd+"'"+')')
-	else:
-		runvasp_file.write("import os\nexitcode = os.system("+"'"+vasp_cmd+"'"+')')
-	runvasp_file.close()
-
 def get_mag_indices(mof):
 #Get indices of d-block, f-block, and semimetal atoms
 	mag_indices = []
@@ -172,43 +183,6 @@ def set_initial_magmoms(mof,spin_level):
 			else:
 				raise ValueError('Spin iteration out of range')
 	return mof
-
-# def set_initial_magmoms(mof,spin_level,refcode):
-# #Add initial magnetic moments to atoms object
-# 	if mof[-1].symbol != ads_species:
-# 		raise ValueError('Last atom in MOF should be adsorbate')
-# 	oms_idx = int(refcode.split('_OMS')[1])
-# 	old_refcode = refcode.split('_spin')[0]
-# 	old_spin = refcode.split('_spin')[1].split('_'+ads_species)[0]
-# 	with open(old_mofpath+old_refcode+'/final/spin'+old_spin+'/INCAR','r') as incarfile:
-# 		for line in incarfile:
-# 			line = line.strip()
-# 			if 'ISPIN = 2' in line:
-# 				mof_temp = read(old_mofpath+old_refcode+'/final/spin'+old_spin+'/OUTCAR')
-# 				old_magmoms = np.append(mof_temp.get_magnetic_moments(),0.0)
-# 				if len(old_magmoms) != len(mof):
-# 					raise ValueError('Improprer number of magmoms for MOF')
-# 				mof.set_initial_magnetic_moments(old_magmoms)
-# 	mag_number = mof[oms_idx].number
-# 	if mag_number not in metal_list:
-# 		raise ValueError('OMS is not even a metal')
-# 	if mag_number in sblock_metals:
-# 		mof[oms_idx].magmom = 0.0
-# 	else:
-# 		if spin_level == 'spin1':
-# 			if mag_number in dblock_metals:
-# 				mof[oms_idx].magmom = 5.0
-# 			elif mag_number in fblock_metals:
-# 				mof[oms_idx].magmom = 7.0
-# 			elif mag_number in poor_metals:
-# 				mof[oms_idx].magmom = 0.1
-# 			else:
-# 				raise ValueError('Metal not properly classified')
-# 		elif spin_level == 'spin2':
-# 			mof[oms_idx].magmom = 0.1
-# 		else:
-# 			raise ValueError('Spin iteration out of range')
-# 	return mof
 
 def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 #Write success files
@@ -386,12 +360,21 @@ def get_error_msgs(outcarfile,refcode):
 				errormsg = check_line_for_error(line,errormsg)
 	return errormsg
 
+def get_warning_msgs(outcarfile):
+#read in any warning messages
+	warningmsg = []
+	with open(outcarfile,'r') as rf:
+		for line in rf:
+			if 'You have a (more or less)' in line:
+				warningmsg.append('large_supercell')
+	return warningmsg
+
 def update_calc(calc,calc_swaps):
 #update calculator based on calc swaps
 	for swap in calc_swaps:
 		swap.replace(' ','')
-		if swap == 'edddav':
-			calc.string_params['algo'] = 'All'
+		if swap == 'large_supercell':
+			calc.special_params['lreal'] = 'Auto'
 		elif 'sigma=' in swap:
 			calc.float_params['sigma'] = float(swap.split('=')[-1])
 		elif 'nbands=' in swap:
@@ -409,7 +392,9 @@ def update_calc(calc,calc_swaps):
 		elif 'algo=' in swap:
 			calc.string_params['algo'] = swap.split('=')[-1]
 		elif 'isif=' in swap:
-			calc.int_params['isif'] = int(swap.split('=')[-1])			
+			calc.int_params['isif'] = int(swap.split('=')[-1])
+		elif swap == 'edddav':
+			calc.string_params['algo'] = 'All'
 		elif swap == 'inv_rot_mat':
 			calc.exp_params['symprec'] = 1e-8
 		elif swap == 'subspacematrix' or swap == 'real_optlay' or swap == 'rspher' or swap == 'nicht_konv':
@@ -429,7 +414,7 @@ def update_calc(calc,calc_swaps):
 			calc.float_params['amin'] = 0.01
 		elif swap == 'zbrent':
 			calc.int_params['ibrion'] = 1
-			calc.exp_params['ediff'] = 1e-6
+			calc.exp_params['ediff'] = calc.exp_params['ediff']*0.1
 			calc.int_params['nelmin'] = 8
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
@@ -659,31 +644,7 @@ def calcs(run_i):
 			lwave=True,
 			ibrion=2,
 			isif=defaults['isif'],
-			nsw=100,
-			ediffg=-0.05,
-			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
-			)
-	elif run_i == 1.6:
-		calc = Vasp(
-			xc=defaults['xc'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
-			ivdw=defaults['ivdw'],
-			prec=defaults['prec'],
-			algo=defaults['algo'],
-			ediff=defaults['ediff']*0.01,
-			nelm=defaults['nelm'],
-			nelmin=8,
-			lreal=defaults['lreal'],
-			ncore=defaults['ncore'],
-			ismear=defaults['ismear'],
-			sigma=defaults['sigma'],
-			lcharg=False,
-			lwave=True,
-			ibrion=1,
-			isif=defaults['isif'],
-			nsw=100,
+			nsw=200,
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
@@ -696,16 +657,16 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff']*0.01,
+			ediff=defaults['ediff'],
 			nelm=defaults['nelm'],
-			nelmin=8,
+			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			ibrion=1,
+			ibrion=2,
 			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
@@ -721,9 +682,9 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff']*0.01,
+			ediff=defaults['ediff'],
 			nelm=defaults['nelm'],
-			nelmin=8,
+			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -731,7 +692,7 @@ def calcs(run_i):
 			lcharg=True,
 			laechg=True,
 			lwave=True,
-			ibrion=1,
+			ibrion=2,
 			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
@@ -818,6 +779,8 @@ def run_screen(cif_files):
 			if mof == None:
 				pprint('Skipping rest because of errors')
 				break
+			warnings = get_warning_msgs(outcar_paths[run_i-1])
+			calc_swaps.extend(warnings)
 
 			#***********ISIF 2 (lowacc)************
 			acc_level = acc_levels[run_i]
@@ -835,29 +798,14 @@ def run_screen(cif_files):
 				if mof != None and dyn and mof.calc.scf_converged == True:
 					loop_i = 0
 					converged = False
-					avg_F = np.inf
-					while mof != None and avg_F >= 0.05 and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
+					while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
 						if mof == None:
 							break
 						converged = mof.calc.converged
-						avg_F = np.mean(np.linalg.norm(mof.get_forces(),axis=1))
 						loop_i += 1
-					if mof != None and mof.calc.converged == False and mof.calc.scf_converged == True:
-						converged = False
-						while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
-							E_prior = mof.get_potential_energy()
-							mof = read_outcar('OUTCAR')
-							mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-							mof, calc_swaps = mof_run(mof,calcs(1.6),cif_file,calc_swaps)
-							if mof == None:
-								break
-							converged = mof.calc.converged
-							E_current = mof.get_potential_energy()
-							if E_current >= E_prior:
-								break
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -890,6 +838,9 @@ def run_screen(cif_files):
 					clean_files(files_to_clean)
 				else:
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				if kpts_lo != kpts_hi:
+					if 'zbrent' in calc_swaps:
+						calc_swaps.remove('zbrent')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
@@ -914,10 +865,28 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				if 'zbrent' in calc_swaps:
+					calc_swaps.rempve('zbrent')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
-					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+					if 'large_supercell' in calc_swaps:
+						calc_swaps.remove('large_supercell')
+						mof = read_outcar('OUTCAR')
+						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+						mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+						if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
+							write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+						else:
+							write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
+							if mof == None:
+								pprint('^ VASP crashed')
+							elif mof.calc.scf_converged == False:
+								pprint('^ SCF did not converge')
+							elif mof.calc.converged == False:
+								pprint('^ Convergence not reached')
+					else:
+						write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
