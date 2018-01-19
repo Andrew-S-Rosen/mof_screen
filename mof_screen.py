@@ -944,6 +944,8 @@ def run_screen(cif_files):
 
 			#***********HIGH ACCURACY ISIF3***********
 			acc_level = acc_levels[run_i]
+			if 'large_supercell' in calc_swaps:
+				calc_swaps.remove('large_supercell')
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
@@ -957,8 +959,6 @@ def run_screen(cif_files):
 					clean_files(files_to_clean)
 				else:
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
-				if 'large_supercell' in calc_swaps:
-					calc_swaps.remove('large_supercell')
 				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 					if loop_i == n_runs - 1 and 'ibrion=1' not in calc_swaps:
@@ -999,8 +999,6 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
-				if 'large_supercell' in calc_swaps:
-					calc_swaps.remove('large_supercell')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof == None:
