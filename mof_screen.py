@@ -403,7 +403,7 @@ def update_calc(calc,calc_swaps):
 			calc.float_params['amin'] = 0.01
 		elif swap == 'zbrent':
 			calc.int_params['ibrion'] = 1
-			calc.exp_params['ediff'] = calc.exp_params['ediff']*0.1
+			calc.exp_params['ediff'] = 1e-6
 			calc.int_params['nelmin'] = 8
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
