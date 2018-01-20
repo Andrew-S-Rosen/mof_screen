@@ -746,8 +746,7 @@ def run_screen(cif_files):
 
 	#Files, spin levels, and accuracy levels to iterate over
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
-	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj',
-	'vasprun.xml']
+	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2','isif4','isif3_lowacc','isif3_highacc','final']
 	nprocs, ppn = get_nprocs()
@@ -927,13 +926,13 @@ def run_screen(cif_files):
 					loop_i += 1
 				if 'ibrion=1' in calc_swaps:
 					calc_swaps.remove('ibrion=1')
-				if mof != None and mof.calc.converged == True:
+				if mof != None and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
-					elif mof.calc.converged == False:
+					elif converged == False:
 						pprint('^ Convergence not reached')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
@@ -977,13 +976,13 @@ def run_screen(cif_files):
 					loop_i += 1
 				if 'ibrion=1' in calc_swaps:
 					calc_swaps.remove('ibrion=1')
-				if mof != None and mof.calc.converged == True and V_diff <= V_cut:
+				if mof != None and converged == True and V_diff <= V_cut:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
-					elif mof.calc.converged == False:
+					elif converged == False:
 						pprint('^ Convergence not reached')
 					elif V_diff > V_cut:
 						pprint('^ Change in V of '+str(V_diff)+' percent')
