@@ -310,7 +310,7 @@ for cif_file in cif_files:
 				raise ValueError('Not coded!')
 			elif cnum == 2:
 				ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,ase_cus_idx)
-				print(refcode+': using angular sweep (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
+				print(refcode+': using angular sweep (cnum='+str(cnum)+')')
 			elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
 				ads_sites[i,:], tri_planar = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords,ase_cus_idx)
 				if tri_planar == True:
