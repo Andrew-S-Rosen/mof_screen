@@ -16,7 +16,6 @@ rcut = 2.5 #cutoff for nearest neighbors
 zeo_tol = 0.1 #tolerance for difference between zeo++ coordinates and ASE
 sum_cutoff = 0.5 #cutoff for sum of vectors to be planar
 rmse_tol = 0.25 #rmse tolerance for if a geometry is planar-like
-r2_tol = 0.95 #r^2 tolerance for if a geometry is planar-like
 overlap_tol = 1.3 #tolerance for overlapping atoms
 
 def get_cif_files():
@@ -32,8 +31,7 @@ def get_cif_files():
 		os.makedirs(error_path)
 	return cif_files
 
-def fit_plane(mic_coords):
-#fit equation of plane and get fit parameters and RMSE
+def fit_line(xyz):
 	x = mic_coords[:,0][np.newaxis].T
 	y = mic_coords[:,1][np.newaxis].T
 	z = mic_coords[:,2][np.newaxis].T
@@ -43,11 +41,28 @@ def fit_plane(mic_coords):
 	fit = np.squeeze(np.dot(np.linalg.pinv(np.dot(A.T,A)),np.dot(A.T,B)))
 	z_fit = fit[0]*x+fit[1]*y+fit[2]
 	ss_res = sum((z_fit-z)**2)[0]
-	rmse = (ss_res/len(z))**0.5
 	ss_tot = sum((z-np.mean(z))**2)[0]
 	r2 = 1-ss_res/ss_tot
 	normal_vec = np.array([fit[0],fit[1],-1])
-	return fit, rmse, r2, normal_vec
+	if r2 < 1:
+		print('WARNING: Poor linear fit to two points')
+	return normal_vec
+
+def fit_plane(xyz):
+#orthogonal regression to ax+by+cz+d=0
+	xyz_mean = np.mean(xyz,axis=0)
+	xyz_sub = xyz-xyz_mean
+	[u,s,v] = np.linalg.svd(xyz_sub,full_matrices=False)
+	v = v.T
+	normal_vec = v[:,-1]
+	a = normal_vec[0]
+	b = normal_vec[1]
+	c = normal_vec[2]
+	d = -np.dot(xyz_mean,normal_vec)
+	fit = a*xyz[:,0]+b*xyz[:,1]+c*xyz[:,2]+d
+	ss_res = sum(fit**2)
+	rmse = (ss_res/np.shape(xyz)[0])**0.5
+	return rmse, normal_vec
 
 def get_CN(oms_path):
 #read OMS file for n_OMS
@@ -164,17 +179,6 @@ def write_files(refcode,mof,best_to_worst_idx,cluster):
 		print('ERROR: '+refcode+' ('+str(cluster)+')')
 		write(error_path+basename+'_'+str(cluster)+'.cif',mof)
 
-def get_vert_vec_norm(mic_coords):
-#Get normal vector if plane is vertical in z
-	vec_norm = np.inf
-	for i in range(2,np.shape(mic_coords)[0]):
-		vec_temp = np.cross(mic_coords[1,:]-mic_coords[0,:],mic_coords[i,:]-mic_coords[0,:])
-		vec_norm_temp = np.linalg.norm(vec_temp)
-		if np.abs(vec_temp[-1])/vec_norm_temp < vec_norm:
-			normal_vec = vec_temp
-			vec_norm = vec_norm_temp
-	return normal_vec
-
 def get_planar_ads_site(cif_file,cus_coord,dist,ase_cus_idx):
 #Get adsorption site for planar structure
 	NN = []
@@ -237,6 +241,7 @@ def get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coord,ase_cus_idx):
 	NN_planar, mindist_planar = get_NNs(cif_file,ads_site_planar,ase_cus_idx)
 	ads_site_nonplanar = get_nonplanar_ads_site(sum_dist,cus_coord)
 	NN_nonplanar, mindist_nonplanar = get_NNs(cif_file,ads_site_nonplanar,ase_cus_idx)
+	tri_planar = True
 	if NN_planar == NN_nonplanar:
 		if mindist_planar >= mindist_nonplanar:
 			ads_site = ads_site_planar
@@ -246,7 +251,8 @@ def get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coord,ase_cus_idx):
 		ads_site = ads_site_planar
 	else:
 		ads_site = ads_site_nonplanar
-	return ads_site
+		tri_planar = False
+	return ads_site, tri_planar
 
 cif_files = get_cif_files()
 for cif_file in cif_files:
@@ -295,20 +301,29 @@ for cif_file in cif_files:
 			scaled_mic_coords = mic_coords*guess_length/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
 			scaled_sum_dist = sum(scaled_mic_coords)
 			sum_dist = sum(mic_coords)
-			fit, rmse, r2, normal_vec = fit_plane(mic_coords)
+			norm_scaled = np.linalg.norm(scaled_sum_dist)
+			if cnum >= 3:
+				rmse, normal_vec = fit_plane(mic_coords)
+			else:
+				normal_vec = fit_line(mic_coords)
 			if cnum == 1:
 				raise ValueError('Not coded!')
 			elif cnum == 2:
 				ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,ase_cus_idx)
-			elif cnum == 3 and np.linalg.norm(scaled_sum_dist) >= sum_cutoff:
-				ads_sites[i,:] = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords,ase_cus_idx)
-			elif np.linalg.norm(scaled_sum_dist) <= sum_cutoff or r2 >= r2_tol or rmse <= rmse_tol:
-				if fit[2] >= 1e10 or rmse >= rmse_tol*2:
-					normal_vec = get_vert_vec_norm(mic_coords)
+				print(refcode+': using angular sweep (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
+			elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
+				ads_sites[i,:], tri_planar = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords,ase_cus_idx)
+				if tri_planar == True:
+					print(refcode+': using least-squares plane (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
+				else:
+					print(refcode+': using sum of vectors (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
+			elif norm_scaled <= sum_cutoff or rmse <= rmse_tol:
+				print(refcode+': using least-squares plane (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
 				dist = get_dist_planar(normal_vec)
 				ads_sites[i,:] = get_planar_ads_site(cif_file,cus_coords,dist,ase_cus_idx)
 			else:
 				ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
+				print(refcode+': using sum of vectors (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
 		ase_cus_idx_cluster = [ase_cus_idx_all[j] for j in omsex_indices]
 		best_to_worst_idx = get_best_to_worst_idx(cif_file,ads_sites,ase_cus_idx_cluster)
 		write_files(refcode,mof,best_to_worst_idx,unique_cluster_sym)
