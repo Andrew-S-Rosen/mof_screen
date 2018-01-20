@@ -866,7 +866,7 @@ def run_screen(cif_files):
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				if 'zbrent' in calc_swaps:
-					calc_swaps.rempve('zbrent')
+					calc_swaps.remove('zbrent')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
