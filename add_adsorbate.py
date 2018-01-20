@@ -241,7 +241,6 @@ def get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coord,ase_cus_idx):
 	NN_planar, mindist_planar = get_NNs(cif_file,ads_site_planar,ase_cus_idx)
 	ads_site_nonplanar = get_nonplanar_ads_site(sum_dist,cus_coord)
 	NN_nonplanar, mindist_nonplanar = get_NNs(cif_file,ads_site_nonplanar,ase_cus_idx)
-	tri_planar = True
 	if NN_planar == NN_nonplanar:
 		if mindist_planar >= mindist_nonplanar:
 			ads_site = ads_site_planar
@@ -251,8 +250,7 @@ def get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coord,ase_cus_idx):
 		ads_site = ads_site_planar
 	else:
 		ads_site = ads_site_nonplanar
-		tri_planar = False
-	return ads_site, tri_planar
+	return ads_site
 
 cif_files = get_cif_files()
 for cif_file in cif_files:
@@ -312,18 +310,12 @@ for cif_file in cif_files:
 				ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,ase_cus_idx)
 				print(refcode+': using angular sweep (cnum='+str(cnum)+')')
 			elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
-				ads_sites[i,:], tri_planar = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords,ase_cus_idx)
-				if tri_planar == True:
-					print(refcode+': using least-squares plane (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
-				else:
-					print(refcode+': using sum of vectors (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
+				ads_sites[i,:] = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords,ase_cus_idx)
 			elif norm_scaled <= sum_cutoff or rmse <= rmse_tol:
-				print(refcode+': using least-squares plane (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
 				dist = get_dist_planar(normal_vec)
 				ads_sites[i,:] = get_planar_ads_site(cif_file,cus_coords,dist,ase_cus_idx)
 			else:
 				ads_sites[i,:] = get_nonplanar_ads_site(sum_dist,cus_coords)
-				print(refcode+': using sum of vectors (cnum='+str(cnum)+', RMSE='+str(np.round(rmse,2))+', sum(r_i)='+str(np.round(norm_scaled,2))+')')
 		ase_cus_idx_cluster = [ase_cus_idx_all[j] for j in omsex_indices]
 		best_to_worst_idx = get_best_to_worst_idx(cif_file,ads_sites,ase_cus_idx_cluster)
 		write_files(refcode,mof,best_to_worst_idx,unique_cluster_sym)
