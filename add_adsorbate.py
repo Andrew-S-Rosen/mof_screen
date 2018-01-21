@@ -1,25 +1,28 @@
+from ase import Atoms, Atom
 from ase.io import read, write
 import numpy as np
 import os
-from ase import Atoms, Atom
 
-#Paths for files
-coremof_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_cifs/' #path for MOFs to oxygenate
-newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs/' #path to generate oxygenated MOFs
-omsdata = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_cifs/OMS_data/' #path to .omsex and .oms files
-error_path = newmofs_path+'errors/'
+#-------------Paths for files-------------
+coremof_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
+'results_cifs/reoptimized_cifs/' #path to MOF CIFs to oxygenate
+newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
+'results_cifs/oxygenated_reoptimized_oms_cifs/' #path to store oxygenated CIFs
+omsdata = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/'
+'reoptimized_cifs/OMS_data/' #path to Zeo++ .omsex and .oms files
+error_path = newmofs_path+'errors/' #path to store failed CIFs
 
-#Parameters
+#-------------Parameters-------------
 guess_length = 2.0 #M-adsorbate bond distance
-ads_species = 'O' #adsorbate
-rcut = 2.5 #cutoff for nearest neighbors
-zeo_tol = 0.1 #tolerance for difference between zeo++ coordinates and ASE
-sum_cutoff = 0.5 #cutoff for sum of vectors to be planar
-rmse_tol = 0.25 #rmse tolerance for if a geometry is planar-like
-overlap_tol = 1.3 #tolerance for overlapping atoms
+ads_species = 'O' #adsorbate species
+rcut = 2.5 #cutoff for calculating nearest neighbors
+sum_cutoff = 0.5 #sum(r_i) cutoff for planar structures
+rmse_tol = 0.25 #RMSE cutoff for planar structures
+overlap_tol = 1.3 #distance tolerance for overlapping atoms
 
+#-------------Functions-------------
 def get_cif_files():
-#read in the CIF files for the MOFs from coremof_path
+#read in the MOF CIF files
 	cif_files = []
 	for filename in os.listdir(coremof_path):
 		filename = filename.strip()
@@ -31,7 +34,8 @@ def get_cif_files():
 		os.makedirs(error_path)
 	return cif_files
 
-def fit_line(xyz):
+def OLS_fit(xyz):
+#OLS regression to z=a+bx+cy and calculation of normal vector
 	x = mic_coords[:,0][np.newaxis].T
 	y = mic_coords[:,1][np.newaxis].T
 	z = mic_coords[:,2][np.newaxis].T
@@ -44,12 +48,12 @@ def fit_line(xyz):
 	ss_tot = sum((z-np.mean(z))**2)[0]
 	r2 = 1-ss_res/ss_tot
 	normal_vec = np.array([fit[0],fit[1],-1])
-	if r2 < 1:
-		print('WARNING: Poor linear fit to two points')
+	if r2 < 1 and len(x) == 2:
+		raise ValueError('Poor linear fit to two points')
 	return normal_vec
 
-def fit_plane(xyz):
-#orthogonal regression to ax+by+cz+d=0
+def TLS_fit(xyz):
+#total LS regression to ax+by+cz+d=0 and calculation of normal vector
 	xyz_mean = np.mean(xyz,axis=0)
 	xyz_sub = xyz-xyz_mean
 	[u,s,v] = np.linalg.svd(xyz_sub,full_matrices=False)
@@ -65,7 +69,7 @@ def fit_plane(xyz):
 	return rmse, normal_vec
 
 def get_CN(oms_path):
-#read OMS file for n_OMS
+#read .oms file to get number of OMS
 	f = open(oms_path,'r')
 	oms_file = f.read()
 	n_OMS = int(oms_file.split('OMS=')[1].split('\n')[0])
@@ -73,7 +77,7 @@ def get_CN(oms_path):
 	return n_OMS
 
 def get_omsex_line(line):
-#read line in OMSEX file
+#read line in .omsex file for OMS details
 	cus_symbol = line.split(' |')[0]
 	cnum = int(line.split('CNUM: ')[1].split('|')[0])
 	cus_coord = np.asarray(np.matrix(line.split('COORD: ')[1].split('|')[0][0:-1]))
@@ -81,11 +85,12 @@ def get_omsex_line(line):
 	return cus_symbol, cnum, cus_coord, coords
 
 def get_omsex_data(refcode):
-#Get all OMSEX data
+#Get all .omsex data
 	cus_coords_all = np.zeros((n_OMS,3))
 	ase_cus_idx_all = []
 	cus_sym_all = []
 	cnums_all = []
+	zeo_tol = 0.1
 	with open(omsdata+refcode+'.omsex','r') as rf:
 		for i, line in enumerate(rf):
 			cus_sym_temp, cnum_temp, cus_coords_all[i,:], NN_coords_temp = get_omsex_line(line)
@@ -100,12 +105,13 @@ def get_omsex_data(refcode):
 					ase_cus_idx_all.append(j)
 					break
 			if len(ase_cus_idx_all) < i+1:
-				print('WARNING with '+refcode+': a zeo++ OMS (#'+str(i)+') is not in same spot as in ASE CIF')
+				raise ValueError('ERROR with '+refcode+': a zeo++ OMS (#'+str(i)+') is not in same spot as in ASE CIF')
 	return cnums_all, cus_coords_all, ase_cus_idx_all, cus_sym_all, NN_coords_all
 
 def get_ase_NN_idx(mof,coords):
-#get ASE indices for NN
+#get ASE indices for coordinating atoms
 	ase_NN_idx = []
+	zeo_tol = 0.1
 	for i in range(np.shape(coords)[0]):
 		nn_fail = False
 		for j, element in enumerate(mof):
@@ -118,12 +124,13 @@ def get_ase_NN_idx(mof,coords):
 	return ase_NN_idx
 
 def get_dist_planar(normal_vec):
-#get distance vector of adsorbate from planar CUS site
+#get distance vector of adsorbate from planar OMS
 	unit_normal = normal_vec/np.linalg.norm(normal_vec)
 	dist = unit_normal*guess_length
 	return dist
 
 def get_NNs(cif_file,ads_site,ase_cus_idx):
+#get the number of NNs and the minimum distance to a NN (other than the OMS)
 	mof_temp = read(coremof_path+cif_file)
 	adsorbate = Atoms([Atom(ads_species,ads_site)])
 	mof_temp.extend(adsorbate)
@@ -135,7 +142,7 @@ def get_NNs(cif_file,ads_site,ase_cus_idx):
 	return NN, mindist
 
 def get_best_to_worst_idx(cif_file,ads_sites,ase_cus_idx_list):
-#sort the OMS by smallest NNs
+#sort the OMS by smallest NNs (using mindist as tiebreaker)
 	NN = []
 	mindist = []
 	i_vec = []
@@ -162,7 +169,7 @@ def add_ads_species(cif_file,ads_site):
 	return mof_temp
 
 def write_files(refcode,mof,best_to_worst_idx,cluster):
-#Write adsorbed CIF
+#write oxygenated CIF
 	basename = refcode+'_'+ads_species
 	success = False
 	for idx in best_to_worst_idx:
@@ -191,7 +198,6 @@ def get_planar_ads_site(cif_file,cus_coord,dist,ase_cus_idx):
 		NN_temp, mindist_temp = get_NNs(cif_file,ads_site_temp,ase_cus_idx)
 		NN.append(NN_temp)
 		mindist.append(mindist_temp)
-	#take the +/- sign of unit normal based on fewest number of NN
 	if NN[0] == NN[1]:
 		if mindist[0] >= mindist[1]:
 			ads_site = cus_coord + dist
@@ -210,7 +216,7 @@ def get_nonplanar_ads_site(sum_dist,cus_coord):
 	return ads_site
 
 def get_bi_ads_site(cif_file,normal_vec,cus_coord,ase_cus_idx):
-#Get adsorption site for 2-coordinate
+#Get adsorption site for 2-coordinate geometry
 	try_angles = np.arange(0,360,10)
 	dist = get_dist_planar(normal_vec)
 	ads_site_temp_unrotated1 = cus_coord + dist
@@ -252,6 +258,7 @@ def get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coord,ase_cus_idx):
 		ads_site = ads_site_nonplanar
 	return ads_site
 
+#-------------Runner-------------
 cif_files = get_cif_files()
 for cif_file in cif_files:
 	refcode = cif_file.split('.cif')[0]
@@ -301,14 +308,13 @@ for cif_file in cif_files:
 			sum_dist = sum(mic_coords)
 			norm_scaled = np.linalg.norm(scaled_sum_dist)
 			if cnum >= 3:
-				rmse, normal_vec = fit_plane(mic_coords)
-			else:
-				normal_vec = fit_line(mic_coords)
+				rmse, normal_vec = TLS_fit(mic_coords)
+			elif cnum == 2:
+				normal_vec = OLS_fit(mic_coords)
 			if cnum == 1:
 				raise ValueError('Not coded!')
 			elif cnum == 2:
 				ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,ase_cus_idx)
-				print(refcode+': using angular sweep (cnum='+str(cnum)+')')
 			elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
 				ads_sites[i,:] = get_tri_ads_site(cif_file,normal_vec,sum_dist,cus_coords,ase_cus_idx)
 			elif norm_scaled <= sum_cutoff or rmse <= rmse_tol:
