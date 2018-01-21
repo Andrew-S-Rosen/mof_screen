@@ -381,7 +381,15 @@ def update_calc(calc,calc_swaps):
 		elif 'algo=' in swap:
 			calc.string_params['algo'] = swap.split('=')[-1]
 		elif 'isif=' in swap:
-			calc.int_params['isif'] = int(swap.split('=')[-1])	
+			calc.int_params['isif'] = int(swap.split('=')[-1])
+		elif 'lreal=' in swap:
+			swap_val = swap.split('=')[1].lower()
+			if swap_val == 'false':
+				calc.special_params['lreal'] = False
+			elif swap_val == 'auto':
+				calc.special_params['lreal'] = 'Auto'
+			elif swap_val == 'true':
+				calc.special_params['lreal'] = True
 		elif swap == 'edddav':
 			calc.string_params['algo'] = 'All'		
 		elif swap == 'inv_rot_mat':
@@ -943,8 +951,6 @@ def run_screen(cif_files):
 
 			#***********HIGH ACCURACY ISIF3***********
 			acc_level = acc_levels[run_i]
-			if 'large_supercell' in calc_swaps:
-				calc_swaps.remove('large_supercell')
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				converged = False
 				loop_i = 0
@@ -974,10 +980,22 @@ def run_screen(cif_files):
 						V_diff = np.abs((V-V0))/V0
 					V0 = V
 					loop_i += 1
-				if 'ibrion=1' in calc_swaps:
-					calc_swaps.remove('ibrion=1')
-				if mof != None and converged == True and V_diff <= V_cut:
-					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+				if mof != None and converged == True and V_diff <= V_cut and 'large_supercell' in calc_swaps:
+					pprint('Running '+spin_level+', '+acc_level+' (LREAL=False)')
+					calc_swaps.append('nsw=100')
+					calc_swaps.remove('large_supercell')
+					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+					calc_swaps.remove('nsw=100')
+					if mof != None and mof.calc.converged == True:
+						if 'ibrion=1' in calc_swaps:
+							calc_swaps.remove('ibrion=1')
+						write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+					else:
+						write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
+						if mof == None:
+							pprint('^ VASP crashed')
+						elif mof.calc.converged == False:
+							pprint('^ Convergence not reached')					
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
@@ -999,6 +1017,8 @@ def run_screen(cif_files):
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
+				if 'large_supercell' in calc_swaps:
+					calc_swaps.remove('large_supercell')
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof == None:
 					break
