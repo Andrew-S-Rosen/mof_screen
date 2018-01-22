@@ -114,7 +114,7 @@ def cif_to_mof(cif_file):
 #Save MOF file as reduced unit cell and read in ASE
 	cifpath = mofpath+cif_file
 	parser = CifParser(cifpath)
-	pm_mof = parser.get_structures()[0]
+	pm_mof = parser.get_structures(primitive=True)[0]
 	pm_mof.to(filename='POSCAR')
 	mof = read('POSCAR')
 	return mof
