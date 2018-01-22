@@ -896,7 +896,7 @@ def run_screen(cif_files):
 					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 					loop_i += 1
-				if mof != None and mof.calc.converged == True:
+				if mof != None and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
@@ -904,7 +904,7 @@ def run_screen(cif_files):
 						pprint('^ VASP crashed')
 					elif mof.calc.scf_converged == False:
 						pprint('^ SCF convergence not reached')
-					elif mof.calc.converged == False:
+					elif converged == False:
 						pprint('^ Convergence not reached')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
