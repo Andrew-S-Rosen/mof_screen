@@ -6,8 +6,8 @@ from ase.optimize import BFGSLineSearch
 from ase.io import read
 
 #-------------SET PATHS-------------
-old_mofpath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results/'
-mofpath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs/'
+kpts_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cleaned/data_for_phase2/kpts.txt'
+mofpath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cleaned/data_for_phase2/cifs/'
 basepath = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/'
 submit_script = 'sub_asevasp_screening2_temp.job'
 stdout_file = 'mof_screen_phase2.out'
@@ -64,23 +64,27 @@ def get_kpts(cif_file,kppa):
 #Get kpoint grid at a given KPPA
 	cif_split1 = cif_file.split('_'+ads_species+'_OMS')[0]
 	old_cif_name = cif_split1.split('_spin')[0]
-	spin = 'spin'+cif_split1.split('_spin')[1]
-	if kppa == 100:
-		kpts_path = old_mofpath+old_cif_name+'/isif2/'+spin+'/KPOINTS'
-	elif kppa == 1000:
-		kpts_path = old_mofpath+old_cif_name+'/final/'+spin+'/KPOINTS'
+	infile = open(kpts_path,'r')
+	lines = infile.read().splitlines()
+	infile.close()
+	for i in range(len(lines)):
+		if old_cif_name in lines[i]:
+			if kppa == 100:
+				kpts = lines[i+1]
+				gamma = lines[i+2]
+			elif kppa == 1000:
+				kpts = lines[i+3]
+				gamma = lines[i+4]
+			else:
+				raise ValueError('Incompatible KPPA with prior runs')
+			break
+	kpts = np.squeeze(np.asarray(np.matrix(kpts))).tolist()
+	if gamma == 'True':
+		gamma = True
+	elif gamma == 'False':
+		gamma = False
 	else:
-		raise ValueError('Incompatible KPPA with prior runs')
-	with open(kpts_path,'r') as rf:
-		for i, line in enumerate(rf):
-			line = line.strip()
-			if i == 2:
-				if 'gamma' in line.lower():
-					gamma = True
-				else:
-					gamma = False
-			if i == 3:
-				kpts = np.squeeze(np.asarray(np.matrix(line))).tolist()
+		raise ValueError('Error parsing KPOINTS file')
 	if len(kpts) != 3:
 		raise ValueError('Error parsing KPOINTS file')
 	return kpts, gamma
@@ -393,6 +397,14 @@ def update_calc(calc,calc_swaps):
 			calc.string_params['algo'] = swap.split('=')[-1]
 		elif 'isif=' in swap:
 			calc.int_params['isif'] = int(swap.split('=')[-1])
+		elif 'lreal=' in swap:
+			swap_val = swap.split('=')[1].lower()
+			if swap_val == 'false':
+				calc.special_params['lreal'] = False
+			elif swap_val == 'auto':
+				calc.special_params['lreal'] = 'Auto'
+			elif swap_val == 'true':
+				calc.special_params['lreal'] = True
 		elif swap == 'edddav':
 			calc.string_params['algo'] = 'All'
 		elif swap == 'inv_rot_mat':
@@ -710,8 +722,7 @@ def run_screen(cif_files):
 
 	#Files, spin levels, and accuracy levels to iterate over
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
-	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj',
-	'vasprun.xml']
+	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','final']
 	nprocs, ppn = get_nprocs()
