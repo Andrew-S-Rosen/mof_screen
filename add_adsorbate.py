@@ -4,12 +4,9 @@ import numpy as np
 import os
 
 #-------------Paths for files-------------
-coremof_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
-'results_cifs/reoptimized_cifs/' #path to MOF CIFs to oxygenate
-newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
-'results_cifs/oxygenated_reoptimized_oms_cifs/' #path to store oxygenated CIFs
-omsdata = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/'
-'reoptimized_cifs/OMS_data/' #path to Zeo++ .omsex and .oms files
+coremof_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_cifs/' #path to MOF CIFs to oxygenate
+newmofs_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/oxygenated_reoptimized_oms_cifs/' #path to store oxygenated CIFs
+omsdata = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cifs/reoptimized_cifs/OMS_data/' #path to Zeo++ .omsex and .oms files
 error_path = newmofs_path+'errors/' #path to store failed CIFs
 
 #-------------Parameters-------------
