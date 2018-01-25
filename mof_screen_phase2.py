@@ -25,7 +25,7 @@ defaults = {
 	'nelm': 250,
 	'nelmin': 6,
 	'lreal': False,
-	'ncore': 24,
+	'ncore': 28,
 	'ismear': 0,
 	'sigma': 0.01,
 	'nsw': 500,
@@ -277,11 +277,15 @@ def get_incar_magmoms(incarpath,poscarpath):
 
 def read_outcar(outcarpath):
 #read OUTCAR and fixes weird fortran I/O errors
+	mof_pos = read(outcarpath.strip('OUTCAR')+'CONTCAR')
 	try:
 		mof = read(outcarpath,format='vasp-out')
 	except ValueError:
 		os.system('sed -i -e "s/\([[:digit:]]\)-\([[:digit:]]\)/\\1 -\\2/g" '+str(outcarpath))
 		mof = read(outcarpath,format='vasp-out')
+	if all(mof.get_atomic_numbers() == mof_pos.get_atomic_numbers()) == False:
+		raise ValueError('CONTCAR and OUTCAR have mismatched atoms')
+	mof.set_positions(mof_pos.get_positions())
 	return mof
 
 def reset_mof():
@@ -294,10 +298,7 @@ def continue_mof():
 #decide if the MOF object should be continued or restarted
 	try:
 		mof = read('CONTCAR')
-		try:
-			mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-		except:
-			mof = continue_failed_magmoms(mof)
+		mof = continue_failed_magmoms(mof)
 	except:
 		mof = reset_mof()
 	return mof
@@ -849,9 +850,6 @@ def run_screen(cif_files):
 					clean_files(files_to_clean)
 				else:
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
-				if kpts_lo != kpts_hi:
-					if 'zbrent' in calc_swaps:
-						calc_swaps.remove('zbrent')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
@@ -876,8 +874,6 @@ def run_screen(cif_files):
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
-				if 'zbrent' in calc_swaps:
-					calc_swaps.remove('zbrent')
 				pprint('Running '+spin_level+', '+acc_level)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
