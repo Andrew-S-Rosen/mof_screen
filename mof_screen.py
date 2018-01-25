@@ -262,11 +262,15 @@ def get_incar_magmoms(incarpath,poscarpath):
 
 def read_outcar(outcarpath):
 #read OUTCAR and fixes weird fortran I/O errors
+	mof_pos = read(outcarpath.strip('OUTCAR')+'CONTCAR')
 	try:
 		mof = read(outcarpath,format='vasp-out')
 	except ValueError:
 		os.system('sed -i -e "s/\([[:digit:]]\)-\([[:digit:]]\)/\\1 -\\2/g" '+str(outcarpath))
 		mof = read(outcarpath,format='vasp-out')
+	if all(mof.get_atomic_numbers() == mof_pos.get_atomic_numbers()) == False:
+		raise ValueError('CONTCAR and OUTCAR have mismatched atoms')
+	mof.set_positions(mof_pos.get_positions())
 	return mof
 
 def reset_mof():
@@ -279,10 +283,7 @@ def continue_mof():
 #decide if the MOF object should be continued or restarted
 	try:
 		mof = read('CONTCAR')
-		try:
-			mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-		except:
-			mof = continue_failed_magmoms(mof)
+		mof = continue_failed_magmoms(mof)
 	except:
 		mof = reset_mof()
 	return mof
