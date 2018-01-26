@@ -25,7 +25,7 @@ defaults = {
 	'nelm': 250,
 	'nelmin': 6,
 	'lreal': False,
-	'ncore': 28,
+	'ncore': 24,
 	'ismear': 0,
 	'sigma': 0.01,
 	'nsw': 500,
@@ -277,15 +277,11 @@ def get_incar_magmoms(incarpath,poscarpath):
 
 def read_outcar(outcarpath):
 #read OUTCAR and fixes weird fortran I/O errors
-	mof_pos = read(outcarpath.strip('OUTCAR')+'CONTCAR')
 	try:
 		mof = read(outcarpath,format='vasp-out')
 	except ValueError:
 		os.system('sed -i -e "s/\([[:digit:]]\)-\([[:digit:]]\)/\\1 -\\2/g" '+str(outcarpath))
 		mof = read(outcarpath,format='vasp-out')
-	if all(mof.get_atomic_numbers() == mof_pos.get_atomic_numbers()) == False:
-		raise ValueError('CONTCAR and OUTCAR have mismatched atoms')
-	mof.set_positions(mof_pos.get_positions())
 	return mof
 
 def reset_mof():
@@ -878,6 +874,7 @@ def run_screen(cif_files):
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					if 'large_supercell' in calc_swaps:
+						pprint('Running '+spin_level+', '+acc_level+' (LREAL=False)')
 						calc_swaps.remove('large_supercell')
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
