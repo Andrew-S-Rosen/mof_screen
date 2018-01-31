@@ -3,12 +3,8 @@ from ase.io import read
 import os
 import numpy as np
 mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
-n_atoms = []
-elements = []
-counts = []
 refcodes = []
-id_list = []
-dup_list = []
+stoichs = []
 for filename in os.listdir(mofpath):
 	filename = filename.strip()
 	if len(filename.split('.cif')) == 2:
@@ -22,23 +18,25 @@ for filename in os.listdir(mofpath):
 		if 6 not in atom_numbers:
 			print('No C in MOF: '+refcode)
 			continue
-		[elements_temp,counts_temp] = np.unique(atom_numbers,return_counts=True)
-		n_atoms_temp = len(mof)
-		elements_temp = elements_temp.tolist()
-		counts_temp = counts_temp.tolist()
-		elements.append(elements_temp)
-		counts.append(counts_temp)
-		n_atoms.append(n_atoms_temp)
-		id_list.append([n_atoms_temp]+elements_temp+counts_temp)
+		stoichs.append(mof.get_chemical_formula())
 os.remove(mofpath+'POSCAR')
-full_id_list = list(zip(refcodes,id_list))
-full_id_list.sort(key=lambda x: x[1])
-unique_id,id_counts = np.unique(id_list,return_counts=True)
-mult_id = unique_id[id_counts > 1].tolist()
-for i, refcode in enumerate(refcodes):
-	n_atoms_i = n_atoms[i]
-	elements_i = elements[i]
-	counts_i = counts[i]
-	id_i = [n_atoms_i]+elements_i+counts_i
-	if id_i in mult_id:
-		print('WARNING: '+refcode+' likely a duplicate ('+str(n_atoms_i)+', '+str(elements_i)+', '+str(counts_i)+')')
+unique_id,id_counts = np.unique(stoichs,return_counts=True)
+mult_ids = unique_id[id_counts > 1].tolist()
+for mult_id in mult_ids:
+	position_mats = []
+	idx = []
+	for i, stoich in enumerate(stoichs):
+		if stoich == mult_id:
+			parser = CifParser(mofpath+refcode+'.cif')
+			pm_mof = parser.get_structures(primitive=True)[0]
+			pm_mof.to(filename='POSCAR')
+			mof = read('POSCAR')
+			position_mats.append(mof.get_positions())
+			idx.append(i)
+	position_mats = np.array(position_mats)
+	n = np.shape(position_mats)[0]
+	for i in range(n):
+		diffs = (np.sum((position_mats[i,:,:]-position_mats[np.arange(n) != i,:,:])**2,axis=1)/n)**(0.5)
+		for j in range(n-1):
+			if all(diffs[j,:] < 0.1):
+				print('WARNING: '+refcodes[idx[i]]+' ('+stoichs[idx[i]]+') is a duplicate with '+refcodes[idx[j]]+' ('+stoichs[idx[j]]+')')
