@@ -17,7 +17,7 @@ for filename in os.listdir(mofpath):
 		pm_mof.to(filename='POSCAR')
 		mof = read('POSCAR')
 		if 6 not in mof.get_atomic_numbers():
-			print('NOT MOF: '+refcode)
+			print('No C in MOF: '+refcode)
 			continue
 		n_atoms.append(len(mof))
 		[elements_temp,counts_temp] = np.unique(mof.get_atomic_numbers(),return_counts=True)
