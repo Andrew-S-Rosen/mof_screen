@@ -41,5 +41,5 @@ for i, refcode in enumerate(refcodes):
 			if counts_i in mult_counts:
 				dup_list.append(refcode)
 dup_list = [dup for _,dup in sorted(zip(n_atoms,dup_list))]
-for dup in dup_list:
-	print('WARNING: '+dup+' likely a duplicate ('+str(n_atoms_i)+', '+str(elements_i)+', '+str(counts_i)+')')
+for i,dup in enumerate(dup_list):
+	print('WARNING: '+dup+' likely a duplicate ('+str(n_atoms[i])+', '+str(elements[i])+', '+str(counts[i])+')')
