@@ -7,6 +7,7 @@ n_atoms = []
 elements = []
 counts = []
 refcodes = []
+id_list = []
 dup_list = []
 for filename in os.listdir(mofpath):
 	filename = filename.strip()
@@ -21,25 +22,23 @@ for filename in os.listdir(mofpath):
 		if 6 not in atom_numbers:
 			print('No C in MOF: '+refcode)
 			continue
-		n_atoms.append(len(mof))
 		[elements_temp,counts_temp] = np.unique(atom_numbers,return_counts=True)
-		elements.append(elements_temp.tolist())
-		counts.append(counts_temp.tolist())
+		n_atoms_temp = len(mof)
+		elements_temp = elements_temp.tolist()
+		counts_temp = counts_temp.tolist()
+		elements.append(elements_temp)
+		counts.append(counts_temp)
+		n_atoms.append(n_atoms_temp)
+		id_list.append([n_atoms_temp]+elements_temp+counts_temp)
 os.remove(mofpath+'POSCAR')
-unique_n_atoms,counts_temp = np.unique(n_atoms,return_counts=True)
-mult_n_atoms = unique_n_atoms[counts_temp > 1].tolist()
-unique_elements,counts_temp = np.unique(elements,return_counts=True)
-mult_elements = unique_elements[counts_temp > 1].tolist()
-unique_counts,counts_temp = np.unique(counts,return_counts=True)
-mult_counts = unique_counts[counts_temp > 1].tolist()
+full_id_list = list(zip(refcodes,id_list))
+full_id_list.sort(key=lambda x: x[1])
+unique_id,id_counts = np.unique(id_list,return_counts=True)
+mult_id = unique_id[id_counts > 1].tolist()
 for i, refcode in enumerate(refcodes):
 	n_atoms_i = n_atoms[i]
-	if n_atoms_i in mult_n_atoms:
-		elements_i = elements[i]
-		if elements_i in mult_elements:
-			counts_i = counts[i]
-			if counts_i in mult_counts:
-				dup_list.append(refcode)
-dup_list = [dup for _,dup in sorted(zip(n_atoms,dup_list))]
-for i,dup in enumerate(dup_list):
-	print('WARNING: '+dup+' likely a duplicate ('+str(n_atoms[i])+', '+str(elements[i])+', '+str(counts[i])+')')
+	elements_i = elements[i]
+	counts_i = counts[i]
+	id_i = [n_atoms_i]+elements_i+counts_i
+	if id_i in mult_id:
+		print('WARNING: '+refcode+' likely a duplicate ('+str(n_atoms_i)+', '+str(elements_i)+', '+str(counts_i)+')')
