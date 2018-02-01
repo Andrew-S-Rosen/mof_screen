@@ -796,7 +796,7 @@ def run_screen(cif_files):
 			result_partial_temp_path = basepath+'results/'+refcode+'/'+acc_level
 			results_partial_paths.append(result_partial_temp_path)
 			error_outcar_partial_paths.append(basepath+'errors/'+refcode+'/'+acc_level)
-			if acc_level == 'final':
+			if acc_level == 'final_spe':
 				spin1_final_mof_path = result_partial_temp_path+'/'+spin_levels[0]+'/OUTCAR'
 
 		#Get the kpoints
