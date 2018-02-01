@@ -62,7 +62,7 @@ def get_nprocs():
 def get_kpts(cif_file,kppa):
 #Get kpoint grid at a given KPPA
 	parser = CifParser(mofpath+cif_file)
-	pm_mof = parser.get_structures(primitive=True)[0]
+	pm_mof = parser.get_structures()[0]
 	pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
 	kpts = pm_kpts.kpts[0]
 	if pm_kpts.style.name == 'Gamma':
@@ -730,13 +730,35 @@ def calcs(run_i):
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
 			sigma=defaults['sigma'],
-			lcharg=True,
-			laechg=True,
+			lcharg=False,
 			lwave=True,
 			ibrion=defaults['ibrion'],
 			isif=2,
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym']
+			)
+	elif run_i == 6:
+		calc = Vasp(
+			xc=defaults['xc'],
+			encut=defaults['encut'],
+			kpts=defaults['kpts_hi'],
+			gamma=defaults['gamma'],
+			ivdw=defaults['ivdw'],
+			prec='Accurate',
+			algo=defaults['algo'],
+			ediff=1e-6,
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=False,
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=True,
+			laechg=True,
+			lwave=True,
+			nsw=0,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
@@ -753,7 +775,7 @@ def run_screen(cif_files):
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
 	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
-	acc_levels = ['scf_test','isif2','isif4','isif3_lowacc','isif3_highacc','final']
+	acc_levels = ['scf_test','isif2','isif4','isif3_lowacc','isif3_highacc','final','final_spe']
 	nprocs, ppn = get_nprocs()
 
 	#for each CIF file, optimize the structure
@@ -1029,6 +1051,32 @@ def run_screen(cif_files):
 						pprint('^ SCF did not converge')
 					elif mof.calc.converged == False:
 						pprint('^ Convergence not reached')
+			elif os.path.isfile(outcar_paths[run_i]) == True:
+				pprint('COMPLETED: '+spin_level+', '+acc_level)
+			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
+			if mof == None:
+				pprint('Skipping rest because of errors')
+				break
+
+			#***********FINAL SPE***********
+			acc_level = acc_levels[run_i]
+			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
+				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
+				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				pprint('Running '+spin_level+', '+acc_level)
+				if 'large_supercell' in calc_swaps:
+					calc_swaps.remove('large_supercell')
+				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+				if mof == None:
+					break
+				if mof != None and mof.calc.scf_converged == True:
+					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+				else:
+					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
+					if mof == None:
+						pprint('^ VASP crashed')
+					elif mof.calc.scf_converged == False:
+						pprint('^ SCF did not converge')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
 			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
