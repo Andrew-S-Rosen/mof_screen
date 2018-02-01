@@ -750,7 +750,6 @@ def calcs(run_i):
 			algo=defaults['algo'],
 			ediff=1e-6,
 			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
 			lreal=False,
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
