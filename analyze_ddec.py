@@ -49,8 +49,7 @@ def analyze_ddecs():
 	for refcode in os.listdir(results_path):
 		spe_path = results_path+refcode+'/final_spe/'
 		if os.path.isdir(spe_path):
-			subdirs = os.listdir(spe_path)
-			for subdir in subdirs:
+			for subdir in os.listdir(spe_path):
 				ddec_path = spe_path+subdir+'/ddec/'
 				if os.path.exists(ddec_path):
 					bad_charges, bad_elements = get_ddec(ddec_path)
