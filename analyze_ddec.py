@@ -47,12 +47,13 @@ def get_ddec(filepath):
 def analyze_ddecs():
 	bad_refcodes = []
 	for refcode in os.listdir(results_path):
-		if os.path.isdir(results_path+refcode):
-			subdirs = os.listdir(results_path+refcode)
+		spe_path = results_path+refcode+'/final_spe/'
+		if os.path.isdir(spe_path):
+			subdirs = os.listdir(spe_path)
 			for subdir in subdirs:
-				path = results_path+refcode+'/'+subdir+'/ddec/'
-				if os.path.exists(path):
-					bad_charges, bad_elements = get_ddec(path)
+				ddec_path = spe_path+subdir+'/ddec/'
+				if os.path.exists(ddec_path):
+					bad_charges, bad_elements = get_ddec(ddec_path)
 					if len(bad_elements) != 0:
 						if refcode not in bad_refcodes:
 							bad_refcodes.append(refcode)
