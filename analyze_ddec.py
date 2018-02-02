@@ -54,8 +54,7 @@ def analyze_ddecs():
 				ddec_path = spe_path+subdir+'/ddec/'
 				if os.path.exists(ddec_path):
 					bad_charges, bad_elements = get_ddec(ddec_path)
-					if len(bad_elements) != 0:
-						if refcode not in bad_refcodes:
+					if len(bad_elements) != 0 and refcode not in bad_refcodes:
 							bad_refcodes.append(refcode)
 	return bad_refcodes
 
