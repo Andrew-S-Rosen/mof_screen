@@ -4,7 +4,7 @@ from shutil import copyfile
 results_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results/AVEMOE_clean_min/test/'
 job_control_path = '/home/asr731/software/chargemol_09_26_2017/scripts/job_control.txt'
 submit_script_path = '/home/asr731/software/chargemol_09_26_2017/scripts/sub_ddec.job'
-sub_command = 'qsub'
+sub_command = 'msub'
 for refcode in os.listdir(results_path):
 	spe_path = results_path+refcode+'/final_spe/'
 	if os.path.isdir(spe_path):
