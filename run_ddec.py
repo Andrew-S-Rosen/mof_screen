@@ -1,7 +1,7 @@
 import os
 from shutil import copyfile
 
-results_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results/'
+results_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results/AVEMOE_clean_min/test/'
 job_control_path = '/home/asr731/software/chargemol_09_26_2017/scripts/job_control.txt'
 submit_script_path = '/home/asr731/software/chargemol_09_26_2017/scripts/sub_ddec.job'
 sub_command = 'qsub'
@@ -17,4 +17,4 @@ for refcode in os.listdir(results_path):
 				copyfile(spe_path+subdir+'/'+file,ddec_path+file)
 			copyfile(job_control_path,ddec_path+'job_control.txt')
 			copyfile(submit_script_path,ddec_path+'sub_ddec.job')
-			os.system(sub_command+' sub_ddec.job')
+			os.system(sub_command+' '+ddec_path+'sub_ddec.job')
