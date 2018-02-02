@@ -44,7 +44,7 @@ def get_ddec(filepath):
 				bad_elements.append(element)
 	return bad_charges, bad_elements
 
-def analyze_ddec():
+def analyze_ddecs():
 	bad_refcodes = []
 	for refcode in os.listdir(results_path):
 		if os.path.isdir(results_path+refcode):
@@ -58,4 +58,5 @@ def analyze_ddec():
 							bad_refcodes.append(refcode)
 	return bad_refcodes
 
-bad_refcodes = analyze_ddec()
+bad_refcodes = analyze_ddecs()
+print(bad_refcodes)
