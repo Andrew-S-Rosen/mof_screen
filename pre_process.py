@@ -43,4 +43,3 @@ for mult_id in mult_ids:
 				dups.append(j)
 		if dups:
 			print(refcodes[idx[i]]+' ('+stoichs[idx[i]]+') is a duplicate of '+str(refcodes[idx[dups]]))
-	print('')
