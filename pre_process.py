@@ -16,7 +16,7 @@ for filename in os.listdir(mofpath):
 		if 'Element C,' not in str(mof.species):
 			print('No C in MOF: '+refcode)
 			continue
-		stoichs.append(mof.formula)
+		stoichs.append(mof.formula.replace(' ',''))
 unique_id,id_counts = np.unique(stoichs,return_counts=True)
 mult_ids = unique_id[id_counts > 1].tolist()
 stoichs = np.array(stoichs)
@@ -39,7 +39,7 @@ for mult_id in mult_ids:
 			sm = StructureMatcher(primitive_cell=True)
 			mof2 = parser2.get_structures(primitive=True)[0]
 			rms = sm.get_rms_dist(mof1,mof2)
-			if rms[0] and rms[0] < 0.1:
+			if rms and rms[0] < 0.1:
 				dups.append(j)
 		if dups:
 			print(refcodes[idx[i]]+' ('+stoichs[idx[i]]+') is a duplicate of '+str(refcodes[idx[dups]]))
