@@ -62,7 +62,7 @@ def get_nprocs():
 def get_kpts(cif_file,kppa):
 #Get kpoint grid at a given KPPA
 	parser = CifParser(mofpath+cif_file)
-	pm_mof = parser.get_structures()[0]
+	pm_mof = parser.get_structures(primitive=True)[0]
 	pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
 	kpts = pm_kpts.kpts[0]
 	if pm_kpts.style.name == 'Gamma':
