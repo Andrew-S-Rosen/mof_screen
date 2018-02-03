@@ -21,7 +21,7 @@ for cif_file in cif_files:
 			kpts_path = old_mofpath+old_cif_name+'/isif2/'+spin+'/KPOINTS'
 			print(old_cif_name)
 		elif kppa == 1000:
-			kpts_path = old_mofpath+old_cif_name+'/final/'+spin+'/KPOINTS'
+			kpts_path = old_mofpath+old_cif_name+'/final_spe/'+spin+'/KPOINTS'
 		else:
 			raise ValueError('Incompatible KPPA with prior runs')
 		with open(kpts_path,'r') as rf:
