@@ -1,0 +1,11 @@
+#!/bin/bash
+#MSUB -N Bader
+#MSUB -A p30148
+#MSUB -l nodes=1:ppn=1
+#MSUB -l walltime=1:00:00
+#MSUB -q short
+
+cd $PBS_O_WORKDIR
+chgsum.pl AECCAR0 AECCAR2
+bader CHGCAR -ref CHGCAR_sum
+rm AECCAR0 AECCAR2 CHGCAR CHGCAR_sum
