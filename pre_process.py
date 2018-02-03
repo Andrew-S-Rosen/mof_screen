@@ -1,7 +1,8 @@
-from pymatgen.io.cif import CifParser
-from ase.io import read
 import os
 import numpy as np
+from pymatgen.io.cif import CifParser
+from pymatgen.analysis.structure_matcher import StructureMatcher
+
 mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
 refcodes = []
 stoichs = []
@@ -11,14 +12,11 @@ for filename in os.listdir(mofpath):
 		refcode = filename.split('.cif')[0]
 		refcodes.append(refcode)
 		parser = CifParser(mofpath+filename)
-		pm_mof = parser.get_structures(primitive=True)[0]
-		pm_mof.to(filename='POSCAR')
-		mof = read('POSCAR')
-		atom_numbers = mof.get_atomic_numbers().tolist()
-		if 6 not in atom_numbers:
+		mof = parser.get_structures(primitive=True)[0]
+		if 'Element C,' not in str(mof.species):
 			print('No C in MOF: '+refcode)
 			continue
-		stoichs.append(mof.get_chemical_formula())
+		stoichs.append(mof.formula)
 unique_id,id_counts = np.unique(stoichs,return_counts=True)
 mult_ids = unique_id[id_counts > 1].tolist()
 stoichs = np.array(stoichs)
@@ -28,23 +26,21 @@ for mult_id in mult_ids:
 	idx = []
 	for i, stoich in enumerate(stoichs):
 		if stoich == mult_id:
-			parser = CifParser(mofpath+refcodes[i]+'.cif')
-			pm_mof = parser.get_structures(primitive=True)[0]
-			pm_mof.to(filename='POSCAR')
-			mof = read('POSCAR')
-			position_mats.append(mof.get_positions())
 			idx.append(i)
 	idx = np.array(idx)
-	position_mats = np.array(position_mats)
-	n = np.shape(position_mats)[0]
+	n = len(idx)
 	for i in range(n):
+		parser1 = CifParser(mofpath+refcodes[idx[i]]+'.cif')
+		mof1 = parser1.get_structures(primitive=True)[0]
 		j_vec = np.setdiff1d(np.arange(n),i)
 		dups = []
 		for j in j_vec:
-			diff = (np.sum((position_mats[i,:,:]-position_mats[j,:,:])**2)/n)**(0.5)
-			if diff < 0.1:
+			parser2 = CifParser(mofpath+refcodes[idx[j]]+'.cif')
+			sm = StructureMatcher(primitive_cell=True)
+			mof2 = parser2.get_structures(primitive=True)[0]
+			rms = sm.get_rms_dist(mof1,mof2)[0]
+			if rms and rms < 0.1:
 				dups.append(j)
 		if dups:
 			print(refcodes[idx[i]]+' ('+stoichs[idx[i]]+') is a duplicate of '+str(refcodes[idx[dups]]))
 	print('')
-os.remove('POSCAR')
