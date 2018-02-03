@@ -722,7 +722,7 @@ def calcs(run_i):
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
 			sigma=defaults['sigma'],
-			lcharg=False,
+			lcharg=True,
 			laechg=True,
 			lwave=True,
 			nsw=0,
