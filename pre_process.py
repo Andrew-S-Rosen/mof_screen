@@ -38,8 +38,8 @@ for mult_id in mult_ids:
 			parser2 = CifParser(mofpath+refcodes[idx[j]]+'.cif')
 			sm = StructureMatcher(primitive_cell=True)
 			mof2 = parser2.get_structures(primitive=True)[0]
-			rms = sm.get_rms_dist(mof1,mof2)[0]
-			if rms and rms < 0.1:
+			rms = sm.get_rms_dist(mof1,mof2)
+			if rms[0] and rms[0] < 0.1:
 				dups.append(j)
 		if dups:
 			print(refcodes[idx[i]]+' ('+stoichs[idx[i]]+') is a duplicate of '+str(refcodes[idx[dups]]))
