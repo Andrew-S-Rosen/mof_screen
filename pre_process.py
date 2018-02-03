@@ -21,6 +21,10 @@ unique_id,id_counts = np.unique(stoichs,return_counts=True)
 mult_ids = unique_id[id_counts > 1].tolist()
 stoichs = np.array(stoichs)
 refcodes = np.array(refcodes)
+sorted_idx = np.argsort(refcodes)
+refcodes = refcodes[sorted_idx]
+stoichs = stoichs[sorted_idx]
+all_dup_refcodes = []
 for mult_id in mult_ids:
 	position_mats = []
 	idx = []
@@ -30,6 +34,9 @@ for mult_id in mult_ids:
 	idx = np.array(idx)
 	n = len(idx)
 	for i in range(n):
+		refcode = refcodes[idx[i]]
+		if refcode in all_dup_refcodes:
+			continue
 		parser1 = CifParser(mofpath+refcodes[idx[i]]+'.cif')
 		mof1 = parser1.get_structures(primitive=True)[0]
 		j_vec = np.setdiff1d(np.arange(n),i)
@@ -41,5 +48,7 @@ for mult_id in mult_ids:
 			rms = sm.get_rms_dist(mof1,mof2)
 			if rms and rms[0] < 0.1:
 				dups.append(j)
+		dup_refcodes = refcodes[idx[dups]]
 		if dups:
-			print(refcodes[idx[i]]+' ('+stoichs[idx[i]]+') is a duplicate of '+str(refcodes[idx[dups]]))
+			print(refcode+' ('+stoichs[idx[i]]+') is a duplicate of '+str(dup_refcodes))
+		all_dup_refcodes.extend(dup_refcodes)
