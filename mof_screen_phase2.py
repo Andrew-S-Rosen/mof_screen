@@ -908,7 +908,7 @@ def run_screen(cif_files):
 			#***********ISIF 2 (medacc)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
+				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps)
 				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 					files_to_clean = ['WAVECAR']
@@ -937,7 +937,7 @@ def run_screen(cif_files):
 			#***********ISIF 2 (final)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
+				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
@@ -979,7 +979,7 @@ def run_screen(cif_files):
 			#***********FINAL SPE***********
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
+				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
