@@ -435,6 +435,8 @@ def update_calc(calc,calc_swaps):
 			calc.int_params['istart'] = int(swap.split('=')[-1])
 		elif 'algo=' in swap:
 			calc.string_params['algo'] = swap.split('=')[-1]
+		elif 'iopt=' in swap:
+			calc.int_params['iopt'] = int(swap.split('=')[-1])
 		elif 'isif=' in swap:
 			calc.int_params['isif'] = int(swap.split('=')[-1])
 		elif 'lreal=' in swap:
@@ -446,16 +448,13 @@ def update_calc(calc,calc_swaps):
 			elif swap_val == 'true':
 				calc.special_params['lreal'] = True
 		elif swap == 'zbrent':
+			calc.int_params['ibrion'] = 3
+			calc.exp_params['ediff'] = 1e-6
 			calc.int_params['nelmin'] = 8
-			if calc.int_params['iopt'] == 7:
-				calc.int_params['ibrion'] = 1
-			else:
-				calc.int_params['ibrion'] = 3
-				calc.int_params['iopt'] = 7
-				calc.float_params['potim'] = 0
-				calc.string_params['algo'] = 'Fast'
-				calc.exp_params['ediff'] = 1e-6
-				calc_swaps.append('vtst')
+			calc.int_params['iopt'] = 7
+			calc.float_params['potim'] = 0
+			calc.string_params['algo'] = 'Fast'
+			calc_swaps.append('vtst')
 		elif swap == 'dentet' or swap == 'grad_not_orth':
 			calc.int_params['ismear'] = 0
 			calc.string_params['algo'] = 'Fast'
@@ -709,6 +708,26 @@ def calcs(run_i):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
+	elif run_i == 'pre-2':
+		calc = Vasp(
+			xc=defaults['xc'],
+			kpts=defaults['kpts_hi'],
+			gamma=defaults['gamma'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=1e-6,
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym']
+			)
 	elif run_i == 2:
 		calc = Vasp(
 			xc=defaults['xc'],
@@ -888,6 +907,7 @@ def run_screen(cif_files):
 					while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+						choose_vasp_version(gpt_version,nprocs,calc_swaps)
 						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,gpt_version,nprocs,calc_swaps)
 						if mof == None:
 							break
@@ -921,13 +941,17 @@ def run_screen(cif_files):
 			calc_swaps.append('vtst')
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps)
+				pprint('Running '+spin_level+', '+acc_level)
 				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 					files_to_clean = ['WAVECAR']
 					clean_files(files_to_clean)
+					choose_vasp_version(gpt_version,nprocs,calc_swaps,'vasp')
+					mof,calc_swaps = mof_run(mof,calcs('pre-2'),cif_file,gpt_version,nprocs,calc_swaps)
+					mof = read_outcar('OUTCAR')
+					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 				else:
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
-				pprint('Running '+spin_level+', '+acc_level)
+				choose_vasp_version(gpt_version,nprocs,calc_swaps)
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,gpt_version,nprocs,calc_swaps)
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
