@@ -102,7 +102,7 @@ def get_gpt_version(kpts,n_atoms,nprocs,ppn):
 			break
 	return gpt_version, nprocs
 
-def choose_vasp_version(gpt_version,nprocs,calc_swaps):
+def choose_vasp_version(gpt_version,nprocs,calc_swaps,*fix_version):
 #Run the gamma pt only or regular VASP version
 	vasp_ex = ['vasp_std','vasp_gam']
 	vtst_ex = ['vasp_std_vtst','vasp_gam_vtst']
@@ -110,7 +110,11 @@ def choose_vasp_version(gpt_version,nprocs,calc_swaps):
 	vtst_cmd = 'mpirun -n '+str(nprocs)+' '+vtst_ex[0]
 	gamvasp_cmd = 'mpirun -n '+str(nprocs)+' '+vasp_ex[1]
 	gamvtst_cmd = 'mpirun -n '+str(nprocs)+' '+vtst_ex[1]
-	if 'vtst' in calc_swaps:
+	if 'vasp' in fix_version:
+		current_module = vasp_module
+	elif 'vtst' in fix_version:
+		current_module = vtst_module
+	elif 'vtst' in calc_swaps:
 		current_module = vtst_module
 	else:
 		current_module = vasp_module
@@ -980,7 +984,7 @@ def run_screen(cif_files):
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps)
+				choose_vasp_version(gpt_version,nprocs,calc_swaps,'vasp')
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				if 'large_supercell' in calc_swaps:
