@@ -446,13 +446,16 @@ def update_calc(calc,calc_swaps):
 			elif swap_val == 'true':
 				calc.special_params['lreal'] = True
 		elif swap == 'zbrent':
-			calc.int_params['ibrion'] = 3
-			calc.exp_params['ediff'] = 1e-6
 			calc.int_params['nelmin'] = 8
-			calc.int_params['iopt'] = 7
-			calc.float_params['potim'] = 0
-			calc.string_params['algo'] = 'Fast'
-			calc_swaps.append('vtst')
+			if calc.int_params['iopt'] == 7:
+				calc.int_params['ibrion'] = 1
+			else:
+				calc.int_params['ibrion'] = 3
+				calc.int_params['iopt'] = 7
+				calc.float_params['potim'] = 0
+				calc.string_params['algo'] = 'Fast'
+				calc.exp_params['ediff'] = 1e-6
+				calc_swaps.append('vtst')
 		elif swap == 'dentet' or swap == 'grad_not_orth':
 			calc.int_params['ismear'] = 0
 			calc.string_params['algo'] = 'Fast'
@@ -713,8 +716,8 @@ def calcs(run_i):
 			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
-			algo=defaults['algo'],
-			ediff=defaults['ediff'],
+			algo='Fast',
+			ediff=1e-6,
 			nelm=defaults['nelm'],
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
@@ -723,7 +726,9 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			ibrion=2,
+			ibrion=3,
+			iopt=7,
+			potim=0,
 			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
@@ -738,8 +743,8 @@ def calcs(run_i):
 			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
-			algo=defaults['algo'],
-			ediff=defaults['ediff'],
+			algo='Fast',
+			ediff=1e-6,
 			nelm=defaults['nelm'],
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
@@ -748,7 +753,9 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			ibrion=2,
+			ibrion=3,
+			iopt=7,
+			potim=0,
 			isif=defaults['isif'],
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
@@ -911,6 +918,7 @@ def run_screen(cif_files):
 
 			#***********ISIF 2 (medacc)************
 			acc_level = acc_levels[run_i]
+			calc_swaps.append('vtst')
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps)
