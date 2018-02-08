@@ -1,19 +1,17 @@
 import os
 from shutil import copyfile
 import numpy as np
+from pymatgen.io.vasp.inputs import Kpoints
+from pymatgen.io.cif import CifParser
 from ase.calculators.vasp import Vasp
 from ase.optimize import BFGSLineSearch
 from ase.io import read
 
 #-------------SET PATHS-------------
-kpts_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cleaned/data_for_phase2/kpts.txt'
-mofpath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results_cleaned/data_for_phase2/cifs/'
-basepath = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/'
-submit_script = 'sub_asevasp_screening2_temp.job'
-stdout_file = 'mof_screen_phase2.out'
-ads_species = 'O'
-vasp_module = 'vasp/5.4.1'
-vtst_module = 'vasp/5.4.1_vtst'
+mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
+basepath = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/'
+submit_script = 'sub_asevasp_screening_temp.job'
+stdout_file = 'mof_screen.out'
 skip_mofs = []
 
 #-------------DEFAULT PARAMETERS-------------
@@ -23,15 +21,14 @@ defaults = {
 	'encut': 520,
 	'prec': 'Accurate',
 	'algo': 'All',
-	'ediff': 1e-4,
 	'nelm': 250,
 	'nelmin': 6,
 	'lreal': False,
 	'ncore': 24,
 	'ismear': 0,
 	'sigma': 0.01,
-	'nsw': 500,
-	'isif': 2,
+	'ibrion': 2,
+	'nsw': 30,
 	'ediffg': -0.03,
 	'lorbit': 11,
 	'kppa_lo': 100,
@@ -64,87 +61,33 @@ def get_nprocs():
 
 def get_kpts(cif_file,kppa):
 #Get kpoint grid at a given KPPA
-	cif_split1 = cif_file.split('_'+ads_species+'_OMS')[0]
-	old_cif_name = cif_split1.split('_spin')[0]
-	infile = open(kpts_path,'r')
-	lines = infile.read().splitlines()
-	infile.close()
-	for i in range(len(lines)):
-		if old_cif_name in lines[i]:
-			if kppa == 100:
-				kpts = lines[i+1]
-				gamma = lines[i+2]
-			elif kppa == 1000:
-				kpts = lines[i+3]
-				gamma = lines[i+4]
-			else:
-				raise ValueError('Incompatible KPPA with prior runs')
-			break
-	kpts = np.squeeze(np.asarray(np.matrix(kpts))).tolist()
-	if gamma == 'True':
+	parser = CifParser(mofpath+cif_file)
+	pm_mof = parser.get_structures(primitive=True)[0]
+	pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
+	kpts = pm_kpts.kpts[0]
+	if pm_kpts.style.name == 'Gamma':
 		gamma = True
-	elif gamma == 'False':
-		gamma = False
 	else:
-		raise ValueError('Error parsing KPOINTS file')
-	if len(kpts) != 3:
-		raise ValueError('Error parsing KPOINTS file')
+		gamma = None
 	return kpts, gamma
 
-def get_gpt_version(kpts,n_atoms,nprocs,ppn):
+def choose_vasp_version(kpts,n_atoms,nprocs,ppn):
+#Run the gamma pt only or regular VASP version
 	if sum(kpts) == 3:
-		gpt_version = True
+		gamma_version = True
 	else:
-		gpt_version = False
+		gamma_version = False
 	while n_atoms < nprocs/2:
 		nprocs = nprocs - ppn
 		if nprocs == ppn:
 			break
-	return gpt_version, nprocs
-
-def choose_vasp_version(gpt_version,nprocs,calc_swaps,*fix_version):
-#Run the gamma pt only or regular VASP version
-	vasp_ex = ['vasp_std','vasp_gam']
-	vtst_ex = ['vasp_std_vtst','vasp_gam_vtst']
-	vasp_cmd =  'mpirun -n '+str(nprocs)+' '+vasp_ex[0]
-	vtst_cmd = 'mpirun -n '+str(nprocs)+' '+vtst_ex[0]
-	gamvasp_cmd = 'mpirun -n '+str(nprocs)+' '+vasp_ex[1]
-	gamvtst_cmd = 'mpirun -n '+str(nprocs)+' '+vtst_ex[1]
-	if 'vasp' in fix_version:
-		current_module = vasp_module
-	elif 'vtst' in fix_version:
-		current_module = vtst_module
-	elif 'vtst' in calc_swaps:
-		current_module = vtst_module
-	else:
-		current_module = vasp_module
-	if os.path.isfile('run_vasp.py'):
-		with open('run_vasp.py','r') as rf:
-			for line in rf:
-				line = line.strip()
-				if 'module load '+vtst_module in line:
-					old_module = vtst_module
-					break
-				if 'module load '+vasp_module in line:
-					old_module = vasp_module
-					break
-	else:
-		old_module = current_module
-	if old_module != current_module:
-		module_cmd = 'module unload '+old_module+'; module load '+current_module+' && '
-	else:
-		module_cmd = 'module load '+current_module+' && '
+	gamvasp_cmd = 'mpirun -n '+str(nprocs)+' vasp_gam'
+	vasp_cmd =  'mpirun -n '+str(nprocs)+' vasp_std'
 	runvasp_file = open('run_vasp.py','w')
-	if current_module == vtst_module:
-		if gpt_version == True:
-			runvasp_file.write("import os\nexitcode = os.system("+"'"+module_cmd+gamvtst_cmd+"'"+')')
-		else:
-			runvasp_file.write("import os\nexitcode = os.system("+"'"+module_cmd+vtst_cmd+"'"+')')
+	if gamma_version == True:
+		runvasp_file.write("import os\nexitcode = os.system("+"'"+gamvasp_cmd+"'"+')')
 	else:
-		if gpt_version == True:
-			runvasp_file.write("import os\nexitcode = os.system("+"'"+module_cmd+gamvasp_cmd+"'"+')')
-		else:
-			runvasp_file.write("import os\nexitcode = os.system("+"'"+module_cmd+vasp_cmd+"'"+')')
+		runvasp_file.write("import os\nexitcode = os.system("+"'"+vasp_cmd+"'"+')')
 	runvasp_file.close()
 
 def pprint(printstr):
@@ -170,7 +113,10 @@ def get_cif_files():
 def cif_to_mof(cif_file):
 #Save MOF file as reduced unit cell and read in ASE
 	cifpath = mofpath+cif_file
-	mof = read(cifpath)
+	parser = CifParser(cifpath)
+	pm_mof = parser.get_structures(primitive=True)[0]
+	pm_mof.to(filename='POSCAR')
+	mof = read('POSCAR')
 	return mof
 
 def prep_paths():
@@ -190,8 +136,6 @@ def prep_paths():
 		open(screen_results_path, 'w').close()
 	if os.path.isfile(log_file) == True:
 		open(log_file, 'w').close()
-	if os.path.isfile('run_vasp.py') == True:
-		os.remove('run_vasp.py')
 
 def clean_files(remove_files):
 #clean files
@@ -400,7 +344,6 @@ def get_error_msgs(outcarfile,refcode):
 				start = True
 			if start == True:
 				errormsg = check_line_for_error(line,errormsg)
-	errormsg = list(set(errormsg))
 	return errormsg
 
 def get_warning_msgs(outcarfile):
@@ -410,7 +353,6 @@ def get_warning_msgs(outcarfile):
 		for line in rf:
 			if 'You have a (more or less)' in line:
 				warningmsg.append('large_supercell')
-	warningmsg = list(set(warningmsg))
 	return warningmsg
 
 def update_calc(calc,calc_swaps):
@@ -435,8 +377,6 @@ def update_calc(calc,calc_swaps):
 			calc.int_params['istart'] = int(swap.split('=')[-1])
 		elif 'algo=' in swap:
 			calc.string_params['algo'] = swap.split('=')[-1]
-		elif 'iopt=' in swap:
-			calc.int_params['iopt'] = int(swap.split('=')[-1])
 		elif 'isif=' in swap:
 			calc.int_params['isif'] = int(swap.split('=')[-1])
 		elif 'lreal=' in swap:
@@ -447,19 +387,8 @@ def update_calc(calc,calc_swaps):
 				calc.special_params['lreal'] = 'Auto'
 			elif swap_val == 'true':
 				calc.special_params['lreal'] = True
-		elif swap == 'zbrent':
-			calc.int_params['ibrion'] = 3
-			calc.exp_params['ediff'] = 1e-6
-			calc.int_params['nelmin'] = 8
-			calc.int_params['iopt'] = 7
-			calc.float_params['potim'] = 0
-			calc.string_params['algo'] = 'Fast'
-			calc_swaps.append('vtst')
-		elif swap == 'dentet' or swap == 'grad_not_orth':
-			calc.int_params['ismear'] = 0
-			calc.string_params['algo'] = 'Fast'
 		elif swap == 'edddav':
-			calc.string_params['algo'] = 'All'
+			calc.string_params['algo'] = 'All'		
 		elif swap == 'inv_rot_mat':
 			calc.exp_params['symprec'] = 1e-8
 		elif swap == 'subspacematrix' or swap == 'real_optlay' or swap == 'rspher' or swap == 'nicht_konv':
@@ -467,6 +396,8 @@ def update_calc(calc,calc_swaps):
 			calc.string_params['prec'] = 'Accurate'
 		elif swap == 'tetirr' or swap == 'incorrect_shift':
 			calc.input_params['gamma'] = True
+		elif swap == 'dentet' or swap == 'grad_not_orth':
+			calc.int_params['ismear'] = 0
 		elif swap == 'rot_matrix':
 			calc.input_params['gamma'] = True
 			calc.int_params['isym'] = 0
@@ -475,6 +406,10 @@ def update_calc(calc,calc_swaps):
 			calc.int_params['isym'] = 0
 		elif swap == 'amin':
 			calc.float_params['amin'] = 0.01
+		elif swap == 'zbrent':
+			calc.int_params['ibrion'] = 1
+			calc.exp_params['ediff'] = 1e-6
+			calc.int_params['nelmin'] = 8
 		elif swap == 'pssyevx' or swap == 'eddrmm':
 			calc.string_params['algo'] = 'Normal'
 		elif swap == 'zheev':
@@ -529,7 +464,7 @@ def get_niter(outcarfile):
 	niter = int(niter)
 	return niter
 
-def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
+def mof_run(mof,calc,cif_file,calc_swaps):
 #Get the optimized structure of the MOF
 	copyfile(mofpath+cif_file,basepath+'working/'+cif_file)
 	success = False
@@ -542,6 +477,7 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 			raise SystemError('VASP stopped but did not crash and burn')
 		success = True
 	except:
+		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
 		refcode = cif_file.split('.cif')[0]
 		if os.path.isfile('WAVECAR'):
@@ -552,9 +488,8 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 			error_len = len(errormsg)
 			if error_len == old_error_len:
 				break
-			print('Attempting to solve VASP issue(s): ',errormsg)
+			print('VASP failed with error(s). Trying to auto-solve issue.',errormsg)
 			mof = continue_mof()
-			choose_vasp_version(gpt_version,nprocs,calc_swaps)
 			try:				
 				mof.set_calculator(calc)
 				mof.get_potential_energy()
@@ -672,9 +607,8 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff'],
+			ediff=1e-4,
 			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
@@ -692,7 +626,54 @@ def calcs(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			ediff=defaults['ediff'],
+			ediff=1e-4,
+			nelm=defaults['nelm'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			ibrion=defaults['ibrion'],
+			isif=2,
+			nsw=400,
+			ediffg=-0.05,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym']
+			)
+	elif run_i == 2:
+		calc = Vasp(
+			xc=defaults['xc'],
+			kpts=defaults['kpts_lo'],
+			gamma=defaults['gamma'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=1e-6,
+			nelm=defaults['nelm'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			ibrion=defaults['ibrion'],
+			isif=4,
+			nsw=defaults['nsw'],
+			ediffg=-0.05,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym']
+			)	
+	elif run_i == 3:
+		calc = Vasp(
+			xc=defaults['xc'],
+			encut=defaults['encut'],
+			kpts=defaults['kpts_lo'],
+			gamma=defaults['gamma'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=1e-6,
 			nelm=defaults['nelm'],
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
@@ -701,16 +682,17 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			ibrion=2,
-			isif=defaults['isif'],
-			nsw=200,
-			ediffg=-0.05,
+			ibrion=defaults['ibrion'],
+			isif=3,
+			nsw=defaults['nsw'],
+			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 'pre-2':
+	elif run_i == 4:
 		calc = Vasp(
 			xc=defaults['xc'],
+			encut=defaults['encut'],
 			kpts=defaults['kpts_hi'],
 			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
@@ -725,36 +707,14 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
-			)
-	elif run_i == 2:
-		calc = Vasp(
-			xc=defaults['xc'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
-			ivdw=defaults['ivdw'],
-			prec=defaults['prec'],
-			algo='Fast',
-			ediff=1e-6,
-			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
-			lreal=defaults['lreal'],
-			ncore=defaults['ncore'],
-			ismear=defaults['ismear'],
-			sigma=defaults['sigma'],
-			lcharg=False,
-			lwave=True,
-			ibrion=3,
-			iopt=7,
-			potim=0,
-			isif=defaults['isif'],
+			ibrion=defaults['ibrion'],
+			isif=3,
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 3:
+	elif run_i == 5:
 		calc = Vasp(
 			xc=defaults['xc'],
 			encut=defaults['encut'],
@@ -762,8 +722,8 @@ def calcs(run_i):
 			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
-			algo='Fast',
-			ediff=1e-6,
+			algo=defaults['algo'],
+			ediff=1e-4,
 			nelm=defaults['nelm'],
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
@@ -772,16 +732,14 @@ def calcs(run_i):
 			sigma=defaults['sigma'],
 			lcharg=False,
 			lwave=True,
-			ibrion=3,
-			iopt=7,
-			potim=0,
-			isif=defaults['isif'],
+			ibrion=defaults['ibrion'],
+			isif=2,
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 4:
+	elif run_i == 6:
 		calc = Vasp(
 			xc=defaults['xc'],
 			encut=defaults['encut'],
@@ -801,8 +759,7 @@ def calcs(run_i):
 			lwave=True,
 			nsw=0,
 			lorbit=defaults['lorbit'],
-			isym=defaults['isym'],
-			addgrid=False
+			isym=defaults['isym']
 			)
 	else:
 		raise ValueError('Out of range for calculators')
@@ -817,7 +774,7 @@ def run_screen(cif_files):
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
 	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
-	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','final','final_spe']
+	acc_levels = ['scf_test','isif2','isif4','isif3_lowacc','isif3_highacc','final','final_spe']
 	nprocs, ppn = get_nprocs()
 
 	#for each CIF file, optimize the structure
@@ -836,7 +793,8 @@ def run_screen(cif_files):
 		results_partial_paths = []
 		error_outcar_partial_paths = []
 		for acc_level in acc_levels:
-			results_partial_paths.append(basepath+'results/'+refcode+'/'+acc_level)
+			result_partial_temp_path = basepath+'results/'+refcode+'/'+acc_level
+			results_partial_paths.append(result_partial_temp_path)
 			error_outcar_partial_paths.append(basepath+'errors/'+refcode+'/'+acc_level)
 		spin1_final_mof_path = results_partial_paths[-1]+'/'+spin_levels[0]+'/OUTCAR'
 
@@ -869,10 +827,9 @@ def run_screen(cif_files):
 				else:
 					mof = cif_to_mof(cif_file)
 				mof = set_initial_magmoms(mof,spin_level)
-				gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps)
+				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
-				mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,gpt_version,nprocs,calc_swaps)
+				mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof != None:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -887,7 +844,7 @@ def run_screen(cif_files):
 			warnings = get_warning_msgs(outcar_paths[run_i-1])
 			calc_swaps.extend(warnings)
 
-			#***********ISIF 2 (lowacc)************
+			#***********ISIF 2 (initial)************
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				if os.path.isfile(spin1_final_mof_path):
@@ -895,24 +852,25 @@ def run_screen(cif_files):
 				else:
 					mof = cif_to_mof(cif_file)
 				mof = set_initial_magmoms(mof,spin_level)
-				gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps)
+				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				steps = 100
 				fmax = 5.0
 				mof, dyn, calc_swaps = mof_bfgs_run(mof,calcs(run_i),cif_file,calc_swaps,steps,fmax)
 				if mof != None and dyn and mof.calc.scf_converged == True:
-					loop_i = 0
-					converged = False
-					while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
+					mof = read_outcar('OUTCAR')
+					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+					mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+					if mof != None and mof.calc.converged  == False and mof.calc.scf_converged == True:
+						calc_swaps.append('nsw=90')
+						if 'ibrion=1' not in calc_swaps:
+							calc_swaps.append('ibrion=1')
 						mof = read_outcar('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-						choose_vasp_version(gpt_version,nprocs,calc_swaps)
-						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,gpt_version,nprocs,calc_swaps)
-						if mof == None:
-							break
-						converged = mof.calc.converged
-						loop_i += 1
+						mof, calc_swaps = mof_run(mof,calcs(1.5),cif_file,calc_swaps)
+						calc_swaps.remove('nsw=90')
+						if 'ibrion=1' in calc_swaps:
+							calc_swaps.remove('ibrion=1')
 				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
@@ -936,32 +894,34 @@ def run_screen(cif_files):
 					pprint('Skipping rest because SPIN2 converged to SPIN1')
 					continue
 
-			#***********ISIF 2 (medacc)************
+			#***********ISIF 4************
 			acc_level = acc_levels[run_i]
-			calc_swaps.append('vtst')
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-				pprint('Running '+spin_level+', '+acc_level)
-				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
-					files_to_clean = ['WAVECAR']
-					clean_files(files_to_clean)
-					choose_vasp_version(gpt_version,nprocs,calc_swaps,'vasp')
-					mof,calc_swaps = mof_run(mof,calcs('pre-2'),cif_file,gpt_version,nprocs,calc_swaps)
+				n_runs = 10
+				loop_i = 0
+				converged = False
+				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
+				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				if os.path.isfile('opt.traj') == True:
+					os.remove('opt.traj')
+				while converged == False and loop_i < n_runs:
+					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
+					mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+					if mof == None:
+						break
+					converged = mof.calc.converged
 					mof = read_outcar('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-				else:
-					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps)
-				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,gpt_version,nprocs,calc_swaps)
-				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
+					loop_i += 1
+				if mof != None and converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
 						pprint('^ VASP crashed')
 					elif mof.calc.scf_converged == False:
-						pprint('^ SCF did not converge')
-					elif mof.calc.converged == False:
+						pprint('^ SCF convergence not reached')
+					elif converged == False:
 						pprint('^ Convergence not reached')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
@@ -970,33 +930,117 @@ def run_screen(cif_files):
 				pprint('Skipping rest because of errors')
 				break
 
-			#***********ISIF 2 (final)************
+			#***********LOW ACCURACY ISIF3***********
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps)
+				converged = False
+				loop_i = 0
+				n_runs = 11
+				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
+				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				while converged == False and loop_i < n_runs:
+					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
+					if loop_i == n_runs - 1 and 'ibrion=1' not in calc_swaps:
+						calc_swaps.append('ibrion=1')
+					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+					if mof == None:
+						break
+					converged = mof.calc.converged
+					mof = read_outcar('OUTCAR')
+					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+					loop_i += 1
+				if 'ibrion=1' in calc_swaps:
+					calc_swaps.remove('ibrion=1')
+				if mof != None and converged == True:
+					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+				else:
+					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
+					if mof == None:
+						pprint('^ VASP crashed')
+					elif converged == False:
+						pprint('^ Convergence not reached')
+			elif os.path.isfile(outcar_paths[run_i]) == True:
+				pprint('COMPLETED: '+spin_level+', '+acc_level)
+			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
+			if mof == None:
+				pprint('Skipping rest because of errors')
+				break
+
+			#***********HIGH ACCURACY ISIF3***********
+			acc_level = acc_levels[run_i]
+			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
+				converged = False
+				loop_i = 0
+				n_runs = 11
+				V_diff = np.inf
+				V_cut = 0.01
+				V0 = mof.get_volume()
+				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
+				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
+					files_to_clean = ['WAVECAR']
+					clean_files(files_to_clean)
+				else:
+					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
+				while (converged == False or V_diff > V_cut) and loop_i < n_runs:
+					pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
+					if loop_i == n_runs - 1 and 'ibrion=1' not in calc_swaps:
+						calc_swaps.append('ibrion=1')
+					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+					if mof == None:
+						break
+					if loop_i > 0:
+						converged = mof.calc.converged
+					mof = read_outcar('OUTCAR')
+					V = mof.get_volume()
+					mof, abs_magmoms = continue_magmoms(mof,'INCAR')					
+					if loop_i > 0:
+						V_diff = np.abs((V-V0))/V0
+					V0 = V
+					loop_i += 1
+				if mof != None and converged == True and V_diff <= V_cut and 'large_supercell' in calc_swaps:
+					pprint('Running '+spin_level+', '+acc_level+' (LREAL=False)')
+					calc_swaps.append('nsw=100')
+					calc_swaps.remove('large_supercell')
+					mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+					calc_swaps.remove('nsw=100')
+					if mof != None and mof.calc.converged == True:
+						if 'ibrion=1' in calc_swaps:
+							calc_swaps.remove('ibrion=1')
+						write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+					else:
+						write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
+						if mof == None:
+							pprint('^ VASP crashed')
+						elif mof.calc.converged == False:
+							pprint('^ Convergence not reached')					
+				else:
+					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
+					if mof == None:
+						pprint('^ VASP crashed')
+					elif converged == False:
+						pprint('^ Convergence not reached')
+					elif V_diff > V_cut:
+						pprint('^ Change in V of '+str(V_diff)+' percent')
+			elif os.path.isfile(outcar_paths[run_i]) == True:
+				pprint('COMPLETED: '+spin_level+', '+acc_level)
+			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
+			if mof == None:
+				pprint('Skipping rest because of errors')
+				break
+
+			#***********FINAL OPT***********
+			acc_level = acc_levels[run_i]
+			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
+				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
-				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,gpt_version,nprocs,calc_swaps)
-				if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
-					if 'large_supercell' in calc_swaps:
-						pprint('Running '+spin_level+', '+acc_level+' (LREAL=False)')
-						calc_swaps.remove('large_supercell')
-						mof = read_outcar('OUTCAR')
-						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-						mof, calc_swaps = mof_run(mof,calcs(run_i),cif_file,gpt_version,nprocs,calc_swaps)
-						if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
-							write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
-						else:
-							write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
-							if mof == None:
-								pprint('^ VASP crashed')
-							elif mof.calc.scf_converged == False:
-								pprint('^ SCF did not converge')
-							elif mof.calc.converged == False:
-								pprint('^ Convergence not reached')
-					else:
-						write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
+				if 'large_supercell' in calc_swaps:
+					calc_swaps.remove('large_supercell')
+				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
+				if mof == None:
+					break
+				if mof != None and mof.calc.converged == True and mof.calc.scf_converged == True:
+					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:
 					write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
 					if mof == None:
@@ -1015,13 +1059,12 @@ def run_screen(cif_files):
 			#***********FINAL SPE***********
 			acc_level = acc_levels[run_i]
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
-				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps,'vasp')
+				choose_vasp_version(kpts_hi,len(mof),nprocs,ppn)
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
 				if 'large_supercell' in calc_swaps:
 					calc_swaps.remove('large_supercell')
-				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,gpt_version,nprocs,calc_swaps)
+				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,calc_swaps)
 				if mof == None:
 					break
 				if mof != None and mof.calc.scf_converged == True:
