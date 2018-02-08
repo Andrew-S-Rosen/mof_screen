@@ -4,6 +4,7 @@ from shutil import copyfile
 
 def prep_paths():
 #Folder and file cleanup
+
 	error_path = basepath+'errors'
 	results_path = basepath+'results'
 	working_path = basepath+'working'
@@ -23,13 +24,15 @@ def prep_paths():
 		os.remove('run_vasp.py')
 
 def clean_files(remove_files):
-#clean files
+#Clean files
+
 	for file in remove_files:
 		if os.path.isfile(file) == True:
 			os.remove(file)
 
 def manage_restart_files(file_path):
-#Make sure WAVECAR is copied
+#Make sure the restart files is copied
+
 	files = ['WAVECAR']
 	for file in files:
 		if os.path.isfile(file) != True or os.stat(file).st_size == 0:

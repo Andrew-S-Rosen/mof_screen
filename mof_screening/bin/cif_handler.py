@@ -1,10 +1,12 @@
 import os
-from settings import mofpath, skip_mofs
+from settings import mofpath, skip_mofs, phase
 from writers import pprint
 from ase.io import read
+from pymatgen.io.cif import CifParser
 
 def get_cif_files():
 #Get CIF files from mofpath
+
 	cif_files = []
 	for filename in os.listdir(mofpath):
 		filename = filename.strip()
@@ -15,10 +17,20 @@ def get_cif_files():
 			else:
 				pprint('Skipping '+refcode)
 	sorted_cifs = sorted(cif_files)
+
 	return sorted_cifs
 
 def cif_to_mof(cif_file):
-#Save MOF file as reduced unit cell and read in ASE
+#Read MOF as ASE atoms object
+#if running Phase 1, do Niggli-reduction. else, get CIF from prior phase
+
 	cifpath = mofpath+cif_file
-	mof = read(cifpath)
+	if phase == 1:
+		parser = CifParser(cifpath)
+		pm_mof = parser.get_structures(primitive=True)[0]
+		pm_mof.to(filename='POSCAR')
+		mof = read('POSCAR')
+	else:
+		mof = read(cifpath)
+
 	return mof

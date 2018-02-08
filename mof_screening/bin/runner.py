@@ -13,8 +13,9 @@ from ase.io import read
 
 def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 #Get the optimized structure of the MOF
-	copyfile(mofpath+cif_file,basepath+'working/'+cif_file)
+
 	success = False
+	copyfile(mofpath+cif_file,basepath+'working/'+cif_file)
 	calc = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	try:
@@ -54,10 +55,12 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 			old_error_len = error_len
 	if success == False:
 		mof = None
+
 	return mof, calc_swaps
 
 def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 #Optimize with BFGSLineSearch
+
 	copyfile(mofpath+cif_file,basepath+'working/'+cif_file)
 	success = False
 	calc = update_calc(calc,calc_swaps)
@@ -90,10 +93,12 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 			old_error_len = error_len
 	if success == False:
 		mof = None
+
 	return mof, dyn, calc_swaps
 
 def prep_next_run(acc_level,run_i,refcode,spin_level):
 #Update counter and decide if next job should be skipped
+
 	skip_spin2 = False
 	success_path = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level
 	incarpath = success_path+'/INCAR'
@@ -110,4 +115,5 @@ def prep_next_run(acc_level,run_i,refcode,spin_level):
 			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in sblock_metals+poor_metals for num in mag_nums) == True:
 				skip_spin2 = True
 	run_i += 1
+
 	return mof, run_i, skip_spin2

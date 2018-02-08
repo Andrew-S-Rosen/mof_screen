@@ -1,17 +1,18 @@
 import os
-import settings
+from settings import basepath
 from shutil import copyfile
 from ase.io import read
 
 def pprint(printstr):
 #Redirect print commands to log file
+
 	print(printstr)
 	with open('screening.log','a') as txtfile:
 		txtfile.write(printstr+'\n')
 
 def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 #Write success files
-	basepath = settings.basepath
+
 	pprint('SUCCESS: '+spin_level+', '+acc_level)
 	success_path = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level
 	if not os.path.exists(success_path):
@@ -24,7 +25,6 @@ def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 
 def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 #Write error files
-	basepath = settings.basepath
 	pprint('ERROR: '+spin_level+', '+acc_level+' failed')
 	error_path = basepath+'errors/'+refcode+'/'+acc_level+'/'+spin_level
 	if not os.path.exists(error_path):
@@ -37,7 +37,6 @@ def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 
 def write_energy(refcode,acc_level,spin_level):
 #Write energy to results file
-	basepath = settings.basepath
 	outcarpath = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level+'/OUTCAR'
 	final_mof = read(outcarpath)
 	E = final_mof.get_potential_energy()

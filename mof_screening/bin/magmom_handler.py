@@ -3,7 +3,8 @@ from metal_types import mag_list, dblock_metals, fblock_metals, poor_metals
 from ase.io import read
 
 def get_incar_magmoms(incarpath,poscarpath):
-#get the magnetic moments from the POSCAR
+#Get the magnetic moments from the POSCAR
+
 	mof_mag_list = []
 	init_mof = read(poscarpath)
 	with open(incarpath,'r') as incarfile:
@@ -19,18 +20,22 @@ def get_incar_magmoms(incarpath,poscarpath):
 		mof_mag_list = np.zeros(len(init_mof))
 	if len(mof_mag_list) != len(mof_mag_list):
 		raise ValueError('Error reading INCAR magnetic moments')
+
 	return mof_mag_list
 
 def get_mag_indices(mof):
-#Get indices of d-block, f-block, and semimetal atoms
+#Get indices of potentially magnetic atoms
+
 	mag_indices = []
 	for i, atom in enumerate(mof):
 		if atom.number in mag_list:
 			mag_indices.append(i)
+
 	return mag_indices
 
 def set_initial_magmoms(mof,spin_level):
 #Add initial magnetic moments to atoms object
+
 	mag_indices = get_mag_indices(mof)
 	mof.set_initial_magnetic_moments(np.zeros(len(mof)))
 	for i, atom in enumerate(mof):
@@ -49,10 +54,12 @@ def set_initial_magmoms(mof,spin_level):
 				atom.magmom = 0.1
 			else:
 				raise ValueError('Spin iteration out of range')
+
 	return mof
 
 def continue_magmoms(mof,incarpath):
 #Read in the old magmoms
+
 	mag_indices = get_mag_indices(mof)
 	ispin = False
 	with open(incarpath,'r') as incarfile:
@@ -65,9 +72,12 @@ def continue_magmoms(mof,incarpath):
 				abs_magmoms = np.abs(mof_magmoms[mag_indices])
 	if ispin == False:
 		abs_magmoms = np.zeros(len(mag_indices))
+
 	return mof, abs_magmoms
 
 def continue_failed_magmoms(mof):
+#If job failed, try to read magmoms from OUTCAR
+
 	self_resort = []
 	file = open('ase-sort.dat', 'r')
 	lines = file.readlines()
@@ -93,4 +103,5 @@ def continue_failed_magmoms(mof):
 	if ispin == True and all(sorted_magmoms == 0.0) == True:
 		raise ValueError('Error reading magmoms from failed OUTCAR')
 	mof.set_initial_magnetic_moments(sorted_magmoms)
+
 	return mof

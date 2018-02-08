@@ -4,7 +4,8 @@ from magmom_handler import get_incar_magmoms, continue_failed_magmoms
 from calc_swaps import update_calc
 
 def get_error_msgs(outcarfile,refcode):
-#read in any error messages
+#Read in any error messages
+
 	errormsg = []
 	start = False
 	with open(outcarfile,'r') as rf:
@@ -17,19 +18,23 @@ def get_error_msgs(outcarfile,refcode):
 			if start == True:
 				errormsg = check_line_for_error(line,errormsg)
 	errormsg = list(set(errormsg))
+
 	return errormsg
 
 def get_warning_msgs(outcarfile):
-#read in any warning messages
+#Read in any warning messages
 	warningmsg = []
 	with open(outcarfile,'r') as rf:
 		for line in rf:
 			if 'You have a (more or less)' in line:
 				warningmsg.append('large_supercell')
 	warningmsg = list(set(warningmsg))
+
 	return warningmsg
 
 def check_line_for_error(line,errormsg):
+#Parse line for VASP error
+
 	if 'inverse of rotation matrix was not found (increase SYMPREC)' in line:
 		errormsg.append('inv_rot_mat')
 	if 'WARNING: Sub-Space-Matrix is not hermitian in DAV' in line:
@@ -38,7 +43,8 @@ def check_line_for_error(line,errormsg):
 		errormsg.append('tetirr')
 	if 'Could not get correct shifts' in line:
 		errormsg.append('incorrect_shift')
-	if 'REAL_OPTLAY: internal error' in line or 'REAL_OPT: internal ERROR' in line:
+	if ('REAL_OPTLAY: internal error' in line
+		or 'REAL_OPT: internal ERROR' in line):
 		errormsg.append('real_optlay')
 	if 'ERROR RSPHER' in line:
 		errormsg.append('rspher')
@@ -54,7 +60,8 @@ def check_line_for_error(line,errormsg):
 		errormsg.append('pricel')
 	if 'One of the lattice vectors is very long (>50 A), but AMIN' in line:
 		errormsg.append('amin')
-	if 'ZBRENT: fatal internal in' in line or 'ZBRENT: fatal error in bracketing' in line:
+	if ('ZBRENT: fatal internal in' in line
+		or 'ZBRENT: fatal error in bracketing' in line):
 		errormsg.append('zbrent')
 	if 'ERROR in subspace rotation PSSYEVX' in line:
 		errormsg.append('pssyevx')
@@ -74,10 +81,12 @@ def check_line_for_error(line,errormsg):
 		errormsg.append('rhosyg')
 	if 'POSMAP internal error: symmetry equivalent atom not found' in line:
 		errormsg.append('posmap')
+
 	return errormsg
 
 def update_calc_after_errors(calc,calc_swaps,errormsg):
-#make a calc swap based on errors
+#Make a calc swap based on any errors
+
 	for msg in errormsg:
 		if msg not in calc_swaps:
 			calc_swaps.append(msg)
@@ -86,7 +95,7 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 		if msg == 'too_few_bands':
 			with open('OUTCAR','r') as outcarfile:
 				for line in outcarfile:
-					if "NBANDS" in line:
+					if 'NBANDS' in line:
 						try:
 							d = line.split("=")
 							nbands = int(d[-1].strip())
@@ -107,19 +116,24 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 							pass
 			calc_swaps.append('potim='+potim)
 			calc.float_params['potim'] = potim
+
 	return calc, calc_swaps
 
 def reset_mof():
-#reset the MOF object to the POSCAR/INCAR
+#Reset the MOF object to the POSCAR/INCAR settings
+
 	mof = read('POSCAR')
 	mof.set_initial_magnetic_moments(get_incar_magmoms('INCAR','POSCAR'))	
+
 	return mof
 
 def continue_mof():
-#decide if the MOF object should be continued or restarted
+#Decide if the MOF object should be continued or restarted
+
 	try:
 		mof = read('CONTCAR')
 		mof = continue_failed_magmoms(mof)
 	except:
 		mof = reset_mof()
+
 	return mof

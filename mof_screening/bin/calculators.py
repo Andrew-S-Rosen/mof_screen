@@ -1,5 +1,6 @@
 from ase.calculators.vasp import Vasp
 
+#default parameters for calculators
 defaults = {
 	'xc': 'PBE',
 	'ivdw': 12,
@@ -23,7 +24,7 @@ defaults = {
 	}
 
 def calcs(run_i):
-#Get calculator
+#calculator definitions for each run
 	if run_i == 0:
 		calc = Vasp(
 			xc=defaults['xc'],
@@ -184,6 +185,9 @@ def calcs(run_i):
 			)
 	else:
 		raise ValueError('Out of range for calculators')
+
+	#don't use Li_sv (ENMAX too high)
 	if 'Li' in calc.setups_defaults:
 		del calc.setups_defaults['Li']
+
 	return calc

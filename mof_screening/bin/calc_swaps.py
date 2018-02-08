@@ -1,5 +1,6 @@
 def update_calc(calc,calc_swaps):
-#update calculator based on calc swaps
+#update calculator based on pre-specified swaps
+
 	for swap in calc_swaps:
 		swap.replace(' ','')
 		if swap == 'large_supercell':
@@ -19,7 +20,8 @@ def update_calc(calc,calc_swaps):
 			calc.string_params['algo'] = 'All'
 		elif swap == 'inv_rot_mat':
 			calc.exp_params['symprec'] = 1e-8
-		elif swap == 'subspacematrix' or swap == 'real_optlay' or swap == 'rspher' or swap == 'nicht_konv':
+		elif (swap == 'subspacematrix' or swap == 'real_optlay' 
+			or swap == 'rspher' or swap == 'nicht_konv'):
 			calc.special_params['lreal'] = False
 			calc.string_params['prec'] = 'Accurate'
 		elif swap == 'tetirr' or swap == 'incorrect_shift':
@@ -71,4 +73,5 @@ def update_calc(calc,calc_swaps):
 				calc.special_params['lreal'] = 'Auto'
 			elif swap_val == 'true':
 				calc.special_params['lreal'] = True
+
 	return calc
