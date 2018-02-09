@@ -27,7 +27,6 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 		if os.path.isfile('WAVECAR'):
 			os.remove('WAVECAR')
 		while True:
-			old_swaps = calc_swaps
 			errormsg = get_error_msgs('OUTCAR',refcode)
 			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
 			error_len = len(errormsg)
@@ -35,23 +34,13 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 				break
 			print('Attempting to solve VASP issue(s): ',errormsg)
 			mof = continue_mof()
-			if 'vtst' in calc_swaps and 'vtst' not in old_swaps:
-				choose_vasp_version(gpt_version,nprocs,calc_swaps,'vasp')
-				static_swaps = ['nsw=0','ibrion=-1','iopt=0','isif=0','algo=All']
-				calc = update_calc(calc,calc_swaps+static_swaps)
-				choose_vasp_version(gpt_version,nprocs,calc_swaps+static_swaps,'vasp')
-				mof.set_calculator(calc)
+			choose_vasp_version(gpt_version,nprocs,calc_swaps)
+			calc = update_calc(calc,calc_swaps)
+			mof.set_calculator(calc)
+			try:
 				mof.get_potential_energy()
-				mof = read('OUTCAR')
-				mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-			if mof != None:
-				choose_vasp_version(gpt_version,nprocs,calc_swaps)
-				calc = update_calc(calc,calc_swaps)
-				mof.set_calculator(calc)
-				try:
-					mof.get_potential_energy()
-				except:
-					pass
+			except:
+				pass
 			old_error_len = error_len
 	if success == False:
 		mof = None
@@ -65,12 +54,11 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 	success = False
 	calc = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
+	dyn = BFGSLineSearch(mof,trajectory='opt.traj')
 	try:
-		dyn = BFGSLineSearch(mof,trajectory='opt.traj')
 		dyn.run(fmax=fmax,steps=steps)
 		success = True
 	except:
-		pprint('Original run failed. Trying to auto-solve issue.')
 		old_error_len = 0
 		refcode = cif_file.split('.cif')[0]
 		if os.path.isfile('WAVECAR'):
@@ -81,11 +69,11 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 			error_len = len(errormsg)
 			if error_len == old_error_len:
 				break
-			print('VASP failed with error(s). Trying to auto-solve issue.',errormsg)
+			print('Attempting to solve VASP issue(s): ',errormsg)
 			mof = continue_mof()
+			mof.set_calculator(calc)
+			dyn = BFGSLineSearch(mof,trajectory='opt.traj')
 			try:				
-				mof.set_calculator(calc)
-				dyn = BFGSLineSearch(mof,trajectory='opt.traj')
 				dyn.run(fmax=fmax,steps=steps)
 				success = True
 			except:

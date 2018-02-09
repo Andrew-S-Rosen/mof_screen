@@ -147,10 +147,6 @@ def run_screen(cif_files):
 				pprint('Running '+spin_level+', '+acc_level)
 				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 					clean_files('WAVECAR')
-					choose_vasp_version(gpt_version,nprocs,calc_swaps,'vasp')
-					mof,calc_swaps = mof_run(mof,calcs('pre-2'),cif_file,gpt_version,nprocs,calc_swaps)
-					mof = read('OUTCAR')
-					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
 				else:
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps)

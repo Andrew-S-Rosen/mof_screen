@@ -87,26 +87,6 @@ def calcs(run_i):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 'pre-2':
-		calc = Vasp(
-			xc=defaults['xc'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
-			ivdw=defaults['ivdw'],
-			prec=defaults['prec'],
-			algo=defaults['algo'],
-			ediff=1e-6,
-			nelm=defaults['nelm'],
-			nelmin=defaults['nelmin'],
-			lreal=defaults['lreal'],
-			ncore=defaults['ncore'],
-			ismear=defaults['ismear'],
-			sigma=defaults['sigma'],
-			lcharg=False,
-			lwave=True,
-			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
-			)
 	elif run_i == 2:
 		calc = Vasp(
 			xc=defaults['xc'],
