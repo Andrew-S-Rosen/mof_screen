@@ -1,6 +1,4 @@
-import os
-from settings import (submit_script, vasp_module, vtst_module, vasp_ex,
-	vtst_ex, parallel_cmd)
+from settings import submit_script
 
 def get_nprocs():
 #Get the number of CPUs from the job submit script
@@ -17,51 +15,31 @@ def get_nprocs():
 
 def choose_vasp_version(gpt_version,nprocs,calc_swaps,*fix_version):
 #Run a given VASP version
+	parallel_cmd = 'mpirun -n'
+	vasp_path = '/home/asr731/software/vasp_builds/bin/'
+	vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
+	vtst_ex = vasp_ex
+	module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
 
 	base = parallel_cmd+' '+str(nprocs)+' '
 	vasp_cmd = base+vasp_ex[0]
 	vtst_cmd = base+vtst_ex[0]
 	gamvasp_cmd = base+vasp_ex[1]
 	gamvtst_cmd = base+vtst_ex[1]
-	if 'vasp' in fix_version:
-		current_module = vasp_module
-	elif 'vtst' in fix_version:
-		current_module = vtst_module
-	elif 'vtst' in calc_swaps:
-		current_module = vtst_module
-	else:
-		current_module = vasp_module
-	if os.path.isfile('run_vasp.py'):
-		with open('run_vasp.py','r') as rf:
-			for line in rf:
-				line = line.strip()
-				if 'module load '+vtst_module in line:
-					old_module = vtst_module
-					break
-				if 'module load '+vasp_module in line:
-					old_module = vasp_module
-					break
-	else:
-		old_module = current_module
-	if old_module != current_module:
-		module_cmd = ('module unload '+old_module+'; module load '+
-			current_module+' && ')
-	else:
-		module_cmd = 'module load '+current_module+' && '
 	runvasp_file = open('run_vasp.py','w')
-	if current_module == vtst_module:
+	if 'vtst' in fix_version or 'vtst' in calc_swaps:
 		if gpt_version == True:
 			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+gamvtst_cmd+"'"+')')
+				+"'"+module_cmd+' && '+gamvtst_cmd+"'"+')')
 		else:
 			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+vtst_cmd+"'"+')')
+				+"'"+module_cmd+' && '+vtst_cmd+"'"+')')
 	else:
 		if gpt_version == True:
 			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+gamvasp_cmd+"'"+')')
+				+"'"+module_cmd+' && '+gamvasp_cmd+"'"+')')
 		else:
 			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+vasp_cmd+"'"+')')
+				+"'"+module_cmd+' && '+vasp_cmd+"'"+')')
 
 	runvasp_file.close()

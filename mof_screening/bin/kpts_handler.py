@@ -12,10 +12,10 @@ def get_kpts(cif_file,kppa):
 	infile.close()
 	for i in range(len(lines)):
 		if old_cif_name in lines[i]:
-			if kppa == defaults.kppa_lo:
+			if kppa == defaults['kppa_lo']:
 				kpts = lines[i+1]
 				gamma = lines[i+2]
-			elif kppa == defaults.kppa_hi:
+			elif kppa == defaults['kppa_hi']:
 				kpts = lines[i+3]
 				gamma = lines[i+4]
 			else:
