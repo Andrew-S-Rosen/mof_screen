@@ -73,4 +73,4 @@ def update_calc(calc,calc_swaps):
 			elif swap_val == 'true':
 				calc.special_params['lreal'] = True
 
-	return calc
+	return calc, calc_swaps

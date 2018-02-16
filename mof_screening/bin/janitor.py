@@ -17,9 +17,9 @@ def prep_paths():
 	if not os.path.exists(working_path):
 		os.makedirs(working_path)
 	if os.path.isfile(screen_results_path) == True:
-		open(screen_results_path, 'w').close()
+		open(screen_results_path,'w').close()
 	if os.path.isfile(log_file) == True:
-		open(log_file, 'w').close()
+		open(log_file,'w').close()
 	if os.path.isfile('run_vasp.py') == True:
 		os.remove('run_vasp.py')
 

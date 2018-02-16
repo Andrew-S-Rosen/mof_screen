@@ -17,7 +17,7 @@ def run_screen(cif_files):
 
 	#Files, spin levels, and accuracy levels to iterate over
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
-	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
+	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','final','final_spe']
 	nprocs, ppn = get_nprocs()
@@ -106,6 +106,7 @@ def run_screen(cif_files):
 				if mof != None and dyn and mof.calc.scf_converged == True:
 					loop_i = 0
 					converged = False
+					clean_files('opt.traj')
 					while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 						mof = read('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
@@ -140,7 +141,6 @@ def run_screen(cif_files):
 
 			#***********ISIF 2 (medacc)************
 			acc_level = acc_levels[run_i]
-			clean_files('opt.traj')
 			calc_swaps.append('vtst')
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)

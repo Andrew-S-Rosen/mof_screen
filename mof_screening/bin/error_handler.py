@@ -90,9 +90,9 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 	for msg in errormsg:
 		if msg not in calc_swaps:
 			calc_swaps.append(msg)
-	calc = update_calc(calc,calc_swaps)
+	calc, calc_swaps = update_calc(calc,calc_swaps)
 	for swap in calc_swaps:
-		if msg == 'too_few_bands':
+		if swap == 'too_few_bands':
 			with open('OUTCAR','r') as outcarfile:
 				for line in outcarfile:
 					if 'NBANDS' in line:
@@ -105,7 +105,8 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 			nbands = int(1.1*nbands)
 			calc_swaps.append('nbands='+nbands)
 			calc.int_params['nbands'] = nbands
-		elif msg == 'brions':
+			calc_swaps.remove('too_few_bands')
+		elif swap == 'brions':
 			with open('OUTCAR','r') as outcarfile:
 				for line in outcarfile:
 					if 'POTIM' in line:
@@ -116,6 +117,7 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 							pass
 			calc_swaps.append('potim='+potim)
 			calc.float_params['potim'] = potim
+			calc_swaps.remove('brions')
 
 	return calc, calc_swaps
 
@@ -137,3 +139,11 @@ def continue_mof():
 		mof = reset_mof()
 
 	return mof
+
+def get_niter(outcarfile):
+	with open(outcarfile,'r') as rf:
+		for line in rf:
+			if '- Iteration' in line:
+				niter = line.split('(')[0].split('n')[-1].strip()
+	niter = int(niter)
+	return niter

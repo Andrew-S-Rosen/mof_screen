@@ -3,11 +3,10 @@ import numpy as np
 from shutil import copyfile
 from settings import mofpath, basepath
 from calc_swaps import update_calc
-from error_handler import get_error_msgs, update_calc_after_errors, continue_mof
+from error_handler import get_niter, get_error_msgs, update_calc_after_errors, continue_mof
 from magmom_handler import continue_magmoms, get_mag_indices
 from compute_environ import choose_vasp_version
 from ase.optimize import BFGSLineSearch
-from writers import pprint
 from metal_types import sblock_metals, poor_metals
 from ase.io import read
 
@@ -16,10 +15,13 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 
 	success = False
 	copyfile(mofpath+cif_file,basepath+'working/'+cif_file)
-	calc = update_calc(calc,calc_swaps)
+	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	try:
 		mof.get_potential_energy()
+		niter = get_niter('OUTCAR')
+		if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
+			raise SystemError('VASP stopped but did not crash and burn')
 		success = True
 	except:
 		old_error_len = 0
@@ -32,13 +34,14 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 			error_len = len(errormsg)
 			if error_len == old_error_len:
 				break
-			print('Attempting to solve VASP issue(s): ',errormsg)
 			mof = continue_mof()
 			choose_vasp_version(gpt_version,nprocs,calc_swaps)
-			calc = update_calc(calc,calc_swaps)
 			mof.set_calculator(calc)
 			try:
 				mof.get_potential_energy()
+				niter = get_niter('OUTCAR')
+				if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
+					raise SystemError('VASP stopped but did not crash and burn')
 			except:
 				pass
 			old_error_len = error_len
@@ -52,7 +55,7 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 
 	copyfile(mofpath+cif_file,basepath+'working/'+cif_file)
 	success = False
-	calc = update_calc(calc,calc_swaps)
+	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	dyn = BFGSLineSearch(mof,trajectory='opt.traj')
 	try:
@@ -69,7 +72,6 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 			error_len = len(errormsg)
 			if error_len == old_error_len:
 				break
-			print('Attempting to solve VASP issue(s): ',errormsg)
 			mof = continue_mof()
 			mof.set_calculator(calc)
 			dyn = BFGSLineSearch(mof,trajectory='opt.traj')
