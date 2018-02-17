@@ -11,7 +11,7 @@ for filename in os.listdir(coremof_path):
 	filename = filename.strip()
 	if len(filename.split('.cif')) == 2:
 		cif_files.append(filename)
-cif_files.sort()
+cif_files = list(set(cif_files))
 for cif_file in cif_files:
 	for kppa in kppas:
 		cif_split1 = cif_file.split('_'+ads_species+'_OMS')[0]

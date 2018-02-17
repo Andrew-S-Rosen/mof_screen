@@ -106,7 +106,7 @@ def run_screen(cif_files):
 				if mof != None and dyn and mof.calc.scf_converged == True:
 					loop_i = 0
 					converged = False
-					clean_files('opt.traj')
+					clean_files(['opt.traj'])
 					while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 						mof = read('OUTCAR')
 						mof, abs_magmoms = continue_magmoms(mof,'INCAR')
@@ -146,7 +146,7 @@ def run_screen(cif_files):
 				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
 				if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
-					clean_files('WAVECAR')
+					clean_files(['WAVECAR'])
 				else:
 					manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps)

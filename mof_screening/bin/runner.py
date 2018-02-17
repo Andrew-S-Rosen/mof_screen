@@ -42,6 +42,7 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 				niter = get_niter('OUTCAR')
 				if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
 					raise SystemError('VASP stopped but did not crash and burn')
+				success = True
 			except:
 				pass
 			old_error_len = error_len
