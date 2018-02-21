@@ -212,16 +212,13 @@ def run_screen(cif_files):
 
 			#***********FINAL SPE***********
 			acc_level = acc_levels[run_i]
+			calc_swaps = []
 			if os.path.isfile(outcar_paths[run_i-1]) == True and os.path.isfile(outcar_paths[run_i]) != True and os.path.isfile(error_outcar_paths[run_i]) != True:
 				gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps,'vasp')
 				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				pprint('Running '+spin_level+', '+acc_level)
-				if 'large_supercell' in calc_swaps:
-					calc_swaps.remove('large_supercell')
 				mof,calc_swaps = mof_run(mof,calcs(run_i),cif_file,gpt_version,nprocs,calc_swaps)
-				if mof == None:
-					break
 				if mof != None and mof.calc.scf_converged == True:
 					write_success(refcode,spin_level,acc_level,vasp_files,cif_file)
 				else:

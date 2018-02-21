@@ -25,6 +25,7 @@ def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 
 def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 #Write error files
+
 	pprint('ERROR: '+spin_level+', '+acc_level+' failed')
 	error_path = basepath+'errors/'+refcode+'/'+acc_level+'/'+spin_level
 	if not os.path.exists(error_path):
@@ -37,6 +38,7 @@ def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 
 def write_energy(refcode,acc_level,spin_level):
 #Write energy to results file
+
 	outcarpath = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level+'/OUTCAR'
 	final_mof = read(outcarpath)
 	E = final_mof.get_potential_energy()
