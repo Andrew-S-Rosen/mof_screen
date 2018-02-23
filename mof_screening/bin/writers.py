@@ -18,7 +18,7 @@ def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 	if not os.path.exists(success_path):
 		os.makedirs(success_path)
 	for file in vasp_files:
-		if os.path.isfile(file) == True:
+		if os.path.isfile(file) == True and os.stat(file).st_size > 0:
 			write_to_path = success_path+'/'+file
 			copyfile(file,write_to_path)
 	os.remove(basepath+'working/'+cif_file)
@@ -31,7 +31,7 @@ def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 	if not os.path.exists(error_path):
 		os.makedirs(error_path)
 	for file in vasp_files:
-		if os.path.isfile(file) == True:
+		if os.path.isfile(file) == True and os.stat(file).st_size > 0:
 			write_to_path = error_path+'/'+file
 			copyfile(file,write_to_path)
 	os.remove(basepath+'working/'+cif_file)
