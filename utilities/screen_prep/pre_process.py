@@ -12,12 +12,12 @@ for filename in os.listdir(mofpath):
 	filename = filename.strip()
 	if len(filename.split('.cif')) == 2:
 		refcode = filename.split('.cif')[0]
-		refcodes.append(refcode)
 		parser = CifParser(mofpath+filename)
 		mof = parser.get_structures(primitive=True)[0]
 		if 'Element C,' not in str(mof.species):
 			print('No C in MOF: '+refcode)
 			continue
+		refcodes.append(refcode)
 		stoichs.append(mof.formula.replace(' ',''))
 unique_id,id_counts = np.unique(stoichs,return_counts=True)
 mult_ids = unique_id[id_counts > 1].tolist()
