@@ -13,7 +13,7 @@ for refcode in os.listdir(results_path):
 			main_site = [atom for atom in struct if atom.species_string == ads_species][-1]
 			neighbors = struct.get_neighbors(main_site,rcut)
 			if len(neighbors) == 0:
-				print(refcode)
+				print(refcode+'_'+subdir)
 			else:
 				neighbors_strs = [specie[0].species_string for specie in neighbors]
 				dist = [specie[1] for specie in neighbors]
@@ -21,4 +21,4 @@ for refcode in os.listdir(results_path):
 				env = list(zip(neighbors_strs,dist))
 				env.sort(key=lambda x: x[1])
 				if env[0][0] in nonmetals_list:
-					print([refcode+'_'+subdir]+orig_env)
+					print(refcode+'_'+subdir)
