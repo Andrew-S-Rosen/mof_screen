@@ -4,11 +4,19 @@ import numpy as np
 from shutil import copyfile
 
 phase2_results_path = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/results/'
-final_folder_name = 'final_spe'
 phase2_cleaned_results_path = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/results_cleaned/'
+final_folder_name = 'final_spe'
+bad_job_file = 'bad_ads_addition.txt'
 
+bad_jobs = []
+with open(phase2_results_path+bad_job_file,'r') as rf:
+	for line in rf:
+		bad_jobs.append(line.rstrip())
 if not os.path.isdir(phase2_cleaned_results_path):
 	os.makedirs(phase2_cleaned_results_path)
+bad_cleaned_results_path = phase2_cleaned_results_path+bad_job_file.split('.')[0]
+if not os.path.isdir(bad_cleaned_results_path):
+	os.makedirs(bad_cleaned_results_path)
 for folder in os.listdir(phase2_results_path):
 	if not os.path.isdir(phase2_results_path+folder):
 		continue
@@ -25,4 +33,7 @@ for folder in os.listdir(phase2_results_path):
 			E = E_temp
 			best_mof = mof_subpath
 			best_mof_name = mof_name
-	copyfile(best_mof+'CONTCAR',phase2_cleaned_results_path+'POSCAR_'+best_mof_name)
+	if best_mof_name in bad_jobs:
+		copyfile(best_mof+'CONTCAR',bad_cleaned_results_path+'/POSCAR_'+best_mof_name)
+	else:
+		copyfile(best_mof+'CONTCAR',phase2_cleaned_results_path+'POSCAR_'+best_mof_name)
