@@ -3,8 +3,6 @@ import numpy as np
 from pymatgen.io.cif import CifParser
 from pymatgen.analysis.structure_matcher import StructureMatcher
 
-#NOTE: Replace with MOFID code when published
-
 mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
 refcodes = []
 stoichs = []
