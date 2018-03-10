@@ -3,7 +3,6 @@ from pymatgen.analysis.local_env import MinimumVIRENN
 import numpy as np
 import os
 
-#make sure it's bound to metal type
 results_path = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/results/'
 ads_species = 'O'
 nonmetals_list = ['H','He','C','N','O','F','Ne','P','S','Cl','Ar','Se','Br','Kr','I','Xe','Rn']
