@@ -2,9 +2,9 @@ import pymatgen as pm
 from pymatgen.analysis.local_env import MinimumVIRENN
 import numpy as np
 import os
-import csv
 
 results_path = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/results/'
+output_name = 'bad_ads_addition.txt'
 ads_species = 'O'
 nonmetals_list = ['H','He','C','N','O','F','Ne','P','S','Cl','Ar','Se','Br','Kr','I','Xe','Rn']
 bad_jobs = []
@@ -25,6 +25,6 @@ for refcode in os.listdir(results_path):
 				if neighbors[np.argmin(dist)]['site'].species_string in nonmetals_list:
 					bad_jobs.append(full_name)
 bad_jobs.sort()
-with open('overlap_list.csv','w') as wf:
-	wr = csv.writer(wf,quoting=csv.QUOTE_ALL)
-	wr.writerow(bad_jobs)
+with open(results_path+output_name,'w') as wf:
+	for bad_job in bad_jobs:
+		wf.write(bad_job+'\n')
