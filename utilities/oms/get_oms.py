@@ -5,5 +5,5 @@ os.chdir(mof_path)
 cif_files = []
 for filename in os.listdir(mof_path):
 	filename = filename.strip()
-	if len(filename.split('.cif')) == 2:
+	if '.cif' in filename:
 		os.system(zeo_path+' -omsex '+filename)
