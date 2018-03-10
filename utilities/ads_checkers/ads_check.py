@@ -2,6 +2,7 @@ import pymatgen as pm
 from pymatgen.analysis.local_env import MinimumVIRENN
 import numpy as np
 import os
+import csv
 
 results_path = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/results/'
 ads_species = 'O'
@@ -24,4 +25,6 @@ for refcode in os.listdir(results_path):
 				if neighbors[np.argmin(dist)]['site'].species_string in nonmetals_list:
 					bad_jobs.append(full_name)
 bad_jobs.sort()
-print(bad_jobs)
+with open('overlap_list.csv','w') as wf:
+	wr = csv.writer(wf,quoting=csv.QUOTE_ALL)
+	wr.writerow(bad_jobs)
