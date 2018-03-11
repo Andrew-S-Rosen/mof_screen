@@ -52,17 +52,20 @@ for cif_file in cif_files:
 			cus_coords = cus_coords_all[omsex_idx,:]
 			ase_cus_idx = ase_cus_idx_all[omsex_idx]
 			ase_NN_idx = get_ase_NN_idx(mof,NN_coords,refcode)
-			mic_coords = mof.get_distances(ase_cus_idx,ase_NN_idx,mic=True,vector=True)
-			scaled_mic_coords = mic_coords*guess_length/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
-			scaled_sum_dist = sum(scaled_mic_coords)
-			sum_dist = sum(mic_coords)
-			norm_scaled = np.linalg.norm(scaled_sum_dist)
-			if cnum >= 3:
-				rmse, normal_vec = TLS_fit(mic_coords)
-			elif cnum == 2:
-				normal_vec = OLS_fit(mic_coords)
+			mic_coords = np.squeeze(mof.get_distances(ase_cus_idx,ase_NN_idx,mic=True,vector=True))
 			if cnum == 1:
-				raise ValueError('Not coded!')
+				normal_vec = mic_coords
+			elif cnum == 2:
+				normal_vec = OLS_fit(mic_coords)			
+			elif cnum >= 3:
+				scaled_mic_coords = mic_coords*guess_length/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
+				scaled_sum_dist = sum(scaled_mic_coords)
+				sum_dist = sum(mic_coords)
+				norm_scaled = np.linalg.norm(scaled_sum_dist)
+				rmse, normal_vec = TLS_fit(mic_coords)
+			if cnum == 1:
+				dist = get_dist_planar(normal_vec)
+				ads_sites[i,:] = O_coords-dist
 			elif cnum == 2:
 				ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,ase_cus_idx)
 			elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
