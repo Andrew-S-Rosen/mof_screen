@@ -65,7 +65,7 @@ for cif_file in cif_files:
 				rmse, normal_vec = TLS_fit(mic_coords)
 			if cnum == 1:
 				dist = get_dist_planar(normal_vec)
-				ads_sites[i,:] = O_coords-dist
+				ads_sites[i,:] = cus_coords-dist
 			elif cnum == 2:
 				ads_sites[i,:] = get_bi_ads_site(cif_file,normal_vec,cus_coords,ase_cus_idx)
 			elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
