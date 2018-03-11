@@ -1,7 +1,7 @@
 import numpy as np
 
 def OLS_fit(xyz):
-#OLS regression to z=a+bx+cy and calculation of normal vector
+#ordinary LS regression to z=a+bx+cy and calculation of normal vector
 
 	x = xyz[:,0][np.newaxis].T
 	y = xyz[:,1][np.newaxis].T
