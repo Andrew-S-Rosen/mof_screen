@@ -23,5 +23,5 @@ for refcode in refcodes:
 				copyfile(spe_path+subdir+'/'+file,bader_path+file)
 			copyfile(submit_script_path,bader_path+'sub_bader.job')
 			os.chdir(bader_path)
-			time.sleep(4)
+			time.sleep(2)
 			os.system(sub_command +' sub_bader.job')
