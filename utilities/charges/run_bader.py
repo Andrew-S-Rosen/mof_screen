@@ -1,5 +1,6 @@
 import os
 from shutil import copyfile
+import time
 
 results_path = '/projects/p30148/vasp_jobs/MOFs/reoptimized_core1/results/'
 submit_script_path = '/home/asr731/bin/submit_scripts/sub_bader.job'
@@ -22,4 +23,5 @@ for refcode in refcodes:
 				copyfile(spe_path+subdir+'/'+file,bader_path+file)
 			copyfile(submit_script_path,bader_path+'sub_bader.job')
 			os.chdir(bader_path)
+			time.sleep(4)
 			os.system(sub_command +' sub_bader.job')
