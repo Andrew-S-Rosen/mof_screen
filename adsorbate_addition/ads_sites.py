@@ -93,7 +93,7 @@ def get_opt_ads_site(struct_file,cnum,mic_coords,center_idx,center_coord):
 #get the optimal adsorption site
 
 	if cnum == 1:
-			normal_vec = mic_coords
+		normal_vec = mic_coords
 	elif cnum == 2:
 		normal_vec = OLS_fit(mic_coords)
 	elif cnum >= 3:
@@ -103,8 +103,8 @@ def get_opt_ads_site(struct_file,cnum,mic_coords,center_idx,center_coord):
 		norm_scaled = np.linalg.norm(scaled_sum_dist)
 		rmse, normal_vec = TLS_fit(mic_coords)
 	if cnum == 1:
-			dist = get_dist_planar(normal_vec)
-			ads_site = center_coord-dist
+		dist = get_dist_planar(normal_vec)
+		ads_site = center_coord-dist
 	elif cnum == 2:
 		ads_site = get_bi_ads_site(struct_file,normal_vec,center_coord,center_idx)
 	elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
