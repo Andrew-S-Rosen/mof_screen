@@ -20,10 +20,11 @@ def run_screen(cif_files):
 	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','final','final_spe']
-	nprocs, ppn = get_nprocs()
 
 	#for each CIF file, optimize the structure
 	for cif_file in cif_files:
+
+		nprocs, ppn = get_nprocs()
 
 		refcode = cif_file.split('.cif')[0]
 		pprint('***STARTING '+refcode+'***')
