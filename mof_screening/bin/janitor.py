@@ -31,10 +31,10 @@ def clean_files(remove_files):
 			os.remove(file)
 
 def manage_restart_files(file_path):
-#Make sure the restart files is copied
+#Make sure the restart files are copied
 
-	files = ['WAVECAR']
+	files = ['WAVECAR','CHGCAR']
 	for file in files:
 		if os.path.isfile(file) != True or os.stat(file).st_size == 0:
-			if os.path.isfile(file_path+'/'+file) == True:
+			if os.path.isfile(file_path+'/'+file) == True and os.stat(file_path+'/'+file).st_size > 0:
 				copyfile(file_path+'/'+file,os.getcwd()+'/'+file)

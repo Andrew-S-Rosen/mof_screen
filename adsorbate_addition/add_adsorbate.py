@@ -1,13 +1,26 @@
 import numpy as np
 from ase.io import read, write
 from ase import Atoms, Atom
-from settings import coremof_path, ads_species, newmofs_path, error_path, overlap_tol
+from settings import coremof_path, ads_species, ads_mol_idx, newmofs_path, error_path, overlap_tol
+from ase.collections import g2
+from ase.build import molecule
 
 def add_ads_species(cif_file,ads_site):
 #add adsorbate to original CIF and save new CIF
 
 	mof_temp = read(coremof_path+cif_file)
-	adsorbate = Atoms([Atom(ads_species,ads_site)])
+	if len(ads_species) == 1:
+		adsorbate = Atoms([Atom(ads_species,ads_site)])
+	else:
+		if ads_species in g2.names:
+			adsorbate = molecule(ads_species)
+			for i, atom in enumerate(adsorbate):
+				if i != ads_mol_idx:
+					atom.position += ads_site - adsorbate[ads_mol_idx].position
+			adsorbate[ads_mol_idx].position = ads_site
+		else:
+			raise ValueError('Only molecules in the g2 collection are supported')
+		
 	mof_temp.extend(adsorbate)
 
 	return mof_temp

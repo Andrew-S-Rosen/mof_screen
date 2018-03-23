@@ -11,7 +11,6 @@ def update_calc(calc,calc_swaps):
 			calc.int_params['nelmin'] = 8
 			calc.int_params['iopt'] = 7
 			calc.float_params['potim'] = 0
-			calc_swaps.append('vtst')
 		elif swap == 'dentet' or swap == 'grad_not_orth':
 			calc.int_params['ismear'] = 0
 			calc.string_params['algo'] = 'Fast'

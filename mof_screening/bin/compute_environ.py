@@ -13,33 +13,21 @@ def get_nprocs():
 
 	return nprocs, ppn
 
-def choose_vasp_version(gpt_version,nprocs,calc_swaps,*fix_version):
+def choose_vasp_version(gpt_version,nprocs,calc_swaps):
 #Run a given VASP version
 	parallel_cmd = 'mpirun -n'
 	vasp_path = '/home/asr731/software/vasp_builds/bin/'
 	vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
-	vtst_ex = vasp_ex
 	module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
-
 	base = parallel_cmd+' '+str(nprocs)+' '
 	vasp_cmd = base+vasp_ex[0]
-	vtst_cmd = base+vtst_ex[0]
 	gamvasp_cmd = base+vasp_ex[1]
-	gamvtst_cmd = base+vtst_ex[1]
 	runvasp_file = open('run_vasp.py','w')
-	if 'vtst' in fix_version or 'vtst' in calc_swaps:
-		if gpt_version == True:
-			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+' && '+gamvtst_cmd+"'"+')')
-		else:
-			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+' && '+vtst_cmd+"'"+')')
+	if gpt_version == True:
+		runvasp_file.write("import os\nexitcode = os.system("
+			+"'"+module_cmd+' && '+gamvasp_cmd+"'"+')')
 	else:
-		if gpt_version == True:
-			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+' && '+gamvasp_cmd+"'"+')')
-		else:
-			runvasp_file.write("import os\nexitcode = os.system("
-				+"'"+module_cmd+' && '+vasp_cmd+"'"+')')
+		runvasp_file.write("import os\nexitcode = os.system("
+			+"'"+module_cmd+' && '+vasp_cmd+"'"+')')
 
 	runvasp_file.close()
