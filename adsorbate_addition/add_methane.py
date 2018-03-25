@@ -7,13 +7,21 @@ import os
 
 cif_path = 'CIFs/'
 grid_path = 'ASCI_grids/'
+new_mof_path = 'CH4_ads/'
+max_dist = 2.5
+if not os.path.exists(new_mof_path):
+	os.makedirs(new_mof_path)
+completed = os.listdir(new_mof_path)
 for cif_name in os.listdir(cif_path):
 	mof_name = cif_name.split('.cif')[0]
-	CH4 = molecule('CH4')
-	cif_name = mof_name+'.cif'
+	if mof_name+'_CH4.cif' in completed:
+		continue
 	grid_name = mof_name+'.grid'
 	if not os.path.isfile(grid_path+grid_name):
 		print('ERROR for ',mof_name,': no grid')
+		continue
+	CH4 = molecule('CH4')
+	cif_name = mof_name+'.cif'
 	CH_length = CH4.get_distance(0,1)
 	CH_angle = CH4.get_angle(1,0,2)
 	CH_dihedral = CH4.get_dihedral(2,1,0,4)
@@ -22,7 +30,6 @@ for cif_name in os.listdir(cif_path):
 	mof = read(cif_path+cif_name)
 	O_idx = [atom.index for atom in mof if atom.symbol == 'O'][-1]
 	O_pos = mof[O_idx].position
-	max_dist = 2.5 #or range between X and Y?
 	D,D_len = get_distances([O_pos],df[['x','y','z']].as_matrix(),cell=mof.cell,pbc=mof.pbc)
 	D.shape = (-1,3)
 	D_len.shape = (-1,)
@@ -43,4 +50,4 @@ for cif_name in os.listdir(cif_path):
 	CH4.set_angle(1,0,4,CH_angle)
 	CH4.set_dihedral(2,1,0,4,CH_dihedral)
 	mof.extend(CH4)
-	write(mof_name+'_CH4.cif',mof)
+	write(new_mof_path+mof_name+'_CH4.cif',mof)
