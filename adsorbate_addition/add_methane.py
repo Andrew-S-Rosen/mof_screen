@@ -62,7 +62,8 @@ for cif_name in os.listdir(cif_path):
 	#Construct CH4 and add to MOF
 	CH4 = molecule(mol_species)
 	CH4[0].position = ads_site
-	r_vec = O_pos - ads_site
+	D,D_len = get_distances([ads_site],[O_pos],cell=mof.cell,pbc=mof.pbc)
+	r_vec = D[0,0]
 	r = (r_vec/np.linalg.norm(r_vec))*CH_length
 	CH4[1].position = ads_site+r
 	CH4.set_distance(0,2,CH_length,fix=0)
