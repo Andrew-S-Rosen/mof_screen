@@ -36,7 +36,7 @@ for folder in results:
 			nn_object = MinimumVIRENN()
 			del struct[H_ads_idx]
 			O_ads_idx = [i for i, atom in enumerate(struct) if atom.species_string == 'O'][-1]
-			neighbors = nn_object.get_nn_info(struct,O_ads_idx-1)
+			neighbors = nn_object.get_nn_info(struct,O_ads_idx)
 			if neighbors:
 				for neighbor in neighbors:
 					dist.append(struct.get_distance(O_ads_idx,neighbor['site_index']))
