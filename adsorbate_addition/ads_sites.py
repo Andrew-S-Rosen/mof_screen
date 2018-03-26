@@ -97,7 +97,7 @@ def get_opt_ads_site(struct_file,cnum,mic_coords,center_idx,center_coord):
 	elif cnum == 2:
 		normal_vec = OLS_fit(mic_coords)
 	elif cnum >= 3:
-		scaled_mic_coords = mic_coords*guess_length/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
+		scaled_mic_coords = mic_coords*2.0/np.linalg.norm(mic_coords,axis=1)[np.newaxis].T
 		scaled_sum_dist = sum(scaled_mic_coords)
 		sum_dist = sum(mic_coords)
 		norm_scaled = np.linalg.norm(scaled_sum_dist)
