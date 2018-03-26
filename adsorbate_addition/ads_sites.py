@@ -107,7 +107,7 @@ def get_opt_ads_site(struct_file,cnum,mic_coords,center_idx,center_coord):
 		ads_site = center_coord-dist
 	elif cnum == 2:
 		ads_site = get_bi_ads_site(struct_file,normal_vec,center_coord,center_idx)
-	elif cnum == 3 and np.linalg.norm(scaled_sum_dist) > sum_cutoff:
+	elif cnum == 3 and norm_scaled > sum_cutoff:
 		ads_site = get_tri_ads_site(struct_file,normal_vec,sum_dist,center_coord,center_idx)
 	elif norm_scaled <= sum_cutoff or rmse <= rmse_tol:
 		dist = get_dist_planar(normal_vec)
