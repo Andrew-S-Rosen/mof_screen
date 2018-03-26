@@ -7,10 +7,10 @@ import os
 
 #Settings
 cif_path = 'CIFs/'
-grid_path = 'ASCI_grids/'
+grid_path = 'ASCI_Grids/'
 new_mof_path = 'CH4_ads/'
 max_dist = 2.5
-ovelrap_tol = 0.75
+overlap_tol = 0.75
 mol_species = 'CH4'
 
 #Get CH4 parameters
@@ -28,6 +28,7 @@ if not os.path.exists(error_path):
 	os.makedirs(error_path)
 completed = os.listdir(new_mof_path)
 
+partition = 1e6
 for cif_name in os.listdir(cif_path):
 
 	#prep paths
@@ -43,6 +44,7 @@ for cif_name in os.listdir(cif_path):
 	#read grid
 	df = pd.read_csv(grid_path+grid_name,delim_whitespace=True,na_values='?',usecols=[0,1,2,3])
 	df.columns = ['x','y','z','e']
+	df['d'] = ''
 
 	#read MOF
 	mof = read(cif_path+cif_name)
@@ -50,9 +52,16 @@ for cif_name in os.listdir(cif_path):
 	O_pos = mof[O_idx].position
 
 	#Construct new df based on max_dist
-	D,D_len = get_distances([O_pos],df[['x','y','z']].as_matrix(),cell=mof.cell,pbc=mof.pbc)
-	D_len.shape = (-1,)
-	df['d'] = D_len
+	n_loops = int(np.ceil(len(df)/partition))
+	O_df = pd.DataFrame()
+	for i in range(n_loops):
+		if i == n_loops-1:
+			idx = np.arange(i*int(partition),len(df))
+		else:
+			idx = np.arange(i*int(partition),(i+1)*int(partition))
+		D,D_len = get_distances([O_pos],df.loc[idx,['x','y','z']].as_matrix(),cell=mof.cell,pbc=mof.pbc)
+		D_len.shape = (-1,)
+		df.loc[idx,'d'] = D_len
 	O_df = df[df['d'] <= max_dist]
 
 	#Get lowest energy spot for CH4
@@ -79,7 +88,7 @@ for cif_name in os.listdir(cif_path):
 	#Confirm no overlapping atoms
 	for i in range(n_CH4):
 		dist = mof.get_distances(-(i+1),np.arange(0,len(mof)-n_CH4).tolist(),mic=True)
-		if np.sum(dist <= ovelrap_tol) > 0:
+		if np.sum(dist <= overlap_tol) > 0:
 			print('ERROR for',mof_name,': overlap')
 			overlap = True
 			write(error_path+mof_name+'_CH4.cif',mof)
