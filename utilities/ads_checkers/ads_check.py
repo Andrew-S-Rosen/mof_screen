@@ -24,6 +24,7 @@ for refcode in os.listdir(results_path):
 					dist.append(struct.get_distance(ads_idx,neighbor['site_index']))
 				if neighbors[np.argmin(dist)]['site'].species_string in nonmetals_list:
 					bad_jobs.append(full_name)
+					continue
 bad_jobs.sort()
 with open(results_path+output_name,'w') as wf:
 	for bad_job in bad_jobs:
