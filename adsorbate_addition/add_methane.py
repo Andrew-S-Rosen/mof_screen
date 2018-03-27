@@ -9,8 +9,8 @@ import os
 cif_path = 'CIFs/'
 grid_path = 'ASCI_Grids/'
 new_mof_path = 'CH4_ads/'
-max_dist = 2.5
-overlap_tol = 0.75
+max_dist = 3.0
+overlap_tol = 1.3
 mol_species = 'CH4'
 
 #Get CH4 parameters
