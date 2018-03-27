@@ -97,6 +97,7 @@ def run_ads_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
+				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)s
 				mof = set_initial_magmoms(mof,spin_level)
 				gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
 				choose_vasp_version(gpt_version,nprocs,calc_swaps)
@@ -300,6 +301,7 @@ def run_vol_screen(cif_files):
 					mof = read(spin1_final_mof_path)
 				else:
 					mof = cif_to_mof(cif_file)
+				manage_restart_files(results_partial_paths[run_i-1]+'/'+spin_level)
 				mof = set_initial_magmoms(mof,spin_level)
 				choose_vasp_version(kpts_lo,len(mof),nprocs,ppn)
 				pprint('Running '+spin_level+', '+acc_level)
