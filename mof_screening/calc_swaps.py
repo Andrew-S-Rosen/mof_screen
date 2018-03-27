@@ -75,5 +75,7 @@ def update_calc(calc,calc_swaps):
 			calc.int_params['ibrion'] = 3
 			calc.int_params['iopt'] = 7
 			calc.float_params['potim'] = 0
+		else:
+			raise ValueError('Unknown calc swap')
 
 	return calc, calc_swaps
