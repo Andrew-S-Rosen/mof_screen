@@ -45,7 +45,8 @@ def calcs_ads(run_i):
 			lwave=True,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
-			nsw=0
+			nsw=0,
+			istart=0
 			)
 	elif run_i == 1:
 		calc = Vasp(
@@ -199,7 +200,8 @@ def calcs_vol(run_i):
 			lwave=True,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
-			nsw=0
+			nsw=0,
+			istart=0
 			)
 	elif run_i == 1:
 		calc = Vasp(
