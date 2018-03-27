@@ -34,15 +34,18 @@ def calcs_ads(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			nelm=1,
+			ediff=defaults['ediff'],
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
 			sigma=defaults['sigma'],
-			istart=0,
 			lcharg=False,
-			lwave=False,
-			isym=defaults['isym']
+			lwave=True,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym'],
+			nsw=0
 			)
 	elif run_i == 1:
 		calc = Vasp(
@@ -185,15 +188,18 @@ def calcs_vol(run_i):
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
-			nelm=1,
+			ediff=defaults['ediff'],
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ncore=defaults['ncore'],
 			ismear=defaults['ismear'],
 			sigma=defaults['sigma'],
-			istart=0,
 			lcharg=False,
-			lwave=False,
-			isym=defaults['isym']
+			lwave=True,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym'],
+			nsw=0
 			)
 	elif run_i == 1:
 		calc = Vasp(
@@ -234,36 +240,12 @@ def calcs_vol(run_i):
 			lwave=True,
 			ibrion=2,
 			isif=2,
-			nsw=400,
+			nsw=defaults['nsw'],
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
 	elif run_i == 2:
-		calc = Vasp(
-			xc=defaults['xc'],
-			setups=defaults['setups'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
-			ivdw=defaults['ivdw'],
-			prec=defaults['prec'],
-			algo=defaults['algo'],
-			ediff=1e-6,
-			nelm=defaults['nelm'],
-			lreal=defaults['lreal'],
-			ncore=defaults['ncore'],
-			ismear=defaults['ismear'],
-			sigma=defaults['sigma'],
-			lcharg=False,
-			lwave=True,
-			ibrion=2,
-			isif=4,
-			nsw=defaults['nsw'],
-			ediffg=-0.05,
-			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
-			)	
-	elif run_i == 3:
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
@@ -284,12 +266,12 @@ def calcs_vol(run_i):
 			lwave=True,
 			ibrion=2,
 			isif=3,
-			nsw=defaults['nsw'],
+			nsw=30,
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 4:
+	elif run_i == 3:
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
@@ -310,12 +292,12 @@ def calcs_vol(run_i):
 			lwave=True,
 			ibrion=2,
 			isif=3,
-			nsw=defaults['nsw'],
+			nsw=30,
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 5:
+	elif run_i == 4:
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
@@ -336,12 +318,12 @@ def calcs_vol(run_i):
 			lwave=True,
 			ibrion=2,
 			isif=2,
-			nsw=defaults['nsw'],
+			nsw=30,
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 6:
+	elif run_i == 5:
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
