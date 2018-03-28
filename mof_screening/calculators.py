@@ -1,5 +1,4 @@
 from ase.calculators.vasp import Vasp
-from settings import f_tol
 
 #default parameters for calculators
 defaults = {
@@ -16,7 +15,7 @@ defaults = {
 	'ismear': 0,
 	'sigma': 0.01,
 	'nsw': 500,
-	'ediffg': -f_tol,
+	'ediffg': -0.03,
 	'lorbit': 11,
 	'kppa_lo': 100,
 	'kppa_hi': 1000,
