@@ -234,6 +234,8 @@ def run_ads_screen(cif_files):
 			if mof == None:
 				pprint('Skipping rest because of errors')
 				break
+			if np.max(np.linalg.norm(mof.get_forces(),axis=1)) > f_tol:
+				pprint('WARNING: |F_max| = '+str(f_tol))
 
 			#***********SAVE and CONTINUE***********
 			if os.path.isfile(outcar_paths[-1]) == True:
@@ -520,6 +522,8 @@ def run_vol_screen(cif_files):
 			if mof == None:
 				pprint('Skipping rest because of errors')
 				break
+			if np.max(np.linalg.norm(mof.get_forces(),axis=1)) > f_tol:
+				pprint('WARNING: |F_max| = '+str(f_tol))
 
 			#***********SAVE and CONTINUE***********
 			if os.path.isfile(outcar_paths[-1]) == True:
