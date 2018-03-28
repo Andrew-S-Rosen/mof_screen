@@ -253,6 +253,7 @@ def run_vol_screen(cif_files):
 	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2','isif3_lowacc','isif3_highacc','final','final_spe']
+	f_tol = np.abs(defaults['ediffg'])
 
 	#for each CIF file, optimize the structure
 	for cif_file in cif_files:
