@@ -11,7 +11,6 @@ from cif_handler import cif_to_mof
 from magmom_handler import set_initial_magmoms, continue_magmoms, get_mag_indices
 from calculators import calcs_ads, calcs_vol, defaults
 from error_handler import get_warning_msgs
-from calculators import defaults
 
 def run_ads_screen(cif_files):
 #Run high-throughput screening
