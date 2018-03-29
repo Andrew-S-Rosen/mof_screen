@@ -18,7 +18,8 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	try:
-		mof.get_potential_energy()
+		E = mof.get_potential_energy()
+		print('E: '+str(E))
 		niter = get_niter('OUTCAR')
 		if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
 			raise SystemError('VASP stopped but did not crash and burn')
@@ -38,7 +39,8 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 			choose_vasp_version(gpt_version,nprocs,calc_swaps)
 			mof.set_calculator(calc)
 			try:
-				mof.get_potential_energy()
+				E = mof.get_potential_energy()
+				print('E: '+str(E))
 				niter = get_niter('OUTCAR')
 				if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
 					raise SystemError('VASP stopped but did not crash and burn')

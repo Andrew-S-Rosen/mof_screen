@@ -13,7 +13,7 @@ def update_calc(calc,calc_swaps):
 			calc.float_params['potim'] = 0
 		elif swap == 'dentet' or swap == 'grad_not_orth':
 			calc.int_params['ismear'] = 0
-			calc.string_params['algo'] = 'Fast'
+			calc.string_params['algo'] = 'Normal'
 		elif swap == 'edddav':
 			calc.string_params['algo'] = 'All'
 		elif swap == 'inv_rot_mat':
