@@ -231,12 +231,12 @@ def run_ads_screen(cif_files):
 						pprint('^ SCF did not converge')
 			elif os.path.isfile(outcar_paths[run_i]) == True:
 				pprint('COMPLETED: '+spin_level+', '+acc_level)
+				if np.max(np.linalg.norm(mof.get_forces(),axis=1)) > f_tol:
+					pprint('WARNING: |F_max| = '+str(f_tol))
 			mof, run_i, skip_spin2 = prep_next_run(acc_level,run_i,refcode,spin_level)
 			if mof == None:
 				pprint('Skipping rest because of errors')
 				break
-			if np.max(np.linalg.norm(mof.get_forces(),axis=1)) > f_tol:
-				pprint('WARNING: |F_max| = '+str(f_tol))
 
 			#***********SAVE and CONTINUE***********
 			if os.path.isfile(outcar_paths[-1]) == True:
