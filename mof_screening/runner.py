@@ -18,36 +18,35 @@ def mof_run(mof,calc,cif_file,gpt_version,nprocs,calc_swaps):
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	try:
-		E = mof.get_potential_energy()
-		print('E: '+str(E))
+		mof.get_potential_energy()
 		niter = get_niter('OUTCAR')
 		if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
 			raise SystemError('VASP stopped but did not crash and burn')
 		success = True
 	except:
-		old_error_len = 0
-		refcode = cif_file.split('.cif')[0]
-		if os.path.isfile('WAVECAR'):
-			os.remove('WAVECAR')
-		while True:
-			errormsg = get_error_msgs('OUTCAR',refcode)
-			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
-			error_len = len(errormsg)
-			if error_len == old_error_len:
-				break
-			mof = continue_mof()
-			choose_vasp_version(gpt_version,nprocs,calc_swaps)
-			mof.set_calculator(calc)
-			try:
-				E = mof.get_potential_energy()
-				print('E: '+str(E))
-				niter = get_niter('OUTCAR')
-				if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
-					raise SystemError('VASP stopped but did not crash and burn')
-				success = True
-			except:
-				pass
-			old_error_len = error_len
+		if not os.path.isfile('STOPCAR'):
+			old_error_len = 0
+			refcode = cif_file.split('.cif')[0]
+			if os.path.isfile('WAVECAR'):
+				os.remove('WAVECAR')
+			while True:
+				errormsg = get_error_msgs('OUTCAR',refcode)
+				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
+				error_len = len(errormsg)
+				if error_len == old_error_len:
+					break
+				mof = continue_mof()
+				choose_vasp_version(gpt_version,nprocs,calc_swaps)
+				mof.set_calculator(calc)
+				try:
+					mof.get_potential_energy()
+					niter = get_niter('OUTCAR')
+					if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
+						raise SystemError('VASP stopped but did not crash and burn')
+					success = True
+				except:
+					pass
+				old_error_len = error_len
 	if success == False:
 		mof = None
 
@@ -65,25 +64,26 @@ def mof_bfgs_run(mof,calc,cif_file,calc_swaps,steps,fmax):
 		dyn.run(fmax=fmax,steps=steps)
 		success = True
 	except:
-		old_error_len = 0
-		refcode = cif_file.split('.cif')[0]
-		if os.path.isfile('WAVECAR'):
-			os.remove('WAVECAR')
-		while True:
-			errormsg = get_error_msgs('OUTCAR',refcode)
-			calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
-			error_len = len(errormsg)
-			if error_len == old_error_len:
-				break
-			mof = continue_mof()
-			mof.set_calculator(calc)
-			dyn = BFGSLineSearch(mof,trajectory='opt.traj')
-			try:				
-				dyn.run(fmax=fmax,steps=steps)
-				success = True
-			except:
-				pass
-			old_error_len = error_len
+		if not os.path.isfile('STOPCAR'):
+			old_error_len = 0
+			refcode = cif_file.split('.cif')[0]
+			if os.path.isfile('WAVECAR'):
+				os.remove('WAVECAR')
+			while True:
+				errormsg = get_error_msgs('OUTCAR',refcode)
+				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
+				error_len = len(errormsg)
+				if error_len == old_error_len:
+					break
+				mof = continue_mof()
+				mof.set_calculator(calc)
+				dyn = BFGSLineSearch(mof,trajectory='opt.traj')
+				try:				
+					dyn.run(fmax=fmax,steps=steps)
+					success = True
+				except:
+					pass
+				old_error_len = error_len
 	if success == False:
 		mof = None
 

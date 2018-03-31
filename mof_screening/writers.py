@@ -35,6 +35,8 @@ def write_errors(refcode,spin_level,acc_level,vasp_files,cif_file):
 			write_to_path = error_path+'/'+file
 			copyfile(file,write_to_path)
 	os.remove(basepath+'working/'+cif_file)
+	if os.path.exists('STOPCAR'):
+		os.remove('STOPCAR')
 
 def write_energy(refcode,acc_level,spin_level):
 #Write energy to results file
