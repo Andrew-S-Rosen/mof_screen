@@ -128,25 +128,39 @@ def get_E_TS(phase2_df,phase3_df,gas_dict):
 			pass
 	return phase2_names, E_H_list, E_TS_list, Ea_list
 
-def get_E_ads(phase1_df,phase4_df,gas_dict):
+def get_E_ads(phase2_df,phase4_df,gas_dict):
 	E_ads_list = []
-	phase1_names = []
+	phase2_names = []
 	for i, row in phase4_df.iterrows():
 		phase4_E = row.E
 		phase4_name = row.Name
-		phase1_name = phase4_name.split('_spin')[0]
-		phase1_E = float(phase1_df[phase1_df['Name'].str.match(phase1_name)].E)
-		E_ads = phase4_E - (phase1_E + gas_dict['CH4'])
+		phase2_name = phase4_name.rsplit('_spin',1)[0]
+		phase2_E = float(phase2_df[phase2_df['Name'].str.match(phase2_name)].E)
+		E_ads = phase4_E - (phase2_E + gas_dict['CH4'])
 		E_ads_list.append(E_ads)
+		phase2_names.append(phase2_name)
+	return phase2_names, E_ads_list
+
+def get_E_ox(phase1_df,phase2_df,gas_dict):
+	E_ox_list = []
+	phase1_names = []
+	for i, row in phase2_df.iterrows():
+		phase2_E = row.E
+		phase2_name = row.Name
+		phase1_name = phase2_name.split('_spin')[0]
+		phase1_E = float(phase1_df[phase1_df['Name'].str.match(phase1_name)].E)
+		E_ox = phase2_E - (phase1_E + 0.5*gas_dict['O2'])
+		E_ox_list.append(E_ox)
 		phase1_names.append(phase1_name)
-	return phase1_names, E_ads_list
+	return phase1_names, E_ox_list
 
 gas_dict = get_gas_dict(gas_path)
 phase1_df = get_df('phase1_df',phase1_results)
 phase2_df = get_df('phase2_df',phase2_results)
 phase3_df = get_df('phase3_df',phase3_results)
 phase4_df = get_df('phase4_df',phase4_results)
-phase2_names, E_H_list, E_TS_list, Ea_list = get_E_TS(phase2_df,phase3_df,gas_dict)
-phase1_names, E_ads_list = get_E_ads(phase1_df,phase4_df,gas_dict)
-write_descriptor(phase2_names,E_H_list,E_TS_list,Ea_list)
+phase2_TS_names, E_H_list, E_TS_list, Ea_list = get_E_TS(phase2_df,phase3_df,gas_dict)
+phase2_ads_names, E_ads_list = get_E_ads(phase2_df,phase4_df,gas_dict)
+phase1_ox_names, E_ox_list = get_E_ox(phase1_df,phase2_df,gas_dict)
+write_descriptor(phase2_TS_names,E_H_list,E_TS_list,Ea_list)
 plot_descriptor(E_H_list,E_TS_list)
