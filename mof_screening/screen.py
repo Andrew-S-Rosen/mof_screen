@@ -17,10 +17,9 @@ def run_ads_screen(cif_files):
 
 	#Files, spin levels, and accuracy levels to iterate over
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
-	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR']
+	'CONTCAR','CHGCAR','WAVECAR']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','final','final_spe']
-	f_tol = np.abs(defaults['ediffg'])
 
 	#for each CIF file, optimize the structure
 	for cif_file in cif_files:
@@ -235,10 +234,6 @@ def run_ads_screen(cif_files):
 			if mof == None:
 				pprint('Skipping rest because of errors')
 				break
-			success_path = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level
-			f_final = np.max(np.linalg.norm(read(success_path+'/OUTCAR').get_forces(),axis=1))
-			if f_final > f_tol:
-				pprint('WARNING: |F_max| = '+str(f_final))
 				
 			#***********SAVE and CONTINUE***********
 			if os.path.isfile(outcar_paths[-1]) == True:
@@ -252,10 +247,9 @@ def run_vol_screen(cif_files):
 
 	#Files, spin levels, and accuracy levels to iterate over
 	vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
-	'CONTCAR','CHGCAR','AECCAR0','AECCAR2','WAVECAR','opt.traj']
+	'CONTCAR','CHGCAR','WAVECAR','opt.traj']
 	spin_levels = ['spin1','spin2']
 	acc_levels = ['scf_test','isif2','isif3_lowacc','isif3_highacc','final','final_spe']
-	f_tol = np.abs(defaults['ediffg'])
 
 	#for each CIF file, optimize the structure
 	for cif_file in cif_files:
@@ -526,10 +520,6 @@ def run_vol_screen(cif_files):
 			if mof == None:
 				pprint('Skipping rest because of errors')
 				break
-			success_path = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level
-			f_final = np.max(np.linalg.norm(read(success_path+'/OUTCAR').get_forces(),axis=1))
-			if f_final > f_tol:
-				pprint('WARNING: |F_max| = '+str(f_final))
 
 			#***********SAVE and CONTINUE***********
 			if os.path.isfile(outcar_paths[-1]) == True:

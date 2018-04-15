@@ -15,9 +15,11 @@ def write_success(refcode,spin_level,acc_level,vasp_files,cif_file):
 
 	pprint('SUCCESS: '+spin_level+', '+acc_level)
 	success_path = basepath+'results/'+refcode+'/'+acc_level+'/'+spin_level
+	if acc_level == 'final_spe':
+		vasp_success_file = vasp_files+['DOSCAR','AECCAR0','AECCAR2']
 	if not os.path.exists(success_path):
 		os.makedirs(success_path)
-	for file in vasp_files:
+	for file in vasp_success_file:
 		if os.path.isfile(file) == True and os.stat(file).st_size > 0:
 			write_to_path = success_path+'/'+file
 			copyfile(file,write_to_path)
