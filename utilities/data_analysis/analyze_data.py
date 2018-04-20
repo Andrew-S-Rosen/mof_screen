@@ -6,17 +6,43 @@ import numpy as np
 from ase.geometry import cell_to_cellpar
 from ase.thermochemistry import IdealGasThermo
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from ase.vibrations import Vibrations
+from pymatgen.analysis.local_env import MinimumVIRENN
+import re
+from pymatgen.io import ase as pm_ase
 
 phase1_results = '/projects/p30470/phase1_results/'
 phase2_results = '/projects/p30148/vasp_jobs/MOFs/oxidized_oms/results/'
 phase3_results = '/projects/p30148/vasp_jobs/MOFs/phase3/results/'
 phase4_results = '/projects/p30148/vasp_jobs/MOFs/phase4/results/'
 gas_path = '/projects/p30148/vasp_jobs/MOFs/gasphase/'
-oms_path = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-Clean/oms_data/'
-T_gas = 300
+T_gas = 150+273.15
 P_gas = 1e5
+
+def get_ddec(filepath):
+	check = False
+	charges = []
+	i = 0
+	with open(filepath+'/DDEC6_even_tempered_net_atomic_charges.xyz','r') as rf:
+		for line in rf:
+			line = line.strip()
+			if 'quadrupole moment tensor' in line:
+				check = True
+				continue
+			if check == True:
+				if not line:
+					break
+				else:
+					line = line.strip()
+					element_str = re.findall('[a-z]',line,re.I)
+					element = ''
+					for letter in element_str:
+						element += letter
+					line = line.split(element_str[-1])[-1]
+					charges.append(np.fromstring(line,dtype=float,sep=' ')[3])
+					i += 1
+	return charges
+
 
 def get_kpts(file_path):
 	with open(file_path+'/KPOINTS','r') as rf:
@@ -29,7 +55,7 @@ def get_kpts(file_path):
 				else:
 					gamma = False
 			elif i == 3:
-				kpts = np.array(line.strip())
+				kpts = [int(num) for num in line.strip().split(' ')]
 			else:
 				break
 	return kpts, gamma
@@ -76,17 +102,16 @@ def get_gas_data(gas_path,gas_name,T,P,geom,sym,spin):
 	os.chdir(pwd)
 	return E, G
 
-def get_NNs(screen_path,mof_name):
-	try:
-		with open(screen_path+'NN_list.txt','r') as rf:
-			for line in rf:
-				if line.split('|')[0] == mof_name:
-					NNs = line.split('|')[-1].strip()
-					NNs = NNs.replace(',','|')
-					break
-	except:
-		NNs = np.nan
-	return NNs
+def get_NNs(mof,idx):
+	bridge = pm_ase.AseAtomsAdaptor()
+	struct = bridge.get_structure(mof)
+	nn_object = MinimumVIRENN()
+	neighbors = nn_object.get_nn_info(struct,idx)
+	NN_idx = []
+	if neighbors:
+		for neighbor in neighbors:
+			NN_idx.append(neighbor['site_index'])
+	return NN_idx
 
 def check_bad(screen_path,mof_name):
 	isbad = False
@@ -99,7 +124,7 @@ def check_bad(screen_path,mof_name):
 		pass
 	return isbad
 
-def get_mof_data(screen_path):
+def get_mof_data(screen_path,phase):
 	refcode_list = []
 	E_list = []
 	net_magmom_list = []
@@ -108,8 +133,16 @@ def get_mof_data(screen_path):
 	V_list = []
 	lattice_list = []
 	formula_list = []
-	NNs_list = []
+	OMS_list = []
 	n_atoms = []
+	C_dist_list = []
+	H_dist_list = []
+	O_mag_list = []
+	M_mag_list = []
+	oxo_cnum_list = []
+	MO_dist_list = []
+	O_ddec6_list = []
+	M_ddec6_list = []
 	folder_list = os.listdir(screen_path)
 	folder_list.sort()
 	for folder in folder_list:
@@ -129,14 +162,52 @@ def get_mof_data(screen_path):
 		if isbad == True:
 			continue
 		mof = read(mof_path+'/OUTCAR')
-		NNs = get_NNs(screen_path,mof_name)
 		try:
 			net_magmom = np.round(mof.get_magnetic_moment(),1)
 		except:
 			net_magmom = 0.0
+		if phase == 3:
+			O_idx = [atom.index for atom in mof if atom.symbol == 'O'][-1]
+			H_idx = [atom.index for atom in mof if atom.symbol == 'H'][-1]
+			H_dist = np.round(mof.get_distance(O_idx,H_idx,mic=True,vector=False),2)
+			H_dist_list.append(H_dist)
+			del mof[H_idx]
+		elif phase == 4:
+			O_idx = [atom.index for atom in mof if atom.symbol == 'O'][-1]
+			C_idx = [atom.index for atom in mof if atom.symbol == 'C'][-1]
+			H_idx = [atom.index for atom in mof if atom.symbol == 'H'][-4:]
+			H_dist = np.round(np.min(mof.get_distances(O_idx,H_idx,mic=True,vector=False)),2)
+			C_dist = np.round(mof.get_distance(O_idx,C_idx,mic=True,vector=False),2)
+			H_dist_list.append(H_dist)
+			C_dist_list.append(C_dist)
+			del mof[[C_idx]+H_idx]
+		if phase >= 2:
+			O_idx = [atom.index for atom in mof if atom.symbol == 'O'][-1]
+			ddec_charges = np.round(get_ddec(mof_path+'/ddec'),2)
+			OMS_idx = get_NNs(mof,O_idx)
+			OMS = mof[OMS_idx].get_chemical_symbols()
+			OMS_list.append(OMS)
+			oxo_cnum_list.append(len(OMS_idx))
+			O_ddec6_list.append(ddec_charges[O_idx])
+			for M_idx in OMS_idx:
+				MO_dist = np.round(mof.get_distance(M_idx,O_idx,mic=True,vector=False),2)
+				M_ddec6 = ddec_charges[M_idx]
+			M_ddec6_list.append(M_ddec6)
+			MO_dist_list.append(MO_dist)
+			try:
+				mof_magmoms = mof.get_magnetic_moments()
+				O_mag = mof_magmoms[O_idx]
+				M_mag = mof_magmoms[OMS_idx]
+				O_mag_list.append(O_mag)
+				M_mag_list.append(M_mag)
+			except:
+				O_mag = 0.0
+				M_mag = 0.0
+				O_mag_list.append(O_mag)
+				M_mag_list.append(M_mag)
 		V = np.round(mof.get_volume(),1)
 		kpts, gamma = get_kpts(mof_path_temp)
-		lattice = np.round(cell_to_cellpar(mof.cell),3)
+		lattice = np.round(cell_to_cellpar(mof.cell),2).tolist()
 		formula = mof.get_chemical_formula()
 		n_atom = len(mof)
 
@@ -148,22 +219,24 @@ def get_mof_data(screen_path):
 		V_list.append(V)
 		lattice_list.append(lattice)
 		formula_list.append(formula)
-		NNs_list.append(NNs)
 		n_atoms.append(n_atom)
-	mof_df = pd.DataFrame({'Name':refcode_list,'E':E_list,'Formula':formula_list,'n_atoms':n_atoms,'M':NNs_list,'Mag':net_magmom_list,'Cell':lattice_list,'V':V_list,'kpts':kpts_list,'gamma':gamma_list})
-	mof_df = mof_df[['Name','Formula','n_atoms','M','E','Mag','kpts','gamma','Cell','V']]
+	data_dict = {'Name':refcode_list,'E':E_list,'Formula':formula_list,'n_atoms':n_atoms,'Mag':net_magmom_list,'Cell':lattice_list,'V':V_list,'kpts':kpts_list,'gamma':gamma_list}
+	if phase >= 2:
+		data_dict['O_mag'] = O_mag_list
+		data_dict['M'] = OMS_list
+		data_dict['M_mag'] = M_mag_list
+		data_dict['Oxo_cnum'] = oxo_cnum_list
+		data_dict['MO_dist'] = MO_dist_list
+		data_dict['O_ddec6'] = O_ddec6_list
+		data_dict['M_ddec6'] = M_ddec6_list
+	if phase == 3:
+		data_dict['H_dist'] = H_dist_list
+	if phase == 4:
+		data_dict['H_dist'] = H_dist_list
+		data_dict['C_dist'] = C_dist_list
+	mof_df = pd.DataFrame(data_dict)
 	mof_df.set_index('Name',inplace=True)
 	return mof_df
-
-def get_NN_list(screen_path):
-	names = []
-	NNs = []
-	with open(screen_path+'NN_list.txt','r') as rf:
-		for line in rf:
-			split_line = line.split('|').strip()
-			names.append(split_line[0])
-			NNs.append(split_line[1])
-	return names, NNs
 
 def plot_descriptor(TS_df):
 	TS_df.to_csv('E_TS.csv')
@@ -181,7 +254,7 @@ def get_mof_df(phase,df_path):
 	if os.path.exists(pckl_name):
 		mof_df = pd.read_pickle(pckl_name)
 	else:
-		mof_df = get_mof_data(df_path)
+		mof_df = get_mof_data(df_path,phase)
 		mof_df.to_pickle(pckl_name)
 		mof_df.to_csv(csv_name)
 	return mof_df
@@ -207,10 +280,12 @@ def get_E_TS(phase2_df,phase3_df,phase4_df,gas_df):
 			phase2_name = phase3_name.rsplit('_spin',1)[0]
 			phase2_E = float(phase2_df[phase2_df.index.str.match(phase2_name)].E)
 			E_H = phase3_E-phase2_E-H_ref
-			E_TS = 0.767*E_H+2.0
+			E_TS = 0.75*E_H+1.96
 			phase4_E = float(phase4_df[phase4_df.index.str.match(phase2_name)].E)
 			phase4_E_ref = phase4_E - (phase2_E + gas_df.loc['CH4'].E)
 			Ea = E_TS - phase4_E_ref
+			if Ea < 0:
+				Ea = 0
 			E_H_list.append(E_H)
 			E_TS_list.append(E_TS)
 			Ea_list.append(Ea)
@@ -235,7 +310,7 @@ def get_E_ads(phase2_df,phase4_df,gas_df):
 			phase2_names.append(phase2_name)
 		except:
 			pass
-	ads_df = pd.DataFrame({'Name':phase2_names,'E_ads':E_ads})
+	ads_df = pd.DataFrame({'Name':phase2_names,'E_ads':E_ads_list})
 	ads_df = ads_df[['Name','E_ads']]
 	ads_df.set_index('Name',inplace=True)
 	return ads_df
@@ -247,7 +322,7 @@ def get_E_ox(phase1_df,phase2_df,gas_df):
 		phase2_E = row.E
 		phase1_name = phase2_name.split('_spin')[0]
 		phase1_E = float(phase1_df[phase1_df.index.str.match(phase1_name)].E)
-		E_ox = phase2_E - (phase1_E + 0.5*gas_df.loc['O2'].E)
+		E_ox = (phase2_E+gas_df.loc['N2'].E) - (phase1_E+gas_df.loc['N2O'].E)
 		E_ox_list.append(E_ox)
 		phase1_names.append(phase1_name)
 	ox_df = pd.DataFrame({'Name':phase1_names,'E_ox':E_ox_list})
@@ -257,29 +332,18 @@ def get_E_ox(phase1_df,phase2_df,gas_df):
 
 def plot_histograms(Ea_list,E_ox_list,E_ads_list):
 	plt.figure()
-	make_hist(Ea_list,'r')
-	make_hist(E_ox_list,'b')
-	make_hist(E_ads_list,'g')
+	make_hist(E_ads_list,'r','auto')
+	make_hist(Ea_list,'g',30)
+	make_hist(E_ox_list,'b','auto')
 	plt.minorticks_on()
 	plt.xlabel(r'$\Delta E$ (eV)')
 	plt.ylabel('Frequency')
-	plt.legend([r'$\Delta E_{a}$',r'$\Delta E_{ox}$',r'$\Delta E_{ads}$'])
+	plt.legend([r'$\Delta E_{ads}$',r'$\Delta E_{a}$',r'$\Delta E_{ox}$'])
 	plt.savefig('hist.png',bbox_inches='tight')
 	plt.close()
 
-def gaussian(x, a, mean, sigma):
-    return a * np.exp(-((x - mean)**2 / (2 * sigma**2)))
-
-def make_hist(data,color):
-	yhist, xhist, patches = plt.hist(data,bins='auto',color=color,alpha=0.5,edgecolor='k')
-	good_idx = np.where(yhist > 0)[0]
-	xhist = xhist[0:-1]+np.diff(xhist)/2
-	xhist = xhist[good_idx]
-	yhist = yhist[good_idx]
-	popt, pcov = curve_fit(gaussian, xhist, yhist)
-	x_vals = np.linspace(min(xhist), max(xhist), 1000)
-	y_fit = gaussian(x_vals, *popt)
-	plt.plot(x_vals,y_fit,color)
+def make_hist(data,color,bins):
+	yhist, xhist, patches = plt.hist(data,bins=bins,color=color,alpha=0.5,edgecolor='k')
 
 gas_df = get_gas_df(gas_path,T_gas,P_gas)
 phase1_df = get_mof_df(1,phase1_results)
@@ -292,4 +356,4 @@ TS_df = get_E_TS(phase2_df,phase3_df,phase4_df,gas_df)
 plot_descriptor(TS_df)
 ads_df = get_E_ads(phase2_df,phase4_df,gas_df)
 ox_df = get_E_ox(phase1_df,phase2_df,gas_df)
-# plot_histograms(Ea_list,E_ox_list,E_ads_list)
+plot_histograms(TS_df['E_a'],ox_df['E_ox'],ads_df['E_ads'])
