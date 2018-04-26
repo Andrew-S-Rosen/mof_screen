@@ -8,7 +8,6 @@ from pymofscreen.error_handler import get_niter, get_error_msgs, update_calc_aft
 from pymofscreen.magmom_handler import continue_magmoms, get_mag_indices
 from pymofscreen.compute_environ import choose_vasp_version
 from pymofscreen.metal_types import spblock_metals, poor_metals
-from pymofscreen.writers import pprint
 from pymofscreen.janitor import clean_files
 
 def mof_run(workflow,mof,calc,kpts):
@@ -26,8 +25,6 @@ def mof_run(workflow,mof,calc,kpts):
 
 	nprocs = workflow.nprocs
 	ppn = workflow.ppn
-	spin_level = workflow.spin_level
-	acc_level = workflow.acc_levels[workflow.run_i]
 	calc_swaps = workflow.calc_swaps
 	cif_file = workflow.cif_file
 	stdout_file = workflow.stdout_file
@@ -35,7 +32,6 @@ def mof_run(workflow,mof,calc,kpts):
 	mofpath = workflow.mofpath
 	basepath = workflow.basepath
 	gamma = workflow.kpts_dict['gamma']
-
 	if sum(kpts) == 3:
 		gpt_version = True
 	else:
@@ -49,7 +45,6 @@ def mof_run(workflow,mof,calc,kpts):
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 
-	pprint('Running '+spin_level+', '+acc_level)
 	success = False
 
 	try:
@@ -111,16 +106,15 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 		calc_swaps (list of strings): calc swaps
 	"""
 
-	spin_level = workflow.spin_level
-	acc_level = workflow.acc_level
 	nprocs = workflow.nprocs
 	ppn = workflow.ppn
+	calc_swaps = workflow.calc_swaps
 	cif_file = workflow.cif_file
 	stdout_file = workflow.stdout_file
 	calc_swaps = workflow.calc_swaps
 	mofpath = workflow.mofpath
 	basepath = workflow.basepath
-	gamma = workflow.gamma
+	gamma = workflow.kpts_dict['gamma']
 
 	if sum(kpts) == 3:
 		gpt_version = True
@@ -136,8 +130,6 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	dyn = BFGSLineSearch(mof,trajectory='opt.traj')
-
-	pprint('Running '+spin_level+', '+acc_level)
 	success = False
 
 	try:

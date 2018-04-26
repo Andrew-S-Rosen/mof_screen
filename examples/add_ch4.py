@@ -11,6 +11,6 @@ stdout_file = 'driver.out'
 cif_files = get_cif_files(mofpath)
 s = screener(mofpath,basepath,ads_species=ads_species,
 	submit_script=submit_script,stdout_file=stdout_file,
-	kpts_path=kpts_path)
+	kpts_path=kpts_path,niggli=False)
 for cif_file in cif_files:
-	mof = s.run_ads_screen(cif_file)
+	mof = s.run_screen(cif_file,'ionic')
