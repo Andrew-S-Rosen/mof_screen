@@ -146,7 +146,7 @@ class workflows():
 				converged = False
 				clean_files(['opt.traj'])
 				while mof != None and loop_i < 4 and converged == False and mof.calc.scf_converged == True:
-					if loop_i == 2 and 'fire' not in self.calc_swaps:
+					if loop_i == 2 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
 						self.calc_swaps.append('fire')
 					mof = read('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
@@ -273,7 +273,7 @@ class workflows():
 			pprint('Running '+spin_level+', '+acc_level)
 			while converged == False and loop_i < n_runs:
 				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-				if loop_i == 10 and 'fire' not in self.calc_swaps:
+				if loop_i == 10 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
 					self.calc_swaps.append('fire')
 				mof,self.calc_swaps = mof_run(self,mof,calcs('isif3_lowacc'),kpts_lo)
 				if mof == None:
@@ -325,7 +325,7 @@ class workflows():
 				manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
 			while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
-				if loop_i == 10 and 'fire' not in self.calc_swaps:
+				if loop_i == 10 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
 					self.calc_swaps.append('fire')
 				mof,self.calc_swaps = mof_run(self,mof,calcs('isif3_highacc'),
 					kpts_hi)

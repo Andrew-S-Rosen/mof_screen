@@ -7,7 +7,7 @@ def pprint(printstr):
 	Args:
 		printstr (string): string to print to stdout
 	"""
-
+	print(printstr)
 	with open('screening.log','a') as txtfile:
 		txtfile.write(printstr+'\n')
 

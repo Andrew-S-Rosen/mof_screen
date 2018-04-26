@@ -45,7 +45,6 @@ def mof_run(workflow,mof,calc,kpts):
 		cif_file))
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
-
 	success = False
 
 	try:
@@ -66,6 +65,7 @@ def mof_run(workflow,mof,calc,kpts):
 			while True:
 
 				errormsg = get_error_msgs('OUTCAR',refcode,stdout_file)
+				print(errormsg)
 				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,
 					errormsg)
 				error_len = len(errormsg)
@@ -151,6 +151,7 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 			while True:
 
 				errormsg = get_error_msgs('OUTCAR',refcode,stdout_file)
+				print(errormsg)
 				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,
 					errormsg)
 				error_len = len(errormsg)
