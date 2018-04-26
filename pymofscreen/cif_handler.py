@@ -5,8 +5,14 @@ from pymatgen.io.cif import CifParser
 from pymofscreen.writers import pprint
 
 def get_cif_files(mofpath,skip_mofs=None):
-#Get CIF files from mofpath
-
+	"""
+	Get the list of CIF files
+	Args:
+		mofpath (string): directory to CIF files 
+		skip_mofs (list): list of MOFs to ignore
+	Returns:
+		sorted_cifs (list): alphabetized list of CIF files
+	"""
 	cif_files = []
 	if skip_mofs is None:
 		skip_mofs = []
@@ -18,17 +24,22 @@ def get_cif_files(mofpath,skip_mofs=None):
 				cif_files.append(filename)
 			else:
 				pprint('Skipping '+refcode)
+	
 	sorted_cifs = sorted(cif_files)
 
 	return sorted_cifs
 
-def cif_to_mof(mofpath,structure_file,niggli):
-#Read MOF as ASE atoms object
-#if running Phase 1, do Niggli-reduction. else, get CIF from prior phase
-
-	filepath = mofpath+structure_file
+def cif_to_mof(filepath,niggli):
+	"""
+	Convert file to ASE Atoms object
+	Args:
+		filepath (string): full path to structure file
+		niggli (bool): if Niggli-reduction should be performed
+	Returns:
+		sorted_cifs (list): alphabetized list of CIF files
+	"""
 	if niggli == True:
-		if '.cif' in structure_file:
+		if '.cif' in os.path.absename(filepath):
 			parser = CifParser(filepath)
 			pm_mof = parser.get_structures(primitive=True)[0]
 		else:

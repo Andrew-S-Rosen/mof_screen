@@ -3,7 +3,15 @@ from pymofscreen.magmom_handler import get_incar_magmoms, continue_failed_magmom
 from pymofscreen.calc_swaps import update_calc
 
 def get_error_msgs(outcarfile,refcode,stdout_file):
-#Read in any error messages
+	"""
+	Parse error messages from VASP
+	Args:
+		outcarfile (string): parth to OUTCAR file
+		refcode (string): name of MOF
+		stdout_file (string): name of stdout file
+	Returns:
+		errormsg (list of strings): error messages in OUTCAR/stdout
+	"""
 
 	errormsg = []
 	start = False
@@ -21,7 +29,14 @@ def get_error_msgs(outcarfile,refcode,stdout_file):
 	return errormsg
 
 def get_warning_msgs(outcarfile):
-#Read in any warning messages
+	"""
+	Parse warning messages from VASP
+	Args:
+		outcarfile (string): parth to OUTCAR file
+	Returns:
+		warningmsg (list of strings): warning messages in OUTCAR
+	"""
+
 	warningmsg = []
 	with open(outcarfile,'r') as rf:
 		for line in rf:
@@ -32,7 +47,13 @@ def get_warning_msgs(outcarfile):
 	return warningmsg
 
 def check_line_for_error(line,errormsg):
-#Parse line for VASP error
+	"""
+	Parse given line for VASP error code
+	Args:
+		line (string): error statement
+	Returns:
+		errormsg (string): VASP error code
+	"""
 
 	if 'inverse of rotation matrix was not found (increase SYMPREC)' in line:
 		errormsg.append('inv_rot_mat')
@@ -84,13 +105,25 @@ def check_line_for_error(line,errormsg):
 	return errormsg
 
 def update_calc_after_errors(calc,calc_swaps,errormsg):
-#Make a calc swap based on any errors
+	"""
+	Update an ASE Vasp calculators object based on error messages
+	Args:
+		calc (dict): ASE Vasp calculator dictionary
+		calc_swaps (list of strings): list of calc swaps
+		errormsg (list of strings): list of error messages
+	Returns:
+		calc (dict): updated ASE Vasp calculator
+		errormsg (list of strings): list of error messages
+	"""
 
 	for msg in errormsg:
 		if msg not in calc_swaps:
 			calc_swaps.append(msg)
+
 	calc, calc_swaps = update_calc(calc,calc_swaps)
+
 	for swap in calc_swaps:
+
 		if swap == 'too_few_bands':
 			with open('OUTCAR','r') as outcarfile:
 				for line in outcarfile:
@@ -105,6 +138,7 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 			calc_swaps.append('nbands='+nbands)
 			calc.int_params['nbands'] = nbands
 			calc_swaps.remove('too_few_bands')
+
 		elif swap == 'brions':
 			with open('OUTCAR','r') as outcarfile:
 				for line in outcarfile:
@@ -121,7 +155,11 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 	return calc, calc_swaps
 
 def reset_mof():
-#Reset the MOF object to the POSCAR/INCAR settings
+	"""
+	Reset the ASE atoms object to the POSCAR/INCAR settings
+	Returns:
+		mof (ASE Atoms object): reset ASE Atoms object
+	"""
 
 	mof = read('POSCAR')
 	mof.set_initial_magnetic_moments(get_incar_magmoms('INCAR','POSCAR'))	
@@ -129,7 +167,11 @@ def reset_mof():
 	return mof
 
 def continue_mof():
-#Decide if the MOF object should be continued or restarted
+	"""
+	Update ASE Atoms object after failed job
+	Returns:
+		mof (ASE Atoms object): reset ASE Atoms object
+	"""
 
 	try:
 		mof = read('CONTCAR')
@@ -140,6 +182,14 @@ def continue_mof():
 	return mof
 
 def get_niter(outcarfile):
+	"""
+	Get the number of ionic steps that were run
+	Args:
+		outcarfile (string): full path to OUTCAR file
+	Returns:
+		niter (int): number of ionic iterations
+	"""
+
 	with open(outcarfile,'r') as rf:
 		for line in rf:
 			if '- Iteration' in line:

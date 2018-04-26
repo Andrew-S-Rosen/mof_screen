@@ -2,7 +2,11 @@ import os
 from shutil import copyfile
 
 def prep_paths(basepath):
-#Folder and file cleanup
+	"""
+	Prepare the necessary file paths
+	Args:
+		basepath (string): full path to base
+	"""
 
 	error_path = basepath+'errors'
 	results_path = basepath+'results'
@@ -15,25 +19,34 @@ def prep_paths(basepath):
 		os.makedirs(results_path)
 	if not os.path.exists(working_path):
 		os.makedirs(working_path)
-	if os.path.isfile(screen_results_path) == True:
+	if os.path.isfile(screen_results_path):
 		open(screen_results_path,'w').close()
-	if os.path.isfile(log_file) == True:
+	if os.path.isfile(log_file):
 		open(log_file,'w').close()
-	if os.path.isfile('run_vasp.py') == True:
+	if os.path.isfile('run_vasp.py'):
 		os.remove('run_vasp.py')
 
 def clean_files(remove_files):
-#Clean files
+	"""
+	Remove specified files
+	Args:
+		remove_files (list of strings): filenames to remove
+	"""
 
 	for file in remove_files:
-		if os.path.isfile(file) == True:
+		if os.path.isfile(file):
 			os.remove(file)
 
 def manage_restart_files(file_path):
-#Make sure the restart files are copied
+	"""
+	Copy restart files to current directory
+	Args:
+		file_path (string): path restart files
+	"""
 
 	files = ['WAVECAR','CHGCAR']
 	for file in files:
-		if os.path.isfile(file) != True or os.stat(file).st_size == 0:
-			if os.path.isfile(file_path+'/'+file) == True and os.stat(file_path+'/'+file).st_size > 0:
-				copyfile(file_path+'/'+file,os.getcwd()+'/'+file)
+		full_path = os.path.join(file_path,file)
+		if not os.path.isfile(file) or os.stat(file).st_size == 0:
+			if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
+				copyfile(full_path,os.path.join(os.getcwd(),file))

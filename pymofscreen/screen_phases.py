@@ -1,33 +1,49 @@
 import os
 import numpy as np
 from ase.io import read
-from pymofscreen.compute_environ import get_nprocs, choose_vasp_version
+from pymofscreen.compute_environ import get_nprocs
 from pymofscreen.writers import pprint, write_success, write_errors
-from pymofscreen.kpts_handler import get_gpt_version
-from pymofscreen.janitor import manage_restart_files
+from pymofscreen.janitor import manage_restart_files, clean_files
 from pymofscreen.runner import mof_run, prep_next_run, mof_bfgs_run
 from pymofscreen.cif_handler import cif_to_mof
 from pymofscreen.magmom_handler import set_initial_magmoms, continue_magmoms, get_mag_indices
-from pymofscreen.calculators import calcs_ads, calcs_vol
 from pymofscreen.error_handler import get_warning_msgs
 
 class workflows():
+	"""
+	This class constructs a workflow for a given calculation stage
+	"""
 
-	def __init__(self,screener,defaults,cif_file,spin_level,prior_spin=None,vasp_files=['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
+	def __init__(self,screener,cif_file,kpts_dict,spin_level,prior_spin=None,vasp_files=['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
 		'CONTCAR','CHGCAR','WAVECAR']):
+		"""
+		Initialize variables that should be used on all MOFs in a database
+		Args:
+			screener (class): pymofscreen.screen.screener class
+			cif_file (string): name of CIF file
+			kpts_dict (dict): dictionary containing kpoint and gamma information
+			spin_level (string): name of spin level
+			prior_spin (string): name of previous spin level (if applicable)
+			vasp_files (list of strings): VASP files to save
+		"""
 		self.cif_file = cif_file
+		self.kpts_dict = kpts_dict
 		self.acc_levels = screener.acc_levels
 		self.spin_level = spin_level
 		self.vasp_files = vasp_files
 		self.calc_swaps = []
 		self.run_i = 0
 		self.refcode = cif_file.split('.cif')[0]
-		self.defaults = defaults
 		self.stdout_file = screener.stdout_file
 		self.mofpath = screener.mofpath
 		self.submit_script = screener.submit_script
 		self.basepath = screener.basepath
 		self.niggli = screener.niggli
+		self.calcs_ads = screener.calcs_ads
+
+		self.nprocs, self.ppn = get_nprocs(self.submit_script)
+		clean_files(vasp_files)
+
 		results_partial_paths = []
 		error_outcar_partial_paths = []
 		error_outcar_paths = []
@@ -41,87 +57,80 @@ class workflows():
 			error_outcar_paths.append(os.path.join(error_outcar_partial_path,spin_level,'OUTCAR'))
 		self.outcar_paths = outcar_paths
 		self.error_outcar_paths = error_outcar_paths
-		self.nprocs, self.ppn = get_nprocs(self.submit_script)
-		self.clean_files(vasp_files)
 		if prior_spin is None:
 			self.spin1_final_mof_path = None
 		else:
 			self.spin1_final_mof_path = os.path.join(results_partial_paths[-1],prior_spin,'OUTCAR')
 		pprint('***STARTING '+self.refcode+': '+spin_level+'***')
-
-	def clean_files(self,remove_files):
-	#Clean files
-		for file in remove_files:
-			if os.path.isfile(file) == True:
-				os.remove(file)
 				
 	def scf_test(self):
-		refcode = self.refcode
-		vasp_files = self.vasp_files
-		acc_levels = self.acc_levels
+		"""
+		Run SCF test job to check for errors
+		Returns:
+			scf_pass (bool): True if passed SCF test
+		"""
 		outcar_paths = self.outcar_paths
 		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
 		cif_file = self.cif_file
-		nprocs = self.nprocs
-		ppn = self.ppn
 		mofpath = self.mofpath
 		spin1_final_mof_path = self.spin1_final_mof_path
-		kpts_lo = self.defaults['kpts_lo']
-		acc_level = acc_levels[self.run_i]
+		kpts_lo = self.kpts_dict['kpts_lo']
+		acc_level = self.acc_levels[self.run_i]
 		niggli = self.niggli
-		if os.path.isfile(outcar_paths[self.run_i]) != True and os.path.isfile(error_outcar_paths[self.run_i]) != True:
+		calcs_ads = self.calcs_ads
+
+		if not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			if spin1_final_mof_path is None:
-				mof = cif_to_mof(mofpath,cif_file,niggli)
+				mof = cif_to_mof(os.path.join(mofpath,cif_file),niggli)
 			else:
 				mof = read(spin1_final_mof_path)
 			mof = set_initial_magmoms(mof,spin_level)
-			gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
-			choose_vasp_version(gpt_version,nprocs,self.calc_swaps)
-			pprint('Running '+spin_level+', '+acc_level)
-			mof, self.calc_swaps = mof_run(self,mof,calcs_ads(self.run_i),gpt_version)
+			mof, self.calc_swaps = mof_run(self,mof,calcs_ads('scf_test'),kpts_lo)
 			if mof != None:
-				write_success(self,acc_level,vasp_files)
+				write_success(self)
 			else:
 				pprint('^ VASP crashed')
-				write_errors(refcode,spin_level,acc_level,vasp_files,cif_file)
-		elif os.path.isfile(outcar_paths[self.run_i]) == True:
+				write_errors(self)
+		elif os.path.isfile(outcar_paths[self.run_i]):
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
 		mof, skip_spin2 = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
-			return None, None
+			return False
 		warnings = get_warning_msgs(outcar_paths[self.run_i-1])
 		self.calc_swaps.extend(warnings)
-		return mof
+		scf_pass = True
+		return scf_pass
 
 	def isif2_lowacc(self):
-		vasp_files = self.vasp_files
+		"""
+		Run low accuracy ISIF2
+		Returns:
+			mof (ASE Atoms object): updated ASE Atoms object
+		"""
 		acc_levels = self.acc_levels
 		outcar_paths = self.outcar_paths
 		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
 		cif_file = self.cif_file
-		nprocs = self.nprocs
-		ppn = self.ppn
 		mofpath = self.mofpath
 		spin1_final_mof_path = self.spin1_final_mof_path
-		kpts_lo = self.defaults['kpts_lo']
+		kpts_lo = self.kpts_dict['kpts_lo']
 		acc_level = acc_levels[self.run_i]
 		niggli = self.niggli
-		if os.path.isfile(outcar_paths[self.run_i-1]) == True and os.path.isfile(outcar_paths[self.run_i]) != True and os.path.isfile(error_outcar_paths[self.run_i]) != True:
+		calcs_ads = self.calcs_ads
+		mag_tol = 0.05
+
+		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			if spin1_final_mof_path is None:
-				mof = cif_to_mof(mofpath,cif_file,niggli)
+				mof = cif_to_mof(os.path.join(mofpath,cif_file),niggli)
 			else:
 				mof = read(spin1_final_mof_path)
 			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
 			mof = set_initial_magmoms(mof,spin_level)
-			gpt_version, nprocs = get_gpt_version(kpts_lo,len(mof),nprocs,ppn)
-			choose_vasp_version(gpt_version,nprocs,self.calc_swaps)
-			pprint('Running '+spin_level+', '+acc_level)
-			steps = 100
 			fmax = 5.0
-			mof, dyn, self.calc_swaps = mof_bfgs_run(self,mof,calcs_ads(self.run_i),steps,fmax)
+			mof, dyn, self.calc_swaps = mof_bfgs_run(self,mof,calcs_ads('ase_bfgs'),kpts_lo,fmax=fmax)
 			if mof != None and dyn and mof.calc.scf_converged == True:
 				loop_i = 0
 				converged = False
@@ -129,16 +138,15 @@ class workflows():
 				while mof != None and loop_i < 5 and converged == False and mof.calc.scf_converged == True:
 					mof = read('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-					choose_vasp_version(gpt_version,nprocs,self.calc_swaps)
-					mof, self.calc_swaps = mof_run(self,mof,calcs_ads(1.5),gpt_version)
+					mof, self.calc_swaps = mof_run(self,mof,calcs_ads('isif2_lowacc'),kpts_lo)
 					if mof == None:
 						break
 					converged = mof.calc.converged
 					loop_i += 1
 			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
-				write_success(self,acc_level,vasp_files)
+				write_success(self)
 			else:
-				write_errors(self,acc_level,vasp_files)
+				write_errors(self)
 				if mof == None:
 					pprint('^ VASP crashed')
 				elif mof.calc.scf_converged == False:
@@ -154,35 +162,31 @@ class workflows():
 		if spin_level == 'spin2':
 			mag_indices = get_mag_indices(mof)
 			old_mof = read(spin1_final_mof_path)
-			if np.sum(np.abs(mof.get_initial_magnetic_moments()[mag_indices] - old_mof.get_magnetic_moments()[mag_indices]) >= 0.05) == 0:
+			if np.sum(np.abs(mof.get_initial_magnetic_moments()[mag_indices] - old_mof.get_magnetic_moments()[mag_indices]) >= mag_tol) == 0:
 				pprint('Skipping rest because SPIN2 converged to SPIN1')
 				return None
 		return mof
 
 	def isif2_medacc(self,mof):
-		vasp_files = self.vasp_files
 		acc_levels = self.acc_levels
 		outcar_paths = self.outcar_paths
 		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
-		nprocs = self.nprocs
-		ppn = self.ppn
-		kpts_lo = self.defaults['kpts_lo']
-		kpts_hi = self.defaults['kpts_hi']
+		kpts_lo = self.kpts_dict['kpts_lo']
+		kpts_hi = self.kpts_dict['kpts_hi']
 		acc_level = acc_levels[self.run_i]
-		if os.path.isfile(outcar_paths[self.run_i-1]) == True and os.path.isfile(outcar_paths[self.run_i]) != True and os.path.isfile(error_outcar_paths[self.run_i]) != True:
-			gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-			pprint('Running '+spin_level+', '+acc_level)
+		calcs_ads = self.calcs_ads
+
+		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 				self.clean_files(['CHGCAR','WAVECAR'])
 			else:
 				manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
-			choose_vasp_version(gpt_version,nprocs,self.calc_swaps)
-			mof,self.calc_swaps = mof_run(self,mof,calcs_ads(self.run_i),gpt_version)
+			mof,self.calc_swaps = mof_run(self,mof,calcs_ads('isif2_medacc'),kpts_lo)
 			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
-				write_success(self,acc_level,vasp_files)
+				write_success(self)
 			else:
-				write_errors(self,acc_level,vasp_files)
+				write_errors(self)
 				if mof == None:
 					pprint('^ VASP crashed')
 				elif mof.calc.scf_converged == False:
@@ -195,35 +199,31 @@ class workflows():
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
+
 		return mof
 
 	def isif2_final(self,mof):
-		vasp_files = self.vasp_files
 		acc_levels = self.acc_levels
 		outcar_paths = self.outcar_paths
 		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
-		nprocs = self.nprocs
-		ppn = self.ppn
-		kpts_hi = self.defaults['kpts_hi']
+		kpts_hi = self.kpts_dict['kpts_hi']
 		acc_level = acc_levels[self.run_i]
-		if os.path.isfile(outcar_paths[self.run_i-1]) == True and os.path.isfile(outcar_paths[self.run_i]) != True and os.path.isfile(error_outcar_paths[self.run_i]) != True:
-			gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-			choose_vasp_version(gpt_version,nprocs,self.calc_swaps)
+		calcs_ads = self.calcs_ads
+
+		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
-			pprint('Running '+spin_level+', '+acc_level)
-			mof,self.calc_swaps = mof_run(self,mof,calcs_ads(self.run_i),gpt_version)
+			mof,self.calc_swaps = mof_run(self,mof,calcs_ads('isif2_highacc'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 				if 'large_supercell' in self.calc_swaps:
-					pprint('Running '+spin_level+', '+acc_level+' (LREAL=False)')
 					self.calc_swaps.remove('large_supercell')
 					mof = read('OUTCAR')
 					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
-					mof, self.calc_swaps = mof_run(self,mof,calcs_ads(self.run_i),gpt_version)
+					mof, self.calc_swaps = mof_run(self,mof,calcs_ads('isif2_highacc'),kpts_hi)
 					if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
-						write_success(self,acc_level,vasp_files)
+						write_success(self)
 					else:
-						write_errors(self,acc_level,vasp_files)
+						write_errors(self)
 						if mof == None:
 							pprint('^ VASP crashed')
 						elif mof.calc.scf_converged == False:
@@ -231,9 +231,9 @@ class workflows():
 						elif mof.calc.converged == False:
 							pprint('^ Convergence not reached')
 				else:
-					write_success(self,acc_level,vasp_files)
+					write_success(self)
 			else:
-				write_errors(self,acc_level,vasp_files)
+				write_errors(self)
 				if mof == None:
 					pprint('^ VASP crashed')
 				elif mof.calc.scf_converged == False:
@@ -249,26 +249,22 @@ class workflows():
 		return mof
 
 	def final_spe(self,mof):
-		vasp_files = self.vasp_files
 		acc_levels = self.acc_levels
 		outcar_paths = self.outcar_paths
 		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
-		nprocs = self.nprocs
-		ppn = self.ppn
-		kpts_hi = self.defaults['kpts_hi']
+		kpts_hi = self.kpts_dict['kpts_hi']
 		acc_level = acc_levels[self.run_i]
+		calcs_ads = self.calcs_ads
 		calc_swaps = []
-		if os.path.isfile(outcar_paths[self.run_i-1]) == True and os.path.isfile(outcar_paths[self.run_i]) != True and os.path.isfile(error_outcar_paths[self.run_i]) != True:
-			gpt_version, nprocs = get_gpt_version(kpts_hi,len(mof),nprocs,ppn)
-			choose_vasp_version(gpt_version,nprocs,calc_swaps)
+
+		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
-			pprint('Running '+spin_level+', '+acc_level)
-			mof,calc_swaps = mof_run(self,mof,calcs_ads(self.run_i),gpt_version)
+			mof,calc_swaps = mof_run(self,mof,calcs_ads('final_spe'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True:
-				write_success(self,acc_level,vasp_files)
+				write_success(self)
 			else:
-				write_errors(self,acc_level,vasp_files)
+				write_errors(self)
 				if mof == None:
 					pprint('^ VASP crashed')
 				elif mof.calc.scf_converged == False:
@@ -279,4 +275,5 @@ class workflows():
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
+
 		return mof, skip_spin2

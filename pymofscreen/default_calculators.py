@@ -17,20 +17,23 @@ defaults = {
 	'nsw': 500,
 	'ediffg': -0.03,
 	'lorbit': 11,
-	'kppa_lo': 100,
-	'kppa_hi': 1000,
 	'isym': 0,
 	'setups':{'base':'recommended','Li':''}
 	}
 
 def calcs_ads(run_i):
-#calculator definitions for each run
-	if run_i == 0:
+	"""
+	Define the default calculators for ionic relaxations
+	Note: it should not include the kpts or gamma keywords!
+	Args:
+		run_i (int): iteration number
+	Returns:
+		calc (dict): ASE Vasp calculator dictionary
+	"""
+	if run_i == 'scf_test':
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -48,12 +51,10 @@ def calcs_ads(run_i):
 			nsw=0,
 			istart=0
 			)
-	elif run_i == 1:
+	elif run_i == 'ase_bfgs':
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -69,12 +70,10 @@ def calcs_ads(run_i):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 1.5:
+	elif run_i == 'isif2_lowacc':
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -94,12 +93,10 @@ def calcs_ads(run_i):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 2:
+	elif run_i == 'isif2_medacc':
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -121,13 +118,11 @@ def calcs_ads(run_i):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 3:
+	elif run_i == 'isif2_highacc':
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
 			encut=defaults['encut'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -149,13 +144,11 @@ def calcs_ads(run_i):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym']
 			)
-	elif run_i == 4:
+	elif run_i == 'final_spe':
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
 			encut=defaults['encut'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -184,8 +177,6 @@ def calcs_vol(run_i):
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -207,8 +198,6 @@ def calcs_vol(run_i):
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -227,8 +216,6 @@ def calcs_vol(run_i):
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -252,8 +239,6 @@ def calcs_vol(run_i):
 			xc=defaults['xc'],
 			setups=defaults['setups'],
 			encut=defaults['encut'],
-			kpts=defaults['kpts_lo'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -278,8 +263,6 @@ def calcs_vol(run_i):
 			xc=defaults['xc'],
 			setups=defaults['setups'],
 			encut=defaults['encut'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -304,8 +287,6 @@ def calcs_vol(run_i):
 			xc=defaults['xc'],
 			setups=defaults['setups'],
 			encut=defaults['encut'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
 			algo=defaults['algo'],
@@ -330,8 +311,6 @@ def calcs_vol(run_i):
 			xc=defaults['xc'],
 			setups=defaults['setups'],
 			encut=defaults['encut'],
-			kpts=defaults['kpts_hi'],
-			gamma=defaults['gamma'],
 			ivdw=defaults['ivdw'],
 			prec='Accurate',
 			algo=defaults['algo'],
