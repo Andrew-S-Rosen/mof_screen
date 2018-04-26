@@ -16,8 +16,6 @@ def write_success(workflow):
 	Write out the successful job files
 	Args:
 		workflow (class): pymofscreen.screen_phases.worfklow class
-		acc_level (string): accuracy level
-		vasp_files (list of strings): relevant VASP files
 	"""
 	spin_level = workflow.spin_level
 	refcode = workflow.refcode
@@ -42,13 +40,12 @@ def write_success(workflow):
 	if os.path.exists('STOPCAR'):
 		os.remove('STOPCAR')
 
-def write_errors(workflow):
+def write_errors(workflow,mof):
 	"""
 	Write out the unsuccesful job files
 	Args:
 		workflow (class): pymofscreen.screen_phases.worfklow class
-		acc_level (string): accuracy level
-		vasp_files (list of strings): relevant VASP files
+		mof (ASE Atoms object): ASE Atoms object
 	"""
 	spin_level = workflow.spin_level
 	refcode = workflow.refcode
@@ -58,6 +55,13 @@ def write_errors(workflow):
 	vasp_files = workflow.vasp_files
 
 	pprint('ERROR: '+spin_level+', '+acc_level+' failed')
+	if acc_level != 'scf_test':
+		if mof == None:
+			pprint('^ VASP crashed')
+		elif mof.calc.scf_converged == False:
+			pprint('^ SCF did not converge')
+		elif mof.calc.converged == False:
+			pprint('^ Convergence not reached')
 	error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
 	if not os.path.exists(error_path):
 		os.makedirs(error_path)

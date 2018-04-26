@@ -41,7 +41,8 @@ def mof_run(workflow,mof,calc,kpts):
 	calc.input_params['kpts'] = kpts
 	calc.input_params['gamma'] = gamma
 
-	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',cif_file))
+	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',
+		cif_file))
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 
@@ -65,7 +66,8 @@ def mof_run(workflow,mof,calc,kpts):
 			while True:
 
 				errormsg = get_error_msgs('OUTCAR',refcode,stdout_file)
-				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
+				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,
+					errormsg)
 				error_len = len(errormsg)
 				if error_len == old_error_len:
 					break
@@ -77,8 +79,9 @@ def mof_run(workflow,mof,calc,kpts):
 				try:
 					mof.get_potential_energy()
 					niter = get_niter('OUTCAR')
-					if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
-						raise SystemError('VASP stopped but did not crash and burn')
+					if (niter < mof.calc.int_params['nsw'] and 
+						mof.calc.converged != True):
+						raise SystemError('VASP stopped but did not die')
 					success = True
 				except:
 					pass
@@ -126,7 +129,8 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	calc.input_params['kpts'] = kpts
 	calc.input_params['gamma'] = gamma
 	
-	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',cif_file))
+	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',
+		cif_file))
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	dyn = BFGSLineSearch(mof,trajectory='opt.traj')
@@ -147,7 +151,8 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 			while True:
 
 				errormsg = get_error_msgs('OUTCAR',refcode,stdout_file)
-				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,errormsg)
+				calc, calc_swaps = update_calc_after_errors(calc,calc_swaps,
+					errormsg)
 				error_len = len(errormsg)
 				if error_len == old_error_len:
 					break

@@ -44,8 +44,8 @@ class screener():
 			acc_levels (list of strings): accuracy levels to consider
 			calcs (function): function to call respective calculator
 		Returns:
-			mofs (list of ASE Atoms objects): ASE Atoms objects for optimized MOF given by
-			cif_file for each spin_level
+			mofs (list of ASE Atoms objects): ASE Atoms objects for optimized
+			MOF given by cif_file for each spin_level
 		"""
 
 		basepath = self.basepath
@@ -53,10 +53,12 @@ class screener():
 		self.calcs = calcs
 		if mode == 'ionic':
 			if acc_levels is None:
-				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']
+				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc',
+				'isif2_highacc','final_spe']
 		elif mode == 'volume':
 			if acc_levels is None:
-				acc_levels = ['scf_test','isif2_lowacc','isif3_lowacc','isif3_highacc','isif2_highacc','final_spe']
+				acc_levels = ['scf_test','isif2_lowacc','isif3_lowacc',
+				'isif3_highacc','isif2_highacc','final_spe']
 		else:
 			raise ValueError('Unsupported DFT screening mode')
 		self.acc_levels = acc_levels
