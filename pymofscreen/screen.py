@@ -4,14 +4,14 @@ from pymofscreen.kpts_handler import get_kpts
 from pymofscreen.screen_phases import workflows
 from pymofscreen.janitor import prep_paths
 from pymofscreen.default_calculators import calcs
-
+import sys
 class screener():
 	"""
 	This class constructs a high-throughput screening workflow
 	"""
 
 	def __init__(self,mofpath,basepath,kpts_path='Auto',kppas=None,niggli=True,
-		submit_script='sub_screen.job',stdout_file='driver.out'):
+		submit_script='sub_screen.job',stdout_file=None):
 		"""
 		Initialize variables that should be used on all MOFs in a database
 		Args:
@@ -33,6 +33,8 @@ class screener():
 		self.niggli = niggli
 		if kppas is None:
 			self.kppas = [100,1000]
+		if stdout_file is None:
+			stdout_file = sys.argv[0].split('.py')[0]+'.out'
 		prep_paths(basepath)
 
 	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,calcs=calcs):
