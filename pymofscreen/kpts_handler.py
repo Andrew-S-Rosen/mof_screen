@@ -18,7 +18,6 @@ def get_kpts(screener,cif_file,level):
 	niggli = screener.niggli
 	mofpath = screener.mofpath
 	kpts_path = screener.kpts_path
-	ads_species = screener.ads_species
 	kppas = screener.kppas
 	kpts = None
 
@@ -43,8 +42,7 @@ def get_kpts(screener,cif_file,level):
 
 	else:
 
-		cif_split1 = cif_file.split('_'+ads_species+'_OMS')[0]
-		old_cif_name = cif_split1.split('_spin')[0]
+		old_cif_name = cif_file.split('_spin')[0]
 		infile = open(kpts_path,'r')
 		lines = infile.read().splitlines()
 		infile.close()

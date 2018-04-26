@@ -10,14 +10,13 @@ class screener():
 	This class constructs a high-throughput screening workflow
 	"""
 
-	def __init__(self,mofpath,basepath,ads_species=None,kpts_path='Auto',kppas=None,niggli=True,
+	def __init__(self,mofpath,basepath,kpts_path='Auto',kppas=None,niggli=True,
 		submit_script='sub_screen.job',stdout_file='driver.out'):
 		"""
 		Initialize variables that should be used on all MOFs in a database
 		Args:
 			mofpath (string): path to the directory containing the CIF files
 			basepath (string): path to the base
-			ads_species (string): (optional) string representing adsorbate species (e.g. 'CH4')
 			kpts_path (string): can be either 'Auto' for an automatic generation
 			of the kpoints based on KPPAs or a string representing the path to a
 			text file with all the kpoint information
@@ -28,7 +27,6 @@ class screener():
 		"""
 		self.mofpath = mofpath
 		self.basepath = basepath
-		self.ads_species = ads_species
 		self.submit_script = submit_script
 		self.stdout_file = stdout_file
 		self.kpts_path = kpts_path
