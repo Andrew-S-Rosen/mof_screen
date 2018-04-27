@@ -3,7 +3,7 @@ Python workflow for high-throughput DFT screening of MOFs
 
 ## Setup
 
-1. PyMOFScreen requires Python 3.x (support for Python 2.x is not guaranteed). If you do not alerady have Python installed, the easiest option is to download the [Anaconda](https://www.anaconda.com/download/) distribution.
+1. PyMOFScreen requires Python 3.x (support for Python 2.x is not guaranteed). If you do not already have Python installed, the easiest option is to download the [Anaconda](https://www.anaconda.com/download/) distribution.
 
 2. Install the most recent version of Pymatgen (e.g. via `pip install pymatgen`).
 
