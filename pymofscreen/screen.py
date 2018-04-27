@@ -57,10 +57,18 @@ class screener():
 			if acc_levels is None:
 				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc',
 				'isif2_highacc','final_spe']
+		elif mode == 'ionic_legacy':
+			if acc_levels is None:
+				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc',
+				'final','final_spe']
 		elif mode == 'volume':
 			if acc_levels is None:
 				acc_levels = ['scf_test','isif2_lowacc','isif3_lowacc',
 				'isif3_highacc','isif2_highacc','final_spe']
+		elif mode == 'volume_legacy':
+			if acc_levels is None:
+				acc_levels = ['scf_test','isif2','isif3_lowacc',
+				'isif3_highacc','final','final_spe']
 		else:
 			raise ValueError('Unsupported DFT screening mode')
 		self.acc_levels = acc_levels
@@ -99,9 +107,7 @@ class screener():
 					if not scf_pass:
 						return None
 
-				elif acc_level == 'isif2_lowacc':
-					if mode == 'volume':
-						acc_level = 'isif2' #for legacy reasons
+				elif acc_level == 'isif2_lowacc' or (acc_level == 'isif2' and mode == 'volume_legacy'):
 					mof = wf.isif2_lowacc()
 					if mof is None:
 						return None
@@ -111,8 +117,7 @@ class screener():
 					if mof is None:
 						return None
 
-				elif acc_level == 'isif2_highacc':
-					acc_level = 'final' #for legacy reasons
+				elif acc_level == 'isif2_highacc' or (acc_level == 'final' and 'legacy' in mode):
 					mof = wf.isif2_highacc(mof)
 					if mof is None:
 						return None
