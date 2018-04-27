@@ -16,7 +16,7 @@ class screener():
 		Initialize variables that should be used on all MOFs in a database
 		Args:
 			mofpath (string): path to the directory containing the CIF files
-			basepath (string): path to the base
+			basepath (string): path to the base directory for the DFT screening
 			kpts_path (string): can be either 'Auto' for an automatic generation
 			of the kpoints based on KPPAs or a string representing the path to a
 			text file with all the kpoint information
