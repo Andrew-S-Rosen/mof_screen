@@ -45,7 +45,8 @@ class workflows():
 		self.calcs = screener.calcs
 
 		self.nprocs, self.ppn = get_nprocs(self.submit_script)
-		defaults['ncore'] = self.ppn
+		if defaults.get('ncore') is None and defaults.get('npar') is None:
+			defaults['ncore'] = self.ppn
 
 		clean_files(self.vasp_files)
 

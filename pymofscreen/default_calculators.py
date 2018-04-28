@@ -11,7 +11,6 @@ defaults = {
 	'nelm': 250,
 	'nelmin': 6,
 	'lreal': False,
-	'ncore': 24,
 	'ismear': 0,
 	'sigma': 0.01,
 	'nsw': 500,
