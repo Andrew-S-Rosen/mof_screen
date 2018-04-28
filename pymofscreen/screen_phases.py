@@ -8,6 +8,7 @@ from pymofscreen.runner import mof_run, prep_next_run, mof_bfgs_run
 from pymofscreen.cif_handler import cif_to_mof
 from pymofscreen.magmom_handler import set_initial_magmoms, continue_magmoms, get_mag_indices
 from pymofscreen.error_handler import get_warning_msgs
+from pymofscreen.default_caulcators import defaults
 
 class workflows():
 	"""
@@ -44,6 +45,8 @@ class workflows():
 		self.calcs = screener.calcs
 
 		self.nprocs, self.ppn = get_nprocs(self.submit_script)
+		defaults['ncore'] = self.ppn
+
 		clean_files(self.vasp_files)
 
 		results_partial_paths = []
