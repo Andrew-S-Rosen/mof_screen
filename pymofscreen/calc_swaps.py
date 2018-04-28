@@ -1,3 +1,6 @@
+from pymofscreen.default_calculators import defaults
+import numpy as np
+
 def update_calc(calc,calc_swaps):
 	"""
 	Update a calculator based on pre-defined "swaps"
@@ -127,9 +130,9 @@ def check_nprocs(n_atoms,nprocs,ppn):
 		nprocs (int): updated total number of processors
 	"""
 
-	while n_atoms < nprocs/2:
-		nprocs -= ppn
+	while n_atoms < nprocs/2.0:
 		if nprocs == ppn:
+			defaults['ncore'] = np.ceil(defaults['ncore']/2)
 			break
-
+		nprocs -= ppn
 	return nprocs

@@ -62,7 +62,7 @@ def choose_vasp_version(gpt_version,nprocs):
 	# module_cmd = 'module load vasp-tpc/5.4.1'
 
 	#Setup for Stampede2
-	# parallel_cmd = 'ibrun'
+	# parallel_cmd = 'ibrun -n'
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp_std_vtst',vasp_path+'vasp_gam_vtst']
 	# module_cmd = 'module load vasp/5.4.4'
