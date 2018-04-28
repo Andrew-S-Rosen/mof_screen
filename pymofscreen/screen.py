@@ -34,7 +34,7 @@ class screener():
 		if kppas is None:
 			self.kppas = [100,1000]
 		if stdout_file is None:
-			stdout_file = sys.argv[0].split('.py')[0]+'.out'
+			self.stdout_file = sys.argv[0].split('.py')[0]+'.out'
 		prep_paths(basepath)
 
 	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,calcs=calcs):
