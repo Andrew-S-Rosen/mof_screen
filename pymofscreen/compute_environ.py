@@ -25,6 +25,17 @@ def get_nprocs(submit_script):
 	# ppn = 32
 	# nprocs = nodes*ppn
 
+	#Setup for Stampede2
+	# with open(submit_script,'r') as rf:
+	# 	for line in rf:
+	# 		if '-N' in line:
+	# 			line = line.strip().replace(' ','')
+	# 			nodes = int(line.split('-N')[1])
+	# 		if '--ntasks-per-node' in line:
+	# 			line = line.strip().replace(' ','')
+	# 			ppn = int(line.split('=')[1])
+	# nprocs = nodes*ppn
+
 	return nprocs, ppn
 
 def choose_vasp_version(gpt_version,nprocs):
@@ -49,6 +60,12 @@ def choose_vasp_version(gpt_version,nprocs):
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
 	# module_cmd = 'module load vasp-tpc/5.4.1'
+
+	#Setup for Stampede2
+	# parallel_cmd = 'ibrun'
+	# vasp_path = ''
+	# vasp_ex = [vasp_path+'vasp_std_vtst',vasp_path+'vasp_gam_vtst']
+	# module_cmd = 'module load vasp/5.4.4'
 
 	#Setting up run_vasp.py
 	base = parallel_cmd+' '+str(nprocs)+' '
