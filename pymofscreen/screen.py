@@ -78,6 +78,7 @@ class screener():
 		self.acc_levels = acc_levels
 		if spin_levels is None:
 			spin_levels = ['spin1','spin2']
+			self.spin_levels = spin_levels
 
 		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',cif_file)
@@ -118,33 +119,33 @@ class screener():
 					if mof is None:
 						return None
 					if i > 0:
-						is_new_spin = check_if_new_spin(self,mof,refcode,spin_levels[i-1])
+						is_new_spin = check_if_new_spin(self,mof,refcode,spin_levels[i])
 						if not is_new_spin:
 							same_spin = True
 							break
 
 				elif acc_level == 'isif2_medacc':
-					mof = wf.isif2_medacc(mof)
+					mof = wf.isif2_medacc()
 					if mof is None:
 						return None
 
 				elif acc_level == 'isif2_highacc' or (acc_level == 'final' and 'legacy' in mode):
-					mof = wf.isif2_highacc(mof)
+					mof = wf.isif2_highacc()
 					if mof is None:
 						return None
 				
 				elif acc_level == 'isif3_lowacc':
-					mof = wf.isif3_lowacc(mof)
+					mof = wf.isif3_lowacc()
 					if mof is None:
 						return None
 
 				elif acc_level == 'isif3_highacc':
-					mof = wf.isif3_highacc(mof)
+					mof = wf.isif3_highacc()
 					if mof is None:
 						return None
 
 				elif acc_level == 'final_spe':
-					mof = wf.final_spe(mof)
+					mof = wf.final_spe()
 					if mof is None:
 						return None
 

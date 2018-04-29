@@ -1,11 +1,13 @@
 import os
 from shutil import copyfile
 from ase.io import read
+from copy import deepcopy
 from ase.optimize import BFGSLineSearch
 from pymofscreen.calc_swaps import update_calc, check_nprocs
 from pymofscreen.error_handler import get_niter, get_error_msgs, update_calc_after_errors, continue_mof
 from pymofscreen.compute_environ import choose_vasp_version
 from pymofscreen.janitor import clean_files
+from pymofscreen.magmom_handler import continue_magmoms
 
 def mof_run(workflow,mof,calc,kpts):
 	"""
@@ -197,3 +199,19 @@ def prep_next_run(workflow):
 	workflow.run_i += 1
 
 	return mof
+
+def prep_new_run(workflow):
+	acc_levels = workflow.acc_levels
+	acc_level = acc_levels[workflow.run_i-1]
+	refcode = workflow.refcode
+	spin_level = workflow.spin_level
+	basepath = workflow.basepath
+	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+	outcarpath = os.path.join(success_path,'OUTCAR')
+	incarpath = os.path.join(success_path,'INCAR')
+
+	mof = read(outcarpath)
+	mof_initialized = deepcopy(mof)
+	mof_initialized = continue_magmoms(mof_initialized,incarpath)
+
+	return mof_initialized

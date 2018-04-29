@@ -4,7 +4,7 @@ from ase.io import read
 from pymofscreen.compute_environ import get_nprocs
 from pymofscreen.writers import pprint, write_success, write_errors
 from pymofscreen.janitor import manage_restart_files, clean_files
-from pymofscreen.runner import mof_run, prep_next_run, mof_bfgs_run
+from pymofscreen.runner import mof_run, prep_next_run, prep_new_run, mof_bfgs_run
 from pymofscreen.cif_handler import cif_to_mof
 from pymofscreen.magmom_handler import set_initial_magmoms, continue_magmoms
 from pymofscreen.error_handler import get_warning_msgs
@@ -112,8 +112,8 @@ class workflows():
 			return False
 		warnings = get_warning_msgs(outcar_paths[self.run_i-1])
 		self.calc_swaps.extend(warnings)
-		scf_pass = True
-		return scf_pass
+
+		return True
 
 	def isif2_lowacc(self):
 		"""
@@ -152,7 +152,7 @@ class workflows():
 					if loop_i == 2 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
 						self.calc_swaps.append('fire')
 					mof = read('OUTCAR')
-					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+					mof = continue_magmoms(mof,'INCAR')
 					mof, self.calc_swaps = mof_run(self,mof,
 						calcs('isif2_lowacc'),kpts_lo)
 					if mof == None:
@@ -174,7 +174,7 @@ class workflows():
 
 		return mof
 
-	def isif2_medacc(self,mof):
+	def isif2_medacc(self):
 		"""
 		Run medium accuracy ISIF2
 		Returns:
@@ -190,11 +190,13 @@ class workflows():
 		calcs = self.calcs
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			mof = prep_new_run(self)
 			if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 				clean_files(['CHGCAR','WAVECAR'])
 			else:
 				manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
 			pprint('Running '+spin_level+', '+acc_level)
+			mof = prep_new_run()
 			mof,self.calc_swaps = mof_run(self,mof,calcs('isif2_medacc'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 				write_success(self)
@@ -209,7 +211,7 @@ class workflows():
 
 		return mof
 
-	def isif2_highacc(self,mof):
+	def isif2_highacc(self):
 		"""
 		Run high accuracy ISIF2
 		Returns:
@@ -224,6 +226,7 @@ class workflows():
 		calcs = self.calcs
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			mof = prep_new_run(self)
 			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('isif2_highacc'),kpts_hi)
@@ -231,7 +234,7 @@ class workflows():
 				if 'large_supercell' in self.calc_swaps:
 					self.calc_swaps.remove('large_supercell')
 					mof = read('OUTCAR')
-					mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+					mof = continue_magmoms(mof,'INCAR')
 					mof, self.calc_swaps = mof_run(self,mof,calcs('isif2_highacc'),kpts_hi)
 					if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 						write_success(self)
@@ -250,7 +253,7 @@ class workflows():
 			
 		return mof
 
-	def isif3_lowacc(self,mof):
+	def isif3_lowacc(self):
 		"""
 		Run low accuracy ISIF3
 		Returns:
@@ -265,6 +268,7 @@ class workflows():
 		calcs = self.calcs
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			mof = prep_new_run(self)
 			converged = False
 			loop_i = 0
 			n_runs = 15
@@ -279,7 +283,7 @@ class workflows():
 					break
 				converged = mof.calc.converged
 				mof = read('OUTCAR')
-				mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+				mof = continue_magmoms(mof,'INCAR')
 				loop_i += 1
 			if 'fire' in self.calc_swaps:
 				self.calc_swaps.remove('fire')
@@ -296,7 +300,7 @@ class workflows():
 
 		return mof
 
-	def isif3_highacc(self,mof):
+	def isif3_highacc(self):
 		"""
 		Run high accuracy ISIF3
 		Returns:
@@ -312,6 +316,7 @@ class workflows():
 		calcs = self.calcs
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			mof = prep_new_run(self)
 			converged = False
 			loop_i = 0
 			n_runs = 15
@@ -334,7 +339,7 @@ class workflows():
 					converged = mof.calc.converged
 				mof = read('OUTCAR')
 				V = mof.get_volume()
-				mof, abs_magmoms = continue_magmoms(mof,'INCAR')
+				mof = continue_magmoms(mof,'INCAR')
 				if loop_i > 0:
 					V_diff = np.abs((V-V0))/V0
 				V0 = V
@@ -365,7 +370,7 @@ class workflows():
 
 		return mof
 
-	def final_spe(self,mof):
+	def final_spe(self):
 		"""
 		Run final single point
 		Returns:
@@ -380,6 +385,7 @@ class workflows():
 		calcs = self.calcs
 		self.calc_swaps = []
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			mof = prep_new_run(self)
 			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi)
