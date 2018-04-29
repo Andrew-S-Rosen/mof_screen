@@ -1,10 +1,14 @@
 import os
+import numpy as np
+import sys
+from copy import deepcopy
 from pymofscreen.writers import pprint
 from pymofscreen.kpts_handler import get_kpts
 from pymofscreen.screen_phases import workflows
 from pymofscreen.janitor import prep_paths
 from pymofscreen.default_calculators import calcs
-import sys
+from pymofscreen.magmom_handler import check_if_new_spin, check_if_skip_low_spin
+
 class screener():
 	"""
 	This class constructs a high-throughput screening workflow
@@ -46,8 +50,8 @@ class screener():
 			acc_levels (list of strings): accuracy levels to consider
 			calcs (function): function to call respective calculator
 		Returns:
-			mofs (list of ASE Atoms objects): ASE Atoms objects for optimized
-			MOF given by cif_file for each spin_level
+			best_mof (ASE Atoms objects): ASE Atoms object for optimized
+			MOF given by cif_file (lowest energy spin state)
 		"""
 
 		basepath = self.basepath
@@ -77,6 +81,7 @@ class screener():
 
 		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',cif_file)
+		refcode = cif_file.split('.cif')[0]
 		if os.path.isfile(working_cif_path) == True:
 			pprint('SKIPPED: Running on another process')
 			return None
@@ -88,7 +93,7 @@ class screener():
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi
 		kpts_dict['gamma'] = gamma
-		mofs = []
+		E = np.inf
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
@@ -98,8 +103,9 @@ class screener():
 				prior_spin = spin_levels[i-1]
 			else:
 				prior_spin = None
-			wf = workflows(self,cif_file,kpts_dict,spin_level,prior_spin)
+			same_spin = False
 
+			wf = workflows(self,cif_file,kpts_dict,spin_level,prior_spin)
 			for acc_level in acc_levels:
 
 				if acc_level == 'scf_test':
@@ -111,6 +117,11 @@ class screener():
 					mof = wf.isif2_lowacc()
 					if mof is None:
 						return None
+					if i > 0:
+						is_new_spin = check_if_new_spin(self,mof,refcode,spin_levels[i-1])
+						if not is_new_spin:
+							same_spin = True
+							break
 
 				elif acc_level == 'isif2_medacc':
 					mof = wf.isif2_medacc(mof)
@@ -133,7 +144,7 @@ class screener():
 						return None
 
 				elif acc_level == 'final_spe':
-					mof, skip_spin2 = wf.final_spe(mof)
+					mof = wf.final_spe(mof)
 					if mof is None:
 						return None
 
@@ -141,9 +152,15 @@ class screener():
 					raise ValueError('Unsupported accuracy level')
 
 			#***********SAVE and CONTINUE***********
-			mofs.append(mof)
-			if skip_spin2 == True:
-				pprint('Skipping '+spin_levels[i+1]+' run')
-				return mofs
+			if same_spin == True:
+				continue
+			E_temp = mof.get_potential_energy()
+			if E_temp < E:
+				best_mof = deepcopy(mof)
+			if len(spin_levels) > 1:
+				skip_low_spin = check_if_skip_low_spin(self,mof,refcode,spin_levels[i])
+				if (spin_level == 'spin1' or spin_level == 'high_spin') and skip_low_spin == True:
+					pprint('Skipping '+spin_levels[i+1]+' run')
+					continue
 
-		return mofs
+		return best_mof

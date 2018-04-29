@@ -1,13 +1,10 @@
 import os
-import numpy as np
 from shutil import copyfile
 from ase.io import read
 from ase.optimize import BFGSLineSearch
 from pymofscreen.calc_swaps import update_calc, check_nprocs
 from pymofscreen.error_handler import get_niter, get_error_msgs, update_calc_after_errors, continue_mof
-from pymofscreen.magmom_handler import continue_magmoms, get_mag_indices
 from pymofscreen.compute_environ import choose_vasp_version
-from pymofscreen.metal_types import spblock_metals, poor_metals
 from pymofscreen.janitor import clean_files
 
 def mof_run(workflow,mof,calc,kpts):
@@ -182,7 +179,6 @@ def prep_next_run(workflow):
 		workflow (class): pymofscreen.screen_phases.worfklow class
 	Returns:
 		mof (ASE Atoms object): updated ASE Atoms object
-		skip_spin2 (bool): True if next spin state should be skipped
 	"""
 
 	acc_levels = workflow.acc_levels
@@ -190,24 +186,14 @@ def prep_next_run(workflow):
 	refcode = workflow.refcode
 	spin_level = workflow.spin_level
 	basepath = workflow.basepath
-
 	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
-	incarpath = os.path.join(success_path,'INCAR')
 	outcarpath = os.path.join(success_path,'OUTCAR')
 	errorpath = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
-	skip_spin2 = False
 
 	if os.path.exists(errorpath):
 		mof = None
 	else:
 		mof = read(outcarpath)
-		if acc_level != 'scf_test':
-			mof, abs_magmoms = continue_magmoms(mof,incarpath)
-			mag_indices = get_mag_indices(mof)
-			mag_nums = mof[mag_indices].get_atomic_numbers()
-			if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in spblock_metals+poor_metals for num in mag_nums) == True:
-				skip_spin2 = True
-
 	workflow.run_i += 1
 
-	return mof, skip_spin2
+	return mof

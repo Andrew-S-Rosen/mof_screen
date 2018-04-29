@@ -130,9 +130,17 @@ def check_nprocs(n_atoms,nprocs,ppn):
 		nprocs (int): updated total number of processors
 	"""
 
-	while n_atoms < nprocs/2.0:
+	lower = False
+	while n_atoms < nprocs/2:
 		if nprocs == ppn:
-			defaults['ncore'] = np.ceil(defaults['ncore']/2)
+			lower = True
 			break
 		nprocs -= ppn
+	if lower == True:
+		while n_atoms < nprocs/2:
+			if nprocs <= 2:
+				break
+			nprocs -= 2
+		defaults['ncore'] = nprocs
+
 	return nprocs

@@ -6,9 +6,9 @@ from pymofscreen.writers import pprint, write_success, write_errors
 from pymofscreen.janitor import manage_restart_files, clean_files
 from pymofscreen.runner import mof_run, prep_next_run, mof_bfgs_run
 from pymofscreen.cif_handler import cif_to_mof
-from pymofscreen.magmom_handler import set_initial_magmoms, continue_magmoms, get_mag_indices
+from pymofscreen.magmom_handler import set_initial_magmoms, continue_magmoms
 from pymofscreen.error_handler import get_warning_msgs
-from pymofscreen.default_caulcators import defaults
+from pymofscreen.default_calculators import defaults
 
 class workflows():
 	"""
@@ -46,7 +46,7 @@ class workflows():
 
 		self.nprocs, self.ppn = get_nprocs(self.submit_script)
 		if defaults.get('ncore') is None and defaults.get('npar') is None:
-			defaults['ncore'] = self.ppn
+			defaults['ncore'] = int(self.ppn/2.0)
 
 		clean_files(self.vasp_files)
 
@@ -106,7 +106,7 @@ class workflows():
 				write_errors(self,mof)
 		elif os.path.isfile(outcar_paths[self.run_i]):
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
-		mof, skip_spin2 = prep_next_run(self)
+		mof = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return False
@@ -132,7 +132,6 @@ class workflows():
 		acc_level = acc_levels[self.run_i]
 		niggli = self.niggli
 		calcs = self.calcs
-		mag_tol = 0.05
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			if spin1_final_mof_path is None:
@@ -168,16 +167,11 @@ class workflows():
 				write_errors(self,mof)
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
-		mof, skip_spin2 = prep_next_run(self)
+		mof = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
-		if spin_level == 'spin2':
-			mag_indices = get_mag_indices(mof)
-			old_mof = read(spin1_final_mof_path)
-			if np.sum(np.abs(mof.get_initial_magnetic_moments()[mag_indices] - old_mof.get_magnetic_moments()[mag_indices]) >= mag_tol) == 0:
-				pprint('Skipping rest because SPIN2 converged to SPIN1')
-				return None
+
 		return mof
 
 	def isif2_medacc(self,mof):
@@ -208,7 +202,7 @@ class workflows():
 				write_errors(self,mof)
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
-		mof, skip_spin2 = prep_next_run(self)
+		mof = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
@@ -249,10 +243,11 @@ class workflows():
 				write_errors(self,mof)
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
-		mof, skip_spin2 = prep_next_run(self)
+		mof = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
+			
 		return mof
 
 	def isif3_lowacc(self,mof):
@@ -294,7 +289,7 @@ class workflows():
 				write_errors(self,mof)
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
-		mof, skip_spin2 = prep_next_run(self)
+		mof = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
@@ -363,7 +358,7 @@ class workflows():
 				self.calc_swaps.remove('fire')
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
-		mof, skip_spin2 = prep_next_run(self)
+		mof = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
@@ -375,7 +370,6 @@ class workflows():
 		Run final single point
 		Returns:
 			mof (ASE Atoms object): updated ASE Atoms object
-			skip_spin2 (bool): True if next spin should be skipped
 		"""
 		acc_levels = self.acc_levels
 		outcar_paths = self.outcar_paths
@@ -396,9 +390,9 @@ class workflows():
 				write_errors(self,mof)
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
-		mof, skip_spin2 = prep_next_run(self)
+		mof = prep_next_run(self)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None
 
-		return mof, skip_spin2
+		return mof

@@ -1,6 +1,8 @@
 import numpy as np
+import os
 from ase.io import read
-from pymofscreen.metal_types import mag_list, dblock_metals, fblock_metals, poor_metals
+from pymofscreen.metal_types import mag_list, spblock_metals, dblock_metals, fblock_metals, poor_metals
+from pymofscreen.writers import pprint
 
 def get_incar_magmoms(incarpath,poscarpath):
 #Get the magnetic moments from the POSCAR
@@ -105,3 +107,34 @@ def continue_failed_magmoms(mof):
 	mof.set_initial_magnetic_moments(sorted_magmoms)
 
 	return mof
+
+def check_if_new_spin(screener,mof,refcode,prior_spin):
+	basepath = screener.basepath
+	acc_levels = screener.acc_levels
+	acc_level = acc_levels[-1]	
+	results_partial_path = os.path.join(basepath,'results',refcode,acc_level)
+	old_mof_path = os.path.join(results_partial_path,prior_spin,'OUTCAR')
+	mag_indices = get_mag_indices(mof)
+	old_mof = read(old_mof_path)
+	mag_tol = 0.05
+	if np.sum(np.abs(mof.get_magnetic_moments()[mag_indices] - old_mof.get_magnetic_moments()[mag_indices]) >= mag_tol) == 0:
+		pprint('Skipping rest because SPIN2 converged to SPIN1')
+		return False
+	else:
+		return True
+
+def check_if_skip_low_spin(screener,mof,refcode,spin_level):
+	acc_levels = screener.acc_levels
+	acc_level = acc_levels[-1]
+	basepath = screener.basepath
+	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+	incarpath = os.path.join(success_path,'INCAR')
+	skip_low_spin = False
+
+	mof, abs_magmoms = continue_magmoms(mof,incarpath)
+	mag_indices = get_mag_indices(mof)
+	mag_nums = mof[mag_indices].get_atomic_numbers()
+	if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in spblock_metals+poor_metals for num in mag_nums) == True:
+		skip_low_spin = True
+
+	return skip_low_spin
