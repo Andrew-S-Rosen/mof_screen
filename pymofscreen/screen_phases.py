@@ -357,7 +357,7 @@ class workflows():
 					write_errors(self,mof)
 			else:
 				write_errors(self,mof)
-				if V_diff > V_cut:
+				if mof is not None and V_diff > V_cut:
 					pprint('^ Change in V of '+str(V_diff)+' percent')
 			if 'fire' in self.calc_swaps:
 				self.calc_swaps.remove('fire')
