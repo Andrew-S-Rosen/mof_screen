@@ -378,11 +378,10 @@ class workflows():
 		kpts_hi = self.kpts_dict['kpts_hi']
 		acc_level = acc_levels[self.run_i]
 		calcs = self.calcs
+		self.calc_swaps = []
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
 			pprint('Running '+spin_level+', '+acc_level)
-			if 'large_supercell' in self.calc_swaps:
-				self.calc_swaps.remove('large_supercell')
 			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True:
 				write_success(self)
