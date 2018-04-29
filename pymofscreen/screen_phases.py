@@ -273,7 +273,6 @@ class workflows():
 			loop_i = 0
 			n_runs = 15
 			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
-			pprint('Running '+spin_level+', '+acc_level)
 			while converged == False and loop_i < n_runs:
 				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 				if loop_i == 10 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
