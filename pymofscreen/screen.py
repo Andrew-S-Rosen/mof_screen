@@ -119,7 +119,7 @@ class screener():
 					if mof is None:
 						return None
 					if i > 0:
-						is_new_spin = check_if_new_spin(self,mof,refcode,spin_levels[i])
+						is_new_spin = check_if_new_spin(self,mof,refcode,acc_level,spin_level)
 						if not is_new_spin:
 							same_spin = True
 							break

@@ -119,11 +119,9 @@ def continue_failed_magmoms(mof):
 
 	return mof
 
-def check_if_new_spin(screener,mof,refcode,current_spin):
+def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
 	basepath = screener.basepath
-	acc_levels = screener.acc_levels
 	spin_levels = screener.spin_levels
-	acc_level = acc_levels[-1]
 	results_partial_path = os.path.join(basepath,'results',refcode,acc_level)
 	success_path = os.path.join(results_partial_path,current_spin)
 	incarpath = os.path.join(success_path,'INCAR')
