@@ -22,7 +22,7 @@ defaults = {
 
 def calcs(calc_name):
 	"""
-	Define the default calculators for ionic relaxations
+	Define the default calculators for relaxations
 	Note: it should not include the kpts or gamma keywords!
 	Args:
 		calc_name (string): name of calculator
@@ -212,6 +212,111 @@ def calcs(calc_name):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			addgrid=False
+			)
+	elif calc_name == 'cineb_sp':
+		calc = Vasp(
+			xc=defaults['xc'],
+			setups=defaults['setups'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=1e-6,
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=False,
+			ibrion=3,
+			potim=0,
+			iopt=1,
+			nsw=1,
+			ediffg=-0.1,
+			lclimb=True,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym'],
+			ichain=0
+			)
+	elif calc_name == 'dimer_lowacc':
+		calc = Vasp(
+			xc=defaults['xc'],
+			setups=defaults['setups'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=1e-8,
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			ibrion=3,
+			potim=0,
+			iopt=2,
+			nsw=defaults['nsw']*2,
+			ediffg=-0.05,
+			DdR=0.01,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym'],
+			ichain=2
+			)
+	elif calc_name == 'dimer_medacc':
+		calc = Vasp(
+			xc=defaults['xc'],
+			setups=defaults['setups'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=1e-8,
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			ibrion=3,
+			potim=0,
+			iopt=2,
+			nsw=defaults['nsw'],
+			ediffg=defaults['ediffg'],
+			DdR=0.01,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym'],
+			ichain=2
+			)
+	elif calc_name == 'dimer_highacc':
+		calc = Vasp(
+			xc=defaults['xc'],
+			encut=defaults['encut'],
+			setups=defaults['setups'],
+			ivdw=defaults['ivdw'],
+			prec=defaults['prec'],
+			algo=defaults['algo'],
+			ediff=1e-8,
+			nelm=defaults['nelm'],
+			nelmin=defaults['nelmin'],
+			lreal=defaults['lreal'],
+			ncore=defaults['ncore'],
+			ismear=defaults['ismear'],
+			sigma=defaults['sigma'],
+			lcharg=False,
+			lwave=True,
+			ibrion=3,
+			potim=0,
+			iopt=2,
+			nsw=defaults['nsw'],
+			ediffg=defaults['ediffg'],
+			DdR=0.01,
+			lorbit=defaults['lorbit'],
+			isym=defaults['isym'],
+			ichain=2
 			)
 	else:
 		raise ValueError('Out of range for calculators')
