@@ -23,7 +23,7 @@ defaults = {
 def calcs(calc_name):
 	"""
 	Define the default calculators for relaxations
-	Note: it should not include the kpts or gamma keywords!
+	Note: it should not include the kpts, gamma, or images keywords!
 	Args:
 		calc_name (string): name of calculator
 	Returns:
@@ -213,7 +213,7 @@ def calcs(calc_name):
 			isym=defaults['isym'],
 			addgrid=False
 			)
-	elif calc_name == 'cineb_sp':
+	elif calc_name == 'cineb_lowacc':
 		calc = Vasp(
 			xc=defaults['xc'],
 			setups=defaults['setups'],
@@ -232,8 +232,8 @@ def calcs(calc_name):
 			ibrion=3,
 			potim=0,
 			iopt=1,
-			nsw=1,
-			ediffg=-0.1,
+			nsw=defaults['nsw'],
+			ediffg=-0.5,
 			lclimb=True,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
@@ -258,9 +258,8 @@ def calcs(calc_name):
 			ibrion=3,
 			potim=0,
 			iopt=2,
-			nsw=defaults['nsw']*2,
+			nsw=defaults['nsw']*4,
 			ediffg=-0.05,
-			DdR=0.01,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			ichain=2
@@ -284,9 +283,8 @@ def calcs(calc_name):
 			ibrion=3,
 			potim=0,
 			iopt=2,
-			nsw=defaults['nsw'],
+			nsw=defaults['nsw']*4,
 			ediffg=defaults['ediffg'],
-			DdR=0.01,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			ichain=2
@@ -311,9 +309,8 @@ def calcs(calc_name):
 			ibrion=3,
 			potim=0,
 			iopt=2,
-			nsw=defaults['nsw'],
+			nsw=defaults['nsw']*4,
 			ediffg=defaults['ediffg'],
-			DdR=0.01,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			ichain=2

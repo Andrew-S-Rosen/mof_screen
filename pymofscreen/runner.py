@@ -35,7 +35,12 @@ def mof_run(workflow,mof,calc,kpts):
 		gpt_version = True
 	else:
 		gpt_version = False
-	nprocs = check_nprocs(len(mof),nprocs,ppn)
+	if calc.int_params['images'] is not None:
+		neb = True
+	else:
+		neb = False
+	if not neb:
+		nprocs = check_nprocs(len(mof),nprocs,ppn)
 	choose_vasp_version(gpt_version,nprocs)
 	calc.input_params['kpts'] = kpts
 	calc.input_params['gamma'] = gamma
@@ -54,7 +59,7 @@ def mof_run(workflow,mof,calc,kpts):
 		success = True
 	except:
 
-		if not os.path.isfile('STOPCAR'):
+		if not os.path.isfile('STOPCAR') and not neb:
 
 			old_error_len = 0
 			refcode = cif_file.split('.cif')[0]
@@ -174,7 +179,7 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 
 	return mof, dyn, calc_swaps
 
-def prep_next_run(workflow):
+def prep_next_run(workflow,change_i=True):
 	"""
 	Prepare for the next run
 	Args:
@@ -196,7 +201,8 @@ def prep_next_run(workflow):
 		mof = None
 	else:
 		mof = read(outcarpath)
-	workflow.run_i += 1
+	if change_i:
+		workflow.run_i += 1
 
 	return mof
 

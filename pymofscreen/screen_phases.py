@@ -9,6 +9,7 @@ from pymofscreen.cif_handler import cif_to_mof
 from pymofscreen.magmom_handler import set_initial_magmoms, continue_magmoms
 from pymofscreen.error_handler import get_warning_msgs
 from pymofscreen.default_calculators import defaults
+from pymofscreen.vtst_handler import nebmake, neb2dim, dimmins, vtst_cleanup, nebef, neb_merge_outcars
 
 class workflows():
 	"""
@@ -389,6 +390,85 @@ class workflows():
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True:
+				write_success(self)
+			else:
+				write_errors(self,mof)
+		elif os.path.isfile(outcar_paths[self.run_i]) == True:
+			pprint('COMPLETED: '+spin_level+', '+acc_level)
+		mof = prep_next_run(self)
+		if mof == None:
+			pprint('Skipping rest because of errors')
+			return None
+
+		return mof
+
+	def cineb_lowacc(self,POSCAR1,POSCAR2,n_images):
+		"""
+		Run CI-NEB low accuracy calculation
+		Returns:
+			mof (ASE Atoms object): updated ASE Atoms object
+		"""
+		outcar_paths = self.outcar_paths
+		error_outcar_paths = self.error_outcar_paths
+		spin_level = self.spin_level
+		kpts_lo = self.kpts_dict['kpts_lo']
+		calcs = self.calcs
+		nprocs = self.nprocs
+		if nprocs % n_images != 0:
+			raise ValueError(str(nprocs)+' procs not divisible by '+str(n_images))
+		if not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			mof1 = read(POSCAR1) #used as a dummy ASE Atoms object to run NEB
+			mof2 = read(POSCAR2)
+			if mof1.get_chemical_formula() != mof2.get_chemical_formula():
+				raise ValueError('POSCAR1 and POSCAR2 must have same atoms')
+			mof1 = set_initial_magmoms(mof1,spin_level)
+			pprint('Running CI-NEB (pre-dimer)')
+			nebmake(POSCAR1,POSCAR2,n_images)
+			mof1,self.calc_swaps = mof_run(self,mof1,calcs('cineb_lowacc'),kpts_lo)
+			clean_files(['POSCAR'])
+			ediffg = calcs('cineb_lowacc').exp_params['ediffg']
+			neb_conv = nebef(ediffg)
+			if neb_conv:
+				pprint('SUCCESS: CI-NEB (pre-dimer)')
+			else:
+				pprint('ERROR: CI-NEB (pre-dimer) failed')
+		elif os.path.isfile(outcar_paths[self.run_i]) == True:
+			pprint('COMPLETED: CI-NEB (pre-dimer)')
+		mof = prep_next_run(self,change_i=False)
+		if mof == None:
+			pprint('Skipping rest because of errors')
+			return None
+
+		return mof
+
+	def dimer(self):
+		"""
+		Run dimer
+		Returns:
+			mof (ASE Atoms object): updated ASE Atoms object
+		"""
+		acc_levels = self.acc_levels
+		outcar_paths = self.outcar_paths
+		error_outcar_paths = self.error_outcar_paths
+		spin_level = self.spin_level
+		acc_level = acc_levels[self.run_i]
+		if 'lowacc' in acc_level:
+			kpts = self.kpts_dict['kpts_lo']
+		else:
+			kpts_lo = self.kpts_dict['kpts_lo']
+			kpts = self.kpts_dict['kpts_hi']
+		calcs = self.calcs
+		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			pprint('Running '+spin_level+', '+acc_level)
+			if 'lowacc' in acc_level:
+				mof = neb2dim()
+			else:
+				mof = prep_new_run(self)
+				manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0],dimer=True)
+				if 'medacc' in acc_level and sum(kpts_lo) == 3 and sum(kpts) > 3:
+					clean_files(['CHGCAR','WAVECAR'])
+			mof,self.calc_swaps = mof_run(self,mof,calcs(acc_level),kpts)
+			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 				write_success(self)
 			else:
 				write_errors(self,mof)

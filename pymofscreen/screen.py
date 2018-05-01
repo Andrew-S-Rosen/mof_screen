@@ -5,7 +5,7 @@ from copy import deepcopy
 from pymofscreen.writers import pprint
 from pymofscreen.kpts_handler import get_kpts
 from pymofscreen.screen_phases import workflows
-from pymofscreen.janitor import prep_paths
+from pymofscreen.janitor import prep_paths,vtst_cleanup
 from pymofscreen.default_calculators import calcs
 from pymofscreen.magmom_handler import check_if_new_spin, check_if_skip_low_spin
 
@@ -43,7 +43,7 @@ class screener():
 
 	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,calcs=calcs):
 		"""
-		Run high-throughput ionic relaxations
+		Run high-throughput ionic or volume relaxations
 		Args:
 			cif_file (string): name of CIF file
 			spin_levels (list of strings): spin states to consider
@@ -75,6 +75,8 @@ class screener():
 				'isif3_highacc','final','final_spe']
 		else:
 			raise ValueError('Unsupported DFT screening mode')
+		if 'scf_test' not in acc_levels:
+			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
 		if spin_levels is None:
 			spin_levels = ['spin1','spin2']
@@ -163,5 +165,99 @@ class screener():
 				if (spin_level == 'spin1' or spin_level == 'high_spin') and skip_low_spin == True:
 					pprint('Skipping '+spin_levels[i+1]+' run')
 					continue
+
+		return best_mof
+
+	def run_ts_screen(self,cif_file,POSCAR1,POSCAR2,n_images=8,spin_levels=None,acc_levels=None,calcs=calcs):
+		"""
+		Run high-throughput TS calculation
+		Args:
+			cif_file (string): name of CIF file
+			spin_levels (list of strings): spin states to consider
+			acc_levels (list of strings): accuracy levels to consider
+			calcs (function): function to call respective calculator
+		Returns:
+			best_mof (ASE Atoms objects): ASE Atoms object for optimized
+			MOF given by cif_file (lowest energy spin state)
+		"""
+
+		basepath = self.basepath
+		self.spin_levels = spin_levels
+		self.calcs = calcs
+		self.acc_levels = acc_levels
+		if spin_levels is None:
+			spin_levels = ['spin1','spin2']
+			self.spin_levels = spin_levels
+		if acc_levels is None:
+			acc_levels = ['dimer_lowacc','dimer_medacc',
+			'dimer_highacc','final_spe']
+
+		#Make sure MOF isn't running on other process
+		working_cif_path = os.path.join(basepath,'working',cif_file)
+		refcode = cif_file.split('.cif')[0]
+		if os.path.isfile(working_cif_path) == True:
+			pprint('SKIPPED: Running on another process')
+			return None
+
+		#Get the kpoints
+		kpts_lo, gamma = get_kpts(self,cif_file,'low')
+		kpts_hi, gamma = get_kpts(self,cif_file,'high')
+		kpts_dict = {}
+		kpts_dict['kpts_lo'] = kpts_lo
+		kpts_dict['kpts_hi'] = kpts_hi
+		kpts_dict['gamma'] = gamma
+		E = np.inf
+
+		#for each spin level, optimize the structure
+		for i, spin_level in enumerate(spin_levels):
+
+			#***********PREP FOR RUN***********
+			if spin_level != spin_levels[0]:
+				prior_spin = spin_levels[i-1]
+			else:
+				prior_spin = None
+			same_spin = False
+
+			wf = workflows(self,cif_file,kpts_dict,spin_level,prior_spin)
+			for acc_level in acc_levels:
+
+				if acc_level == 'dimer_lowacc' and i == 0:
+					mof = wf.cineb_lowacc(POSCAR1,POSCAR2,n_images)
+					if mof is None:
+						return None
+
+				if 'dimer' in acc_level:
+					mof = wf.dimer()
+					if mof is None:
+						return None
+
+				elif acc_level == 'final_spe':
+					mof = wf.final_spe()
+					if mof is None:
+						return None
+				else:
+					raise ValueError('Unsupported accuracy level')
+
+				if acc_level == 'dimer_lowacc' and i > 0:
+					is_new_spin = check_if_new_spin(self,mof,refcode,acc_level,spin_level)
+					if not is_new_spin:
+						same_spin = True
+						break
+
+			#***********SAVE and CONTINUE***********
+			vtst_cleanup()
+			if same_spin == True:
+				continue
+			E_temp = mof.get_potential_energy()
+			if E_temp < E:
+				best_mof = deepcopy(mof)
+			if len(spin_levels) > 1:
+				skip_low_spin = check_if_skip_low_spin(self,mof,refcode,spin_levels[i])
+				if (spin_level == 'spin1' or spin_level == 'high_spin') and skip_low_spin == True:
+					pprint('Skipping '+spin_levels[i+1]+' run')
+					continue
+
+		os.remove(POSCAR1)
+		os.remove(POSCAR2)
 
 		return best_mof

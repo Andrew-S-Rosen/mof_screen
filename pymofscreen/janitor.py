@@ -1,5 +1,5 @@
 import os
-from shutil import copyfile
+from shutil import copyfile, rmtree
 
 def prep_paths(basepath):
 	"""
@@ -37,7 +37,7 @@ def clean_files(remove_files):
 		if os.path.isfile(file):
 			os.remove(file)
 
-def manage_restart_files(file_path):
+def manage_restart_files(file_path,dimer=False):
 	"""
 	Copy restart files to current directory
 	Args:
@@ -45,8 +45,19 @@ def manage_restart_files(file_path):
 	"""
 
 	files = ['WAVECAR','CHGCAR']
+	if dimer == True:
+		files += ['NEWMODECAR']
 	for file in files:
 		full_path = os.path.join(file_path,file)
 		if not os.path.isfile(file) or os.stat(file).st_size == 0:
 			if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
-				copyfile(full_path,os.path.join(os.getcwd(),file))
+				if file == 'NEWMODECAR':
+					copyfile(full_path,os.path.join(os.getcwd(),'MODECAR'))
+				else:
+					copyfile(full_path,os.path.join(os.getcwd(),file))
+
+def vtst_cleanup():
+	if os.path.exists('neb_temp'):
+		rmtree('neb_temp')
+	if os.path.exists('dim_temp'):
+		rmtree('dim_temp')
