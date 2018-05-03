@@ -1,5 +1,4 @@
 import os
-from shutil import copyfile
 from ase.io import read
 from copy import deepcopy
 from ase.optimize import BFGSLineSearch
@@ -25,10 +24,9 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 	nprocs = workflow.nprocs
 	ppn = workflow.ppn
 	calc_swaps = workflow.calc_swaps
-	cif_file = workflow.cif_file
+	refcode = workflow.refcode
 	stdout_file = workflow.stdout_file
 	calc_swaps = workflow.calc_swaps
-	mofpath = workflow.mofpath
 	basepath = workflow.basepath
 	gamma = workflow.kpts_dict['gamma']
 	if sum(kpts) == 3:
@@ -47,9 +45,8 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 	calc.input_params['gamma'] = gamma
 	if calc.int_params['ncore'] is None and calc.int_params['npar'] is None:
 		calc.int_params['ncore'] = int(ppn/2.0)
-
-	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',
-		cif_file))
+	working_file = os.path.join(basepath,'working',refcode)
+	open(working_file,'w').close()
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	success = False
@@ -65,7 +62,6 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 		if not os.path.isfile('STOPCAR') and not neb:
 
 			old_error_len = 0
-			refcode = cif_file.split('.cif')[0]
 			restart_files = ['WAVECAR','CHGCAR']
 			clean_files(restart_files)
 
@@ -119,10 +115,9 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	nprocs = workflow.nprocs
 	ppn = workflow.ppn
 	calc_swaps = workflow.calc_swaps
-	cif_file = workflow.cif_file
+	refcode = workflow.refcode
 	stdout_file = workflow.stdout_file
 	calc_swaps = workflow.calc_swaps
-	mofpath = workflow.mofpath
 	basepath = workflow.basepath
 	gamma = workflow.kpts_dict['gamma']
 
@@ -137,9 +132,8 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	calc.input_params['gamma'] = gamma
 	if calc.int_params['ncore'] is None and calc.int_params['npar'] is None:
 		calc.int_params['ncore'] = int(ppn/2.0)
-
-	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',
-		cif_file))
+	working_file = os.path.join(basepath,'working',refcode)
+	open(working_file,'w').close()
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	dyn = BFGSLineSearch(mof,trajectory='opt.traj')
@@ -153,7 +147,6 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 		if not os.path.isfile('STOPCAR'):
 
 			old_error_len = 0
-			refcode = cif_file.split('.cif')[0]
 			restart_files = ['WAVECAR','CHGCAR']
 			clean_files(restart_files)
 

@@ -224,7 +224,7 @@ def calcs(calc_name):
 			potim=0,
 			iopt=1,
 			nsw=defaults['nsw'],
-			ediffg=-5,
+			ediffg=-0.5,
 			lclimb=True,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],

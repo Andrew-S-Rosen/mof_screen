@@ -22,9 +22,11 @@ def write_success(workflow,neb=False):
 	pprint('SUCCESS: '+spin_level+', '+acc_level)
 	refcode = workflow.refcode
 	basepath = workflow.basepath
-	cif_file = workflow.cif_file
 	vasp_files = workflow.vasp_files
-	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+	if not neb:
+		success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+	elif neb:
+		success_path = os.path.join(basepath,'results',refcode,acc_level)
 	if not os.path.exists(success_path):
 		os.makedirs(success_path)
 	if not neb:
@@ -45,7 +47,7 @@ def write_success(workflow,neb=False):
 			write_to_path = os.path.join(success_path,tar_file)
 			copyfile(tar_file,write_to_path)
 		os.remove('neb.tar.gz')
-	os.remove(os.path.join(basepath,'working',cif_file))
+	os.remove(os.path.join(basepath,'working',refcode))
 	if os.path.exists('STOPCAR'):
 		os.remove('STOPCAR')
 
@@ -69,10 +71,12 @@ def write_errors(workflow,mof,neb=False):
 			pprint('^ Convergence not reached')
 	refcode = workflow.refcode
 	basepath = workflow.basepath
-	cif_file = workflow.cif_file
 	vasp_files = workflow.vasp_files
 	stdout_file = workflow.stdout_file
-	error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
+	if not neb:
+		error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
+	elif neb:
+		error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
 	if not os.path.exists(error_path):
 		os.makedirs(error_path)
 	if not neb:
@@ -90,6 +94,6 @@ def write_errors(workflow,mof,neb=False):
 		if os.path.isfile(tar_file) and os.stat(tar_file).st_size > 0:
 			write_to_path = os.path.join(error_path,tar_file)
 			copyfile(tar_file,write_to_path)		
-	os.remove(os.path.join(basepath,'working',cif_file))
+	os.remove(os.path.join(basepath,'working',refcode))
 	if os.path.exists('STOPCAR'):
 		os.remove('STOPCAR')

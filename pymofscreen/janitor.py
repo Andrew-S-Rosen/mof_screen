@@ -12,6 +12,15 @@ def clean_files(remove_files):
 		if os.path.isfile(file):
 			os.remove(file)
 
+
+def vtst_cleanup():
+	if os.path.exists('neb'):
+		rmtree('neb')
+	if os.path.exists('dim'):
+		rmtree('dim')
+	if os.path.exists('neb.tar.gz'):
+		os.remove('neb.tar.gz')
+
 def prep_paths(basepath):
 	"""
 	Prepare the necessary file paths
@@ -35,8 +44,7 @@ def prep_paths(basepath):
 	if os.path.isfile(log_file):
 		open(log_file,'w').close()
 	clean_files(['run_vasp.py','neb.tar.gz'])
-	if os.path.exists('neb'):
-		rmtree('neb')
+	vtst_cleanup()
 
 def manage_restart_files(file_path,dimer=False,neb=False):
 	"""
@@ -57,16 +65,10 @@ def manage_restart_files(file_path,dimer=False,neb=False):
 		if not os.path.isfile(file) or os.stat(file).st_size == 0:
 			if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
 				if file == 'NEWMODECAR':
-					copyfile(full_path,os.path.join(os.getcwd(),'MODECAR'))
+					copyfile(full_path,'MODECAR')
 				else:
-					copyfile(full_path,os.path.join(os.getcwd(),file))
+					copyfile(full_path,file)
 				if '.tar.gz' in file:
 					os.system('tar -zxvf '+file)
 				elif '.gz' in file:
 					os.system('gunzip '+file)
-
-def neb_cleanup():
-	if os.path.exists('neb'):
-		rmtree('neb')
-	if os.path.exists('neb.tar.gz'):
-		os.remove('neb.tar.gz')

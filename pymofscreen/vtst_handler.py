@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from shutil import copyfile, rmtree
+from shutil import copyfile, rmtree, move
 from ase.io import read, write
 from pymofscreen.janitor import clean_files
 
@@ -16,7 +16,7 @@ def nebmake(initial_atoms,final_atoms,n_images):
 	else:
 		last_image = str(n_images+1)
 	write(os.path.join(neb_path,'POSCAR1'),initial_atoms,format='vasp')
-	write(os.path.join(neb_path,'POSCAR2'),initial_atoms,format='vasp')
+	write(os.path.join(neb_path,'POSCAR2'),final_atoms,format='vasp')
 	os.system('nebmake.pl POSCAR1 POSCAR2 '+str(n_images))
 	write_dummy_outcar(os.path.join(neb_path,'00','OUTCAR'),initial_atoms.get_potential_energy())
 	write_dummy_outcar(os.path.join(neb_path,last_image,'OUTCAR'),final_atoms.get_potential_energy())
@@ -33,16 +33,20 @@ def neb2dim():
 	neb_fin_path = os.path.join(neb_path,'neb_fin')
 	os.chdir(neb_fin_path)
 	os.system('nebresults.pl')
-	copyfile(os.path.join(neb_fin_path,'exts.data'),os.path.join(neb_path,'exts.dat'))
+	copyfile(os.path.join(neb_fin_path,'exts.dat'),os.path.join(neb_path,'exts.dat'))
 	os.chdir(neb_path)
 	os.system('neb2dim.pl')
-	dim_path = os.path.join(neb_path,'dim')
-	os.chdir(dim_path)
+	old_dim_path = os.path.join(neb_path,'dim')
+	new_dim_path = os.path.join(pwd,'dim')
+	move(old_dim_path,new_dim_path)
+	os.chdir(new_dim_path)
 	mof = read('POSCAR')	
 	return mof
 
 def dimmins(dis):
-	os.system('vfin.pl dim_temp')
+	#probably wont work without all files
+	os.system('vfin.pl dim_fin')
+	rmtree('dim_fin')
 	os.system('dimmins.pl POSCAR MODECAR '+str(dis))
 
 def nebef(ediffg):

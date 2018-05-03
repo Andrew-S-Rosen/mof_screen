@@ -112,7 +112,7 @@ class screener():
 
 				if acc_level == 'scf_test':
 					scf_pass = wf.scf_test()
-					if scf_pass is False:
+					if not scf_pass:
 						return None
 
 				elif acc_level == 'isif2_lowacc' or (acc_level == 'isif2' and mode == 'volume_legacy'):
@@ -168,11 +168,11 @@ class screener():
 
 		return best_mof
 
-	def run_ts_screen(self,cif_file,initial_atoms,final_atoms,n_images=6,spin_levels=None,acc_levels=None,calcs=calcs):
+	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=6,spin_levels=None,acc_levels=None,calcs=calcs):
 		"""
 		Run high-throughput TS calculation
 		Args:
-			cif_file (string): name of CIF file
+			name (string): name of CIF file
 			spin_levels (list of strings): spin states to consider
 			acc_levels (list of strings): accuracy levels to consider
 			calcs (function): function to call respective calculator
@@ -195,15 +195,15 @@ class screener():
 		self.acc_levels = acc_levels
 
 		#Make sure MOF isn't running on other process
-		working_cif_path = os.path.join(basepath,'working',cif_file)
-		refcode = cif_file.split('.cif')[0]
+		working_cif_path = os.path.join(basepath,'working',name)
+		refcode = name.split('.cif')[0]
 		if os.path.isfile(working_cif_path) == True:
 			pprint('SKIPPED: Running on another process')
 			return None
 
 		#Get the kpoints
-		kpts_lo, gamma = get_kpts(self,cif_file,'low')
-		kpts_hi, gamma = get_kpts(self,cif_file,'high')
+		kpts_lo, gamma = get_kpts(self,name,'low')
+		kpts_hi, gamma = get_kpts(self,name,'high')
 		kpts_dict = {}
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi
@@ -220,12 +220,12 @@ class screener():
 				prior_spin = None
 			same_spin = False
 
-			wf = workflows(self,cif_file,kpts_dict,spin_level,prior_spin)
+			wf = workflows(self,name,kpts_dict,spin_level,prior_spin)
 			for acc_level in acc_levels:
 
 				if acc_level == 'cineb_lowacc' and i == 0:
 					neb_conv = wf.cineb_lowacc(initial_atoms,final_atoms,n_images)
-					if neb_conv is False:
+					if not neb_conv:
 						return None
 
 				elif acc_level == 'cineb_lowacc' and i > 0:
