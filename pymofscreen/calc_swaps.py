@@ -113,6 +113,13 @@ def update_calc(calc,calc_swaps):
 			calc.int_params['iopt'] = 7
 			calc.float_params['potim'] = 0
 		
+		elif 'lwave=' in swap:
+			swap_val = swap.split('=')[-1].lower()
+			if swap_val == 'true':
+				calc.bool_params['lwave'] = True
+			elif swap_val == 'false':
+				calc.bool_params['lwave'] = False
+				
 		else:
 			raise ValueError('Unknown calc swap')
 

@@ -188,10 +188,12 @@ class screener():
 			spin_levels = ['spin1','spin2']
 		self.spin_levels = spin_levels
 		if acc_levels is None:
-			acc_levels = ['cineb_lowacc','dimer_lowacc','dimer_medacc',
+			acc_levels = ['scf_test','cineb_lowacc','dimer_lowacc','dimer_medacc',
 			'dimer_highacc','final_spe']
 		if 'cineb_lowacc' not in acc_levels:
 			acc_levels = ['cineb_lowacc']+acc_levels
+		if 'scf_test' not in acc_levels:
+			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
 
 		#Make sure MOF isn't running on other process
@@ -222,6 +224,14 @@ class screener():
 
 			wf = workflows(self,name,kpts_dict,spin_level,prior_spin)
 			for acc_level in acc_levels:
+
+				if acc_level == 'scf_test' and i == 0:
+					scf_pass = wf.scf_test(quick_test=True)
+					if not scf_pass:
+						return None					
+
+				elif acc_level == 'scf_test' and i > 0:
+					continue
 
 				if acc_level == 'cineb_lowacc' and i == 0:
 					neb_conv = wf.cineb_lowacc(initial_atoms,final_atoms,n_images)

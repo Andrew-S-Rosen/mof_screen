@@ -297,7 +297,7 @@ def calcs(calc_name):
 			ibrion=3,
 			potim=0,
 			iopt=2,
-			nsw=defaults['nsw']*4,
+			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],

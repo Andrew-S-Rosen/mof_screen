@@ -73,7 +73,7 @@ class workflows():
 				prior_spin,'OUTCAR')
 		pprint('***STARTING '+self.refcode+': '+spin_level+'***')
 				
-	def scf_test(self):
+	def scf_test(self,quick_test=False):
 		"""
 		Run SCF test job to check for errors
 		Returns:
@@ -96,8 +96,12 @@ class workflows():
 			else:
 				mof = read(spin1_final_mof_path)
 			mof = set_initial_magmoms(mof,spin_level)
+			if quick_test:
+				self.calc_swaps.append(['nelm=5','lwave=False'])
 			pprint('Running '+spin_level+', '+acc_level)
 			mof, self.calc_swaps = mof_run(self,mof,calcs('scf_test'),kpts_lo)
+			if quick_test:
+				self.calc_swaps.remove(['nelm=5','lwave=False'])
 			if mof != None:
 				write_success(self)
 			else:
@@ -195,8 +199,8 @@ class workflows():
 				clean_files(['CHGCAR','WAVECAR'])
 			else:
 				manage_restart_files(prior_results_path)
-			pprint('Running '+spin_level+', '+acc_level)
 			mof = prep_new_run()
+			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('isif2_medacc'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 				write_success(self)
@@ -276,9 +280,9 @@ class workflows():
 			n_runs = 15
 			manage_restart_files(prior_results_path)
 			while converged == False and loop_i < n_runs:
-				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 				if loop_i == 10 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
 					self.calc_swaps.append('fire')
+				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 				mof,self.calc_swaps = mof_run(self,mof,calcs('isif3_lowacc'),kpts_lo)
 				if mof == None:
 					break
@@ -330,9 +334,9 @@ class workflows():
 			else:
 				manage_restart_files(prior_results_path)
 			while (converged == False or V_diff > V_cut) and loop_i < n_runs:
-				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 				if loop_i == 10 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
 					self.calc_swaps.append('fire')
+				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 				mof,self.calc_swaps = mof_run(self,mof,calcs('isif3_highacc'),
 					kpts_hi)
 				if mof == None:
@@ -347,9 +351,9 @@ class workflows():
 				V0 = V
 				loop_i += 1
 			if mof != None and converged == True and V_diff <= V_cut and 'large_supercell' in self.calc_swaps:
-				pprint('Running '+spin_level+', '+acc_level+' (LREAL=False)')
 				self.calc_swaps.append('nsw=100')
 				self.calc_swaps.remove('large_supercell')
+				pprint('Running '+spin_level+', '+acc_level+' (LREAL=False)')
 				mof,self.calc_swaps = mof_run(self,mof,calcs('isif3_highacc'),
 					kpts_hi)
 				self.calc_swaps.remove('nsw=100')
@@ -427,9 +431,9 @@ class workflows():
 		if not os.path.isfile(data_path) and not os.path.isfile(error_data_path):
 			if initial_atoms.get_chemical_formula() != final_atoms.get_chemical_formula():
 				raise ValueError('POSCAR1 and POSCAR2 must have same atoms')
-			pprint('Running CI-NEB (pre-dimer)')
 			nebmake(initial_atoms,final_atoms,n_images)
 			initial_atoms = set_initial_magmoms(initial_atoms,spin_level)
+			pprint('Running CI-NEB (pre-dimer)')
 			initial_atoms,self.calc_swaps = mof_run(self,initial_atoms,calcs('cineb_lowacc'),kpts_lo,images=n_images)
 			ediffg = calcs('cineb_lowacc').exp_params['ediffg']
 			neb_conv = nebef(ediffg)
@@ -470,15 +474,18 @@ class workflows():
 			kpts = self.kpts_dict['kpts_hi']
 		calcs = self.calcs
 		if os.path.isfile(prior_neb_data_path) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
-			pprint('Running '+spin_level+', '+acc_level)
 			if 'lowacc' in acc_level:
 				manage_restart_files(prior_results_path,neb=True)
 				mof = neb2dim()
+				mof = set_initial_magmoms(mof,spin_level)
 			else:
 				mof = prep_new_run(self)
 				manage_restart_files(prior_results_path,dimer=True)
 				if 'medacc' in acc_level and sum(kpts_lo) == 3 and sum(kpts) > 3:
 					clean_files(['CHGCAR','WAVECAR'])
+			if 'highacc' in acc_level and 'large_supercell' in self.calc_swaps:
+				self.calc_swaps.remove('large_supercell')
+			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs(acc_level),kpts)
 			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
 				write_success(self)
