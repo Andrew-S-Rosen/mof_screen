@@ -1,19 +1,43 @@
 import os
 import numpy as np
-from shutil import copyfile
-from ase.io import read
+from shutil import copyfile, rmtree
+from ase.io import read, write
+from pymofscreen.janitor import clean_files
 
-def nebmake(POSCAR1,POSCAR2,n_images):
-	os.system('nebmake.pl '+POSCAR1+' '+POSCAR2+' '+str(n_images))
+def nebmake(initial_atoms,final_atoms,n_images):
+	pwd = os.getcwd()
+	neb_path = os.path.join(pwd,'neb')
+	if os.path.exists(neb_path):
+		rmtree(neb_path)
+	os.makedirs(neb_path)
+	os.chdir(neb_path)
+	if n_images < 10:
+		last_image = '0'+str(n_images+1)
+	else:
+		last_image = str(n_images+1)
+	write(os.path.join(neb_path,'POSCAR1'),initial_atoms,format='vasp')
+	write(os.path.join(neb_path,'POSCAR2'),initial_atoms,format='vasp')
+	os.system('nebmake.pl POSCAR1 POSCAR2 '+str(n_images))
+	write_dummy_outcar(os.path.join(neb_path,'00','OUTCAR'),initial_atoms.get_potential_energy())
+	write_dummy_outcar(os.path.join(neb_path,last_image,'OUTCAR'),final_atoms.get_potential_energy())
+
+def write_dummy_outcar(name,E):
+	with open(name,'w') as wf:
+		wf.write('  energy  without entropy=                   energy(sigma->0) =     '+str(E)+'\n')
 
 def neb2dim():
-	os.system('vfin.pl neb_temp')
-	os.chdir('neb_temp')
+	pwd = os.getcwd()
+	neb_path = os.path.join(pwd,'neb')
+	os.chdir(neb_path)
+	os.system('vfin.pl neb_fin')
+	neb_fin_path = os.path.join(neb_path,'neb_fin')
+	os.chdir(neb_fin_path)
 	os.system('nebresults.pl')
-	copyfile('exts.data','../exts.dat')
-	os.chdir('../')
+	copyfile(os.path.join(neb_fin_path,'exts.data'),os.path.join(neb_path,'exts.dat'))
+	os.chdir(neb_path)
 	os.system('neb2dim.pl')
-	os.chdir('dim')
+	dim_path = os.path.join(neb_path,'dim')
+	os.chdir(dim_path)
 	mof = read('POSCAR')	
 	return mof
 
@@ -22,6 +46,8 @@ def dimmins(dis):
 	os.system('dimmins.pl POSCAR MODECAR '+str(dis))
 
 def nebef(ediffg):
+	ediffg = abs(ediffg)
+	clean_files(['POSCAR'])
 	open('nebef.dat','w').close()
 	os.system('nebef.pl > nebef.dat')
 	max_F = 0

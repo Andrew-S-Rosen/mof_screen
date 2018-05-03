@@ -9,7 +9,7 @@ from pymofscreen.compute_environ import choose_vasp_version
 from pymofscreen.janitor import clean_files
 from pymofscreen.magmom_handler import continue_magmoms
 
-def mof_run(workflow,mof,calc,kpts):
+def mof_run(workflow,mof,calc,kpts,images=None):
 	"""
 	Run an atoms.get_potential_energy() calculation
 	Args:
@@ -35,8 +35,9 @@ def mof_run(workflow,mof,calc,kpts):
 		gpt_version = True
 	else:
 		gpt_version = False
-	if calc.int_params['images'] is not None:
+	if images is not None:
 		neb = True
+		calc.int_params['images'] = images
 	else:
 		neb = False
 	if not neb:
@@ -44,6 +45,8 @@ def mof_run(workflow,mof,calc,kpts):
 	choose_vasp_version(gpt_version,nprocs)
 	calc.input_params['kpts'] = kpts
 	calc.input_params['gamma'] = gamma
+	if calc.int_params['ncore'] is None and calc.int_params['npar'] is None:
+		calc.int_params['ncore'] = int(ppn/2.0)
 
 	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',
 		cif_file))
@@ -132,7 +135,9 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	choose_vasp_version(gpt_version,nprocs)
 	calc.input_params['kpts'] = kpts
 	calc.input_params['gamma'] = gamma
-	
+	if calc.int_params['ncore'] is None and calc.int_params['npar'] is None:
+		calc.int_params['ncore'] = int(ppn/2.0)
+
 	copyfile(os.path.join(mofpath,cif_file),os.path.join(basepath,'working',
 		cif_file))
 	calc, calc_swaps = update_calc(calc,calc_swaps)
@@ -179,7 +184,7 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 
 	return mof, dyn, calc_swaps
 
-def prep_next_run(workflow,change_i=True):
+def prep_next_run(workflow):
 	"""
 	Prepare for the next run
 	Args:
@@ -201,8 +206,7 @@ def prep_next_run(workflow,change_i=True):
 		mof = None
 	else:
 		mof = read(outcarpath)
-	if change_i:
-		workflow.run_i += 1
+	workflow.run_i += 1
 
 	return mof
 

@@ -1,5 +1,4 @@
 from pymofscreen.default_calculators import defaults
-import numpy as np
 
 def update_calc(calc,calc_swaps):
 	"""

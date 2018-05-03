@@ -3,13 +3,13 @@ import numpy as np
 from ase.io import read
 from pymofscreen.compute_environ import get_nprocs
 from pymofscreen.writers import pprint, write_success, write_errors
-from pymofscreen.janitor import manage_restart_files, clean_files
+from pymofscreen.janitor import manage_restart_files, clean_files, neb_cleanup
 from pymofscreen.runner import mof_run, prep_next_run, prep_new_run, mof_bfgs_run
 from pymofscreen.cif_handler import cif_to_mof
 from pymofscreen.magmom_handler import set_initial_magmoms, continue_magmoms
 from pymofscreen.error_handler import get_warning_msgs
 from pymofscreen.default_calculators import defaults
-from pymofscreen.vtst_handler import nebmake, neb2dim, dimmins, vtst_cleanup, nebef, neb_merge_outcars
+from pymofscreen.vtst_handler import nebmake, neb2dim, nebef
 
 class workflows():
 	"""
@@ -44,27 +44,26 @@ class workflows():
 		self.basepath = screener.basepath
 		self.niggli = screener.niggli
 		self.calcs = screener.calcs
-
 		self.nprocs, self.ppn = get_nprocs(self.submit_script)
-		if defaults.get('ncore') is None and defaults.get('npar') is None:
-			defaults['ncore'] = int(self.ppn/2.0)
 
 		clean_files(self.vasp_files)
 
 		results_partial_paths = []
-		error_outcar_partial_paths = []
+		error_partial_paths = []
 		error_outcar_paths = []
 		outcar_paths = []
 		for acc_level in self.acc_levels:
 			results_partial_paths.append(os.path.join(self.basepath,'results',
 				self.refcode,acc_level))
-			error_outcar_partial_paths.append(os.path.join(self.basepath,
+			error_partial_paths.append(os.path.join(self.basepath,
 				'errors',self.refcode,acc_level))
+		self.results_partial_paths = results_partial_paths
+		self.error_partial_paths = error_partial_paths
 		for results_partial_path in results_partial_paths:
 			outcar_paths.append(os.path.join(results_partial_path,spin_level,
 				'OUTCAR'))
-		for error_outcar_partial_path in error_outcar_partial_paths:
-			error_outcar_paths.append(os.path.join(error_outcar_partial_path,
+		for error_partial_path in error_partial_paths:
+			error_outcar_paths.append(os.path.join(error_partial_path,
 				spin_level,'OUTCAR'))
 		self.outcar_paths = outcar_paths
 		self.error_outcar_paths = error_outcar_paths
@@ -133,13 +132,13 @@ class workflows():
 		acc_level = acc_levels[self.run_i]
 		niggli = self.niggli
 		calcs = self.calcs
-
+		prior_results_partial_path = self.results_partial_paths[self.run_i-1]
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			if spin1_final_mof_path is None:
 				mof = cif_to_mof(os.path.join(mofpath,cif_file),niggli)
 			else:
 				mof = read(spin1_final_mof_path)
-			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
+			manage_restart_files(prior_results_partial_path)
 			mof = set_initial_magmoms(mof,spin_level)
 			fmax = 5.0
 			pprint('Running '+spin_level+', '+acc_level)
@@ -189,13 +188,14 @@ class workflows():
 		kpts_hi = self.kpts_dict['kpts_hi']
 		acc_level = acc_levels[self.run_i]
 		calcs = self.calcs
+		prior_results_partial_path = self.results_partial_paths[self.run_i-1]
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			mof = prep_new_run(self)
 			if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 				clean_files(['CHGCAR','WAVECAR'])
 			else:
-				manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
+				manage_restart_files(prior_results_partial_path)
 			pprint('Running '+spin_level+', '+acc_level)
 			mof = prep_new_run()
 			mof,self.calc_swaps = mof_run(self,mof,calcs('isif2_medacc'),kpts_hi)
@@ -225,10 +225,11 @@ class workflows():
 		kpts_hi = self.kpts_dict['kpts_hi']
 		acc_level = acc_levels[self.run_i]
 		calcs = self.calcs
+		prior_results_partial_path = self.results_partial_paths[self.run_i-1]
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			mof = prep_new_run(self)
-			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
+			manage_restart_files(prior_results_partial_path)
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('isif2_highacc'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True and mof.calc.converged == True:
@@ -267,13 +268,14 @@ class workflows():
 		kpts_lo = self.kpts_dict['kpts_lo']
 		acc_level = acc_levels[self.run_i]
 		calcs = self.calcs
+		prior_results_partial_path = self.results_partial_paths[self.run_i-1]
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			mof = prep_new_run(self)
 			converged = False
 			loop_i = 0
 			n_runs = 15
-			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
+			manage_restart_files(prior_results_partial_path)
 			while converged == False and loop_i < n_runs:
 				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 				if loop_i == 10 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
@@ -314,6 +316,7 @@ class workflows():
 		kpts_hi = self.kpts_dict['kpts_hi']
 		acc_level = acc_levels[self.run_i]
 		calcs = self.calcs
+		prior_results_partial_path = self.results_partial_paths[self.run_i-1]
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			mof = prep_new_run(self)
@@ -326,7 +329,7 @@ class workflows():
 			if sum(kpts_lo) == 3 and sum(kpts_hi) > 3:
 				clean_files(['CHGCAR','WAVECAR'])
 			else:
-				manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
+				manage_restart_files(prior_results_partial_path)
 			while (converged == False or V_diff > V_cut) and loop_i < n_runs:
 				pprint('Running '+spin_level+', '+acc_level+': iteration '+str(loop_i)+'/'+str(n_runs-1))
 				if loop_i == 10 and 'fire' not in self.calc_swaps and 'zbrent' not in self.calc_swaps:
@@ -384,9 +387,11 @@ class workflows():
 		acc_level = acc_levels[self.run_i]
 		calcs = self.calcs
 		self.calc_swaps = []
+		prior_results_partial_path = self.results_partial_paths[self.run_i-1]
+
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			mof = prep_new_run(self)
-			manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0])
+			manage_restart_files(prior_results_partial_path)
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True:
@@ -402,44 +407,47 @@ class workflows():
 
 		return mof
 
-	def cineb_lowacc(self,POSCAR1,POSCAR2,n_images):
+	def cineb_lowacc(self,initial_atoms,final_atoms,n_images):
 		"""
 		Run CI-NEB low accuracy calculation
 		Returns:
 			mof (ASE Atoms object): updated ASE Atoms object
 		"""
-		outcar_paths = self.outcar_paths
-		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
 		kpts_lo = self.kpts_dict['kpts_lo']
 		calcs = self.calcs
 		nprocs = self.nprocs
+		pwd = os.getcwd()
+		partial_path = self.results_partial_paths[self.run_i]
+		data_path = os.path.join(partial_path,'neb.tar.gz')
+		partial_error_path = self.error_partial_paths[self.run_i]
+		error_data_path = os.path.join(partial_error_path,'neb.tar.gz')
+		neb_conv = False
 		if nprocs % n_images != 0:
 			raise ValueError(str(nprocs)+' procs not divisible by '+str(n_images))
-		if not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
-			mof1 = read(POSCAR1) #used as a dummy ASE Atoms object to run NEB
-			mof2 = read(POSCAR2)
-			if mof1.get_chemical_formula() != mof2.get_chemical_formula():
+		if not os.path.isfile(data_path) and not os.path.isfile(error_data_path):
+			if initial_atoms.get_chemical_formula() != final_atoms.get_chemical_formula():
 				raise ValueError('POSCAR1 and POSCAR2 must have same atoms')
-			mof1 = set_initial_magmoms(mof1,spin_level)
 			pprint('Running CI-NEB (pre-dimer)')
-			nebmake(POSCAR1,POSCAR2,n_images)
-			mof1,self.calc_swaps = mof_run(self,mof1,calcs('cineb_lowacc'),kpts_lo)
-			clean_files(['POSCAR'])
+			nebmake(initial_atoms,final_atoms,n_images)
+			initial_atoms = set_initial_magmoms(initial_atoms,spin_level)
+			initial_atoms,self.calc_swaps = mof_run(self,initial_atoms,calcs('cineb_lowacc'),kpts_lo,images=n_images)
 			ediffg = calcs('cineb_lowacc').exp_params['ediffg']
 			neb_conv = nebef(ediffg)
-			if neb_conv:
-				pprint('SUCCESS: CI-NEB (pre-dimer)')
+			os.chdir(pwd)
+			if neb_conv == True:
+				write_success(self,neb=True)
 			else:
-				pprint('ERROR: CI-NEB (pre-dimer) failed')
-		elif os.path.isfile(outcar_paths[self.run_i]) == True:
+				write_errors(self,initial_atoms,neb=True)
+			neb_cleanup()
+		elif os.path.isfile(data_path) == True:
 			pprint('COMPLETED: CI-NEB (pre-dimer)')
-		mof = prep_next_run(self,change_i=False)
-		if mof == None:
+		self.run_i += 1
+		if not neb_conv:
 			pprint('Skipping rest because of errors')
 			return None
 
-		return mof
+		return neb_conv
 
 	def dimer(self):
 		"""
@@ -452,19 +460,23 @@ class workflows():
 		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
 		acc_level = acc_levels[self.run_i]
+		pwd = os.getcwd()
+		prior_results_partial_path = self.results_partial_paths[self.run_i-1]
+		prior_neb_data_path = os.path.join(prior_results_partial_path,'neb.tar.gz')
 		if 'lowacc' in acc_level:
 			kpts = self.kpts_dict['kpts_lo']
 		else:
 			kpts_lo = self.kpts_dict['kpts_lo']
 			kpts = self.kpts_dict['kpts_hi']
 		calcs = self.calcs
-		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+		if os.path.isfile(prior_neb_data_path) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			pprint('Running '+spin_level+', '+acc_level)
 			if 'lowacc' in acc_level:
+				manage_restart_files(prior_results_partial_path,neb=True)
 				mof = neb2dim()
 			else:
 				mof = prep_new_run(self)
-				manage_restart_files(outcar_paths[self.run_i-1].split('OUTCAR')[0],dimer=True)
+				manage_restart_files(prior_results_partial_path,dimer=True)
 				if 'medacc' in acc_level and sum(kpts_lo) == 3 and sum(kpts) > 3:
 					clean_files(['CHGCAR','WAVECAR'])
 			mof,self.calc_swaps = mof_run(self,mof,calcs(acc_level),kpts)
@@ -475,6 +487,7 @@ class workflows():
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
 		mof = prep_next_run(self)
+		os.chdir(pwd)
 		if mof == None:
 			pprint('Skipping rest because of errors')
 			return None

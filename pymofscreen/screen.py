@@ -5,7 +5,7 @@ from copy import deepcopy
 from pymofscreen.writers import pprint
 from pymofscreen.kpts_handler import get_kpts
 from pymofscreen.screen_phases import workflows
-from pymofscreen.janitor import prep_paths,vtst_cleanup
+from pymofscreen.janitor import prep_paths
 from pymofscreen.default_calculators import calcs
 from pymofscreen.magmom_handler import check_if_new_spin, check_if_skip_low_spin
 
@@ -55,7 +55,6 @@ class screener():
 		"""
 
 		basepath = self.basepath
-		self.spin_levels = spin_levels
 		self.calcs = calcs
 		if mode == 'ionic':
 			if acc_levels is None:
@@ -80,7 +79,7 @@ class screener():
 		self.acc_levels = acc_levels
 		if spin_levels is None:
 			spin_levels = ['spin1','spin2']
-			self.spin_levels = spin_levels
+		self.spin_levels = spin_levels
 
 		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',cif_file)
@@ -113,13 +112,14 @@ class screener():
 
 				if acc_level == 'scf_test':
 					scf_pass = wf.scf_test()
-					if not scf_pass:
+					if scf_pass is False:
 						return None
 
 				elif acc_level == 'isif2_lowacc' or (acc_level == 'isif2' and mode == 'volume_legacy'):
 					mof = wf.isif2_lowacc()
 					if mof is None:
 						return None
+
 					if i > 0:
 						is_new_spin = check_if_new_spin(self,mof,refcode,acc_level,spin_level)
 						if not is_new_spin:
@@ -153,7 +153,7 @@ class screener():
 
 				else:
 					raise ValueError('Unsupported accuracy level')
-
+		
 			#***********SAVE and CONTINUE***********
 			if same_spin == True:
 				continue
@@ -168,7 +168,7 @@ class screener():
 
 		return best_mof
 
-	def run_ts_screen(self,cif_file,POSCAR1,POSCAR2,n_images=8,spin_levels=None,acc_levels=None,calcs=calcs):
+	def run_ts_screen(self,cif_file,initial_atoms,final_atoms,n_images=6,spin_levels=None,acc_levels=None,calcs=calcs):
 		"""
 		Run high-throughput TS calculation
 		Args:
@@ -184,13 +184,15 @@ class screener():
 		basepath = self.basepath
 		self.spin_levels = spin_levels
 		self.calcs = calcs
-		self.acc_levels = acc_levels
 		if spin_levels is None:
 			spin_levels = ['spin1','spin2']
-			self.spin_levels = spin_levels
+		self.spin_levels = spin_levels
 		if acc_levels is None:
-			acc_levels = ['dimer_lowacc','dimer_medacc',
+			acc_levels = ['cineb_lowacc','dimer_lowacc','dimer_medacc',
 			'dimer_highacc','final_spe']
+		if 'cineb_lowacc' not in acc_levels:
+			acc_levels = ['cineb_lowacc']+acc_levels
+		self.acc_levels = acc_levels
 
 		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',cif_file)
@@ -221,12 +223,15 @@ class screener():
 			wf = workflows(self,cif_file,kpts_dict,spin_level,prior_spin)
 			for acc_level in acc_levels:
 
-				if acc_level == 'dimer_lowacc' and i == 0:
-					mof = wf.cineb_lowacc(POSCAR1,POSCAR2,n_images)
-					if mof is None:
+				if acc_level == 'cineb_lowacc' and i == 0:
+					neb_conv = wf.cineb_lowacc(initial_atoms,final_atoms,n_images)
+					if neb_conv is False:
 						return None
 
-				if 'dimer' in acc_level:
+				elif acc_level == 'cineb_lowacc' and i > 0:
+					continue
+
+				elif 'dimer' in acc_level:
 					mof = wf.dimer()
 					if mof is None:
 						return None
@@ -245,7 +250,6 @@ class screener():
 						break
 
 			#***********SAVE and CONTINUE***********
-			vtst_cleanup()
 			if same_spin == True:
 				continue
 			E_temp = mof.get_potential_energy()
@@ -256,8 +260,5 @@ class screener():
 				if (spin_level == 'spin1' or spin_level == 'high_spin') and skip_low_spin == True:
 					pprint('Skipping '+spin_levels[i+1]+' run')
 					continue
-
-		os.remove(POSCAR1)
-		os.remove(POSCAR2)
 
 		return best_mof
