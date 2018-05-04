@@ -17,7 +17,7 @@ class screener():
 	def __init__(self,mofpath,basepath,kpts_path='Auto',kppas=None,
 		submit_script='sub_screen.job',stdout_file=None):
 		"""
-		Initialize variables that should be used on all MOFs in a database
+		Initialize variables that should be used on all MOFs in a databasehttp://sites.northwestern.edu/
 		Args:
 			mofpath (string): path to the directory containing the CIF files
 			basepath (string): path to the base directory for the DFT screening
@@ -52,7 +52,6 @@ class screener():
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized
 			MOF given by cif_file (lowest energy spin state)
 		"""
-
 		basepath = self.basepath
 		self.calcs = calcs
 		self.niggli = niggli
@@ -81,9 +80,10 @@ class screener():
 			spin_levels = ['spin1','spin2']
 		self.spin_levels = spin_levels
 
+		pprint('-----STARTING '+mode+'SCREENING-----')
 		#Make sure MOF isn't running on other process
-		working_cif_path = os.path.join(basepath,'working',cif_file)
 		refcode = cif_file.split('.cif')[0]
+		working_cif_path = os.path.join(basepath,'working',refcode)
 		if os.path.isfile(working_cif_path) == True:
 			pprint('SKIPPED: Running on another process')
 			return None
@@ -168,7 +168,7 @@ class screener():
 
 		return best_mof
 
-	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=6,cif_file=None,spin_levels=None,acc_levels=None,calcs=calcs):
+	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calcs=calcs):
 		"""
 		Run high-throughput TS calculation
 		Args:
@@ -202,7 +202,12 @@ class screener():
 			elif cif_file.split('.cif')[0] == name:
 				raise ValueError('Input name and name of CIF file must not be identical')
 
+		pprint('-----STARTING TS SCREENING-----')
 		#Make sure MOF isn't running on other process
+		if initial_atoms.get_chemical_formula() != final_atoms.get_chemical_formula():
+			pprint('SKIPPED: Atoms not identical between initial and final state')
+			return None
+
 		working_cif_path = os.path.join(basepath,'working',name)
 		if os.path.isfile(working_cif_path) == True:
 			pprint('SKIPPED: Running on another process')
