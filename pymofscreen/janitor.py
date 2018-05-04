@@ -65,13 +65,15 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 		files = ['neb.tar.gz']
 	for file in files:
 		full_path = os.path.join(file_path,file)
-		if not os.path.isfile(file) or os.stat(file).st_size == 0:
-			if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
-				if file == 'NEWMODECAR':
-					copyfile(full_path,'MODECAR')
-				else:
+		if file == 'NEWMODECAR':
+			if os.path.isfile('MODECAR'):
+				os.remove('MODECAR')
+			copyfile(full_path,'MODECAR')
+		else:
+			if not os.path.isfile(file) or os.stat(file).st_size == 0:
+				if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
 					copyfile(full_path,file)
-				if '.tar.gz' in file:
-					os.system('tar -zxvf '+file)
-				elif '.gz' in file:
-					os.system('gunzip '+file)
+					if '.tar.gz' in file:
+						os.system('tar -zxvf '+file)
+					elif '.gz' in file:
+						os.system('gunzip '+file)
