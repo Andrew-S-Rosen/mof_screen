@@ -12,7 +12,6 @@ def clean_files(remove_files):
 		if os.path.isfile(file):
 			os.remove(file)
 
-
 def vtst_cleanup():
 	if os.path.exists('neb'):
 		rmtree('neb')
@@ -20,6 +19,7 @@ def vtst_cleanup():
 		rmtree('dim')
 	if os.path.exists('neb.tar.gz'):
 		os.remove('neb.tar.gz')
+	clean_files(['MODECAR'])
 
 def prep_paths(basepath):
 	"""
@@ -43,17 +43,20 @@ def prep_paths(basepath):
 		open(screen_results_path,'w').close()
 	if os.path.isfile(log_file):
 		open(log_file,'w').close()
-	clean_files(['run_vasp.py','neb.tar.gz'])
+	clean_files(['run_vasp.py','neb.tar.gz','AECCAR0','AECCAR1','AECCAR2','CENTCAR','CHG','ase-sort.dat','DIMCAR','DOSCAR','EIGENVAL','IBZKPT','OSZICAR','PCDAT','PROCAR','REPORT','vasprun.xml','XDATCAR','WAVECAR','CHGCAR'])
 	vtst_cleanup()
 
-def manage_restart_files(file_path,dimer=False,neb=False):
+def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 	"""
 	Copy restart files to current directory
 	Args:
 		file_path (string): path restart files
 	"""
 
-	files = ['WAVECAR','CHGCAR']
+	if wavechg:
+		files = ['WAVECAR','CHGCAR']
+	else:
+		files = []
 	if dimer == True and neb == True:
 		raise ValueError('Cannot be both NEB and dimer')
 	if dimer == True:

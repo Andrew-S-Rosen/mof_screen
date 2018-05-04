@@ -66,6 +66,7 @@ class workflows():
 				spin_level,'OUTCAR'))
 		self.outcar_paths = outcar_paths
 		self.error_outcar_paths = error_outcar_paths
+		self.prior_spin = prior_spin
 		if prior_spin is None:
 			self.spin1_final_mof_path = None
 		else:
@@ -130,6 +131,7 @@ class workflows():
 		spin_level = self.spin_level
 		cif_file = self.cif_file
 		mofpath = self.mofpath
+		prior_spin = self.prior_spin
 		spin1_final_mof_path = self.spin1_final_mof_path
 		kpts_lo = self.kpts_dict['kpts_lo']
 		acc_level = acc_levels[self.run_i]
@@ -137,7 +139,7 @@ class workflows():
 		calcs = self.calcs
 		prior_results_path = os.path.join(self.results_partial_paths[self.run_i-1],spin_level)
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
-			if spin1_final_mof_path is None:
+			if prior_spin is None:
 				mof = cif_to_mof(os.path.join(mofpath,cif_file),niggli)
 			else:
 				mof = read(spin1_final_mof_path)
@@ -376,7 +378,7 @@ class workflows():
 
 		return mof
 
-	def final_spe(self):
+	def final_spe(self,newmodecar=False):
 		"""
 		Run final single point
 		Returns:
@@ -394,7 +396,10 @@ class workflows():
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			mof = prep_new_run(self)
-			manage_restart_files(prior_results_path)
+			if newmodecar:
+				manage_restart_files(prior_results_path,dimer=True)
+			else:
+				manage_restart_files(prior_results_path)
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi)
 			if mof != None and mof.calc.scf_converged == True:
@@ -463,21 +468,34 @@ class workflows():
 		outcar_paths = self.outcar_paths
 		error_outcar_paths = self.error_outcar_paths
 		spin_level = self.spin_level
+		prior_spin = self.prior_spin
 		acc_level = acc_levels[self.run_i]
+		results_partial_paths = self.results_partial_paths
 		pwd = os.getcwd()
-		prior_neb_data_path = os.path.join(self.results_partial_paths[0],'neb.tar.gz')
-		prior_results_path = os.path.join(self.results_partial_paths[self.run_i-1],spin_level)
 		if 'lowacc' in acc_level:
 			kpts = self.kpts_dict['kpts_lo']
 		else:
 			kpts_lo = self.kpts_dict['kpts_lo']
 			kpts = self.kpts_dict['kpts_hi']
 		calcs = self.calcs
-		if os.path.isfile(prior_neb_data_path) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
-			if 'lowacc' in acc_level:
+		if 'lowacc' in acc_level and prior_spin is None:
+			prior_results_path = os.path.join(results_partial_paths[self.run_i-1])
+			prior_results_file = os.path.join(prior_results_path,'neb.tar.gz')
+		elif 'lowacc' in acc_level and prior_spin is not None:
+			prior_results_path = os.path.join(results_partial_paths[-1],prior_spin)
+			prior_results_file = os.path.join(prior_results_path,'OUTCAR')
+		else:
+			prior_results_file = outcar_paths[self.run_i-1]
+			prior_results_path = os.path.join(results_partial_paths[self.run_i-1],spin_level)
+		if os.path.isfile(prior_results_file) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
+			if 'lowacc' in acc_level and prior_spin is None:
 				manage_restart_files(prior_results_path,neb=True)
 				mof = neb2dim()
 				mof = set_initial_magmoms(mof,spin_level)
+			elif 'lowacc' in acc_level and prior_spin is not None:
+				mof = read(prior_results_file)
+				mof = set_initial_magmoms(mof,spin_level)
+				manage_restart_files(prior_results_path,dimer=True,wavechg=False)
 			else:
 				mof = prep_new_run(self)
 				manage_restart_files(prior_results_path,dimer=True)
@@ -491,6 +509,7 @@ class workflows():
 				write_success(self)
 			else:
 				write_errors(self,mof)
+			vtst_cleanup()
 		elif os.path.isfile(outcar_paths[self.run_i]) == True:
 			pprint('COMPLETED: '+spin_level+', '+acc_level)
 		mof = prep_next_run(self)

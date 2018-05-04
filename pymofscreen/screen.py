@@ -147,7 +147,7 @@ class screener():
 						return None
 
 				elif acc_level == 'final_spe':
-					mof = wf.final_spe()
+					mof = wf.final_spe(newmodecar=True)
 					if mof is None:
 						return None
 
@@ -168,7 +168,7 @@ class screener():
 
 		return best_mof
 
-	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=6,spin_levels=None,acc_levels=None,calcs=calcs):
+	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=6,cif_file=None,spin_levels=None,acc_levels=None,calcs=calcs):
 		"""
 		Run high-throughput TS calculation
 		Args:
@@ -195,17 +195,22 @@ class screener():
 		if 'scf_test' not in acc_levels:
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
+		kpts_path = self.kpts_path
+		if kpts_path == 'Auto':
+			if cif_file is None:
+				raise ValueError('Specify a CIF file if not using automatic KPPA')
+			# elif cif_file.split('.cif')[0] == name:
+			# 	raise ValueError('Input name and name of CIF file must not be identical')
 
 		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',name)
-		refcode = name.split('.cif')[0]
 		if os.path.isfile(working_cif_path) == True:
 			pprint('SKIPPED: Running on another process')
 			return None
 
 		#Get the kpoints
-		kpts_lo, gamma = get_kpts(self,name,'low')
-		kpts_hi, gamma = get_kpts(self,name,'high')
+		kpts_lo, gamma = get_kpts(self,cif_file,'low')
+		kpts_hi, gamma = get_kpts(self,cif_file,'high')
 		kpts_dict = {}
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi
@@ -225,20 +230,18 @@ class screener():
 			wf = workflows(self,name,kpts_dict,spin_level,prior_spin)
 			for acc_level in acc_levels:
 
-				if acc_level == 'scf_test' and i == 0:
+				if acc_level == 'scf_test':
 					scf_pass = wf.scf_test(quick_test=True)
 					if not scf_pass:
 						return None					
 
-				elif acc_level == 'scf_test' and i > 0:
-					continue
-
-				if acc_level == 'cineb_lowacc' and i == 0:
+				elif acc_level == 'cineb_lowacc' and i == 0:
 					neb_conv = wf.cineb_lowacc(initial_atoms,final_atoms,n_images)
 					if not neb_conv:
 						return None
 
 				elif acc_level == 'cineb_lowacc' and i > 0:
+					wf.run_i += 1
 					continue
 
 				elif 'dimer' in acc_level:
@@ -254,7 +257,7 @@ class screener():
 					raise ValueError('Unsupported accuracy level')
 
 				if acc_level == 'dimer_lowacc' and i > 0:
-					is_new_spin = check_if_new_spin(self,mof,refcode,acc_level,spin_level)
+					is_new_spin = check_if_new_spin(self,mof,name,acc_level,spin_level)
 					if not is_new_spin:
 						same_spin = True
 						break
@@ -266,7 +269,7 @@ class screener():
 			if E_temp < E:
 				best_mof = deepcopy(mof)
 			if len(spin_levels) > 1:
-				skip_low_spin = check_if_skip_low_spin(self,mof,refcode,spin_levels[i])
+				skip_low_spin = check_if_skip_low_spin(self,mof,name,spin_levels[i])
 				if (spin_level == 'spin1' or spin_level == 'high_spin') and skip_low_spin == True:
 					pprint('Skipping '+spin_levels[i+1]+' run')
 					continue
