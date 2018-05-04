@@ -14,7 +14,7 @@ class screener():
 	This class constructs a high-throughput screening workflow
 	"""
 
-	def __init__(self,mofpath,basepath,kpts_path='Auto',kppas=None,niggli=True,
+	def __init__(self,mofpath,basepath,kpts_path='Auto',kppas=None,
 		submit_script='sub_screen.job',stdout_file=None):
 		"""
 		Initialize variables that should be used on all MOFs in a database
@@ -34,14 +34,13 @@ class screener():
 		self.submit_script = submit_script
 		self.stdout_file = stdout_file
 		self.kpts_path = kpts_path
-		self.niggli = niggli
 		if kppas is None:
 			self.kppas = [100,1000]
 		if stdout_file is None:
 			self.stdout_file = sys.argv[0].split('.py')[0]+'.out'
 		prep_paths(basepath)
 
-	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,calcs=calcs):
+	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
 		"""
 		Run high-throughput ionic or volume relaxations
 		Args:
@@ -56,6 +55,7 @@ class screener():
 
 		basepath = self.basepath
 		self.calcs = calcs
+		self.niggli = niggli
 		if mode == 'ionic':
 			if acc_levels is None:
 				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc',
@@ -199,8 +199,8 @@ class screener():
 		if kpts_path == 'Auto':
 			if cif_file is None:
 				raise ValueError('Specify a CIF file if not using automatic KPPA')
-			# elif cif_file.split('.cif')[0] == name:
-			# 	raise ValueError('Input name and name of CIF file must not be identical')
+			elif cif_file.split('.cif')[0] == name:
+				raise ValueError('Input name and name of CIF file must not be identical')
 
 		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',name)
@@ -231,7 +231,7 @@ class screener():
 			for acc_level in acc_levels:
 
 				if acc_level == 'scf_test':
-					scf_pass = wf.scf_test(quick_test=True)
+					scf_pass = wf.scf_test(atoms_overwrite=initial_atoms,quick_test=True)
 					if not scf_pass:
 						return None					
 

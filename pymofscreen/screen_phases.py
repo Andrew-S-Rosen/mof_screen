@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from copy import deepcopy
 from ase.io import read
 from pymofscreen.compute_environ import get_nprocs
 from pymofscreen.writers import pprint, write_success, write_errors
@@ -74,7 +75,7 @@ class workflows():
 				prior_spin,'OUTCAR')
 		pprint('***STARTING '+self.refcode+': '+spin_level+'***')
 				
-	def scf_test(self,quick_test=False):
+	def scf_test(self,atoms_overwrite=None,quick_test=False):
 		"""
 		Run SCF test job to check for errors
 		Returns:
@@ -92,17 +93,22 @@ class workflows():
 		calcs = self.calcs
 		
 		if not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
-			if spin1_final_mof_path is None:
-				mof = cif_to_mof(os.path.join(mofpath,cif_file),niggli)
+			if atoms_overwrite:
+				mof = deepcopy(atoms_overwrite)
 			else:
-				mof = read(spin1_final_mof_path)
+				if spin1_final_mof_path is None:
+					mof = cif_to_mof(os.path.join(mofpath,cif_file),niggli)
+				else:
+					mof = read(spin1_final_mof_path)
 			mof = set_initial_magmoms(mof,spin_level)
 			if quick_test:
-				self.calc_swaps.append(['nelm=5','lwave=False'])
+				self.calc_swaps.append('nelm=5')
+				self.calc_swaps.append('lwave=False')
 			pprint('Running '+spin_level+', '+acc_level)
 			mof, self.calc_swaps = mof_run(self,mof,calcs('scf_test'),kpts_lo)
 			if quick_test:
-				self.calc_swaps.remove(['nelm=5','lwave=False'])
+				self.calc_swaps.remove('nelm=5')
+				self.calc_swaps.remove('lwave=False')
 			if mof != None:
 				write_success(self)
 			else:

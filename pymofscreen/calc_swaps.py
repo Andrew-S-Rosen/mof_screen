@@ -1,5 +1,5 @@
 from pymofscreen.default_calculators import defaults
-
+from pymofscreen.writers import pprint
 def update_calc(calc,calc_swaps):
 	"""
 	Update a calculator based on pre-defined "swaps"
@@ -8,7 +8,7 @@ def update_calc(calc,calc_swaps):
 		calc_swaps (list): list of pre-existing calc swaps
 	Returns:
 		calc (dictionary): updated ASE Vasp calculator
-		calc_swaps (lsit): updated list of swaps
+		calc_swaps (list): updated list of swaps
 	"""
 	for swap in calc_swaps:
 
