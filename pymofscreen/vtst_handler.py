@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import time
 from shutil import copyfile, rmtree, move
 from ase.io import read, write
 from pymofscreen.janitor import clean_files
@@ -30,11 +31,14 @@ def neb2dim():
 	neb_path = os.path.join(pwd,'neb')
 	os.chdir(neb_path)
 	os.system('vfin.pl neb_fin')
+	time.sleep(5)
 	neb_fin_path = os.path.join(neb_path,'neb_fin')
 	os.chdir(neb_fin_path)
 	os.system('nebresults.pl')
 	copyfile(os.path.join(neb_fin_path,'exts.dat'),os.path.join(neb_path,'exts.dat'))
 	os.chdir(neb_path)
+	if os.stat(os.path.join(neb_path,'exts.dat')).st_size == 0:
+		raise ValueError('Error with exts.dat file')
 	os.system('neb2dim.pl')
 	old_dim_path = os.path.join(neb_path,'dim')
 	new_dim_path = os.path.join(pwd,'dim')

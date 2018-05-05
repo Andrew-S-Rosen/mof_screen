@@ -80,7 +80,7 @@ class screener():
 			spin_levels = ['spin1','spin2']
 		self.spin_levels = spin_levels
 
-		pprint('-----STARTING '+mode+'SCREENING-----')
+		pprint('-----STARTING '+mode.upper()+' SCREENING-----')
 		#Make sure MOF isn't running on other process
 		refcode = cif_file.split('.cif')[0]
 		working_cif_path = os.path.join(basepath,'working',refcode)
