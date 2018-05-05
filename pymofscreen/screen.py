@@ -147,7 +147,7 @@ class screener():
 						return None
 
 				elif acc_level == 'final_spe':
-					mof = wf.final_spe(newmodecar=True)
+					mof = wf.final_spe()
 					if mof is None:
 						return None
 
@@ -255,7 +255,7 @@ class screener():
 						return None
 
 				elif acc_level == 'final_spe':
-					mof = wf.final_spe()
+					mof = wf.final_spe(newmodecar=True)
 					if mof is None:
 						return None
 				else:
