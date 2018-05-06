@@ -15,7 +15,7 @@ class screener():
 	"""
 
 	def __init__(self,mofpath,basepath,kpts_path='Auto',kppas=None,
-		submit_script='sub_screen.job',stdout_file=None):
+		submit_script=None,stdout_file=None):
 		"""
 		Initialize variables that should be used on all MOFs in a databasehttp://sites.northwestern.edu/
 		Args:
@@ -31,13 +31,16 @@ class screener():
 		"""
 		self.mofpath = mofpath
 		self.basepath = basepath
+		pwd = os.getcwd()
+		if submit_script is None:
+			submit_script = os.path.join(pwd,'sub_screen.job')
 		self.submit_script = submit_script
+		if stdout_file is None:
+			stdout_file = os.path.join(pwd,sys.argv[0].split('.py')[0]+'.out')
 		self.stdout_file = stdout_file
 		self.kpts_path = kpts_path
 		if kppas is None:
 			self.kppas = [100,1000]
-		if stdout_file is None:
-			self.stdout_file = sys.argv[0].split('.py')[0]+'.out'
 		prep_paths(basepath)
 
 	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
