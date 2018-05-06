@@ -71,7 +71,7 @@ def choose_vasp_version(gpt_version,nprocs):
 	base = parallel_cmd+' '+str(nprocs)+' '
 	vasp_cmd = base+vasp_ex[0]
 	gamvasp_cmd = base+vasp_ex[1]
-	if gpt_version == True:
+	if gpt_version:
 		runvasp_file.write("import os\nexitcode = os.system("
 			+"'"+module_cmd+' && '+gamvasp_cmd+"'"+')')
 	else:

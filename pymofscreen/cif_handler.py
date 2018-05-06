@@ -38,7 +38,7 @@ def cif_to_mof(filepath,niggli):
 	Returns:
 		sorted_cifs (list): alphabetized list of CIF files
 	"""
-	if niggli == True:
+	if niggli:
 		if '.cif' in os.path.basename(filepath):
 			parser = CifParser(filepath)
 			pm_mof = parser.get_structures(primitive=True)[0]

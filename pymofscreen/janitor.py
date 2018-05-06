@@ -13,6 +13,10 @@ def clean_files(remove_files):
 			os.remove(file)
 
 def vtst_cleanup():
+	"""
+	Remove VTST-generated files/folders
+	"""
+
 	if os.path.exists('neb'):
 		rmtree('neb')
 	if os.path.exists('dim'):
@@ -57,11 +61,11 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 		files = ['WAVECAR','CHGCAR']
 	else:
 		files = []
-	if dimer == True and neb == True:
+	if dimer and neb:
 		raise ValueError('Cannot be both NEB and dimer')
-	if dimer == True:
+	if dimer:
 		files += ['NEWMODECAR']
-	if neb == True:
+	if neb:
 		files = ['neb.tar.gz']
 	for file in files:
 		full_path = os.path.join(file_path,file)

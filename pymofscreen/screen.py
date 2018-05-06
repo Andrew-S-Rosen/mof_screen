@@ -25,10 +25,11 @@ class screener():
 			of the kpoints based on KPPAs or a string representing the path to a
 			text file with all the kpoint information
 			kppas (list of ints): KPPAs to use if kpts_path == 'Auto'
-			niggli (bool): True if Niggli-reduction should be performed
-			submit_script (string): name of job submission script
-			stdout_file (string): name of the stdout file
+			submit_script (string): path to job submission script
+			stdout_file (string): path to the stdout file
 		"""
+
+		#Setup default parameters
 		self.mofpath = mofpath
 		self.basepath = basepath
 		pwd = os.getcwd()
@@ -48,13 +49,17 @@ class screener():
 		Run high-throughput ionic or volume relaxations
 		Args:
 			cif_file (string): name of CIF file
+			mode (string): 'ionic' or 'volume'
 			spin_levels (list of strings): spin states to consider
 			acc_levels (list of strings): accuracy levels to consider
+			niggli (bool): True/False if Niggli-reduction should be done
 			calcs (function): function to call respective calculator
 		Returns:
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized
 			MOF given by cif_file (lowest energy spin state)
 		"""
+
+		#Setup default parameters
 		basepath = self.basepath
 		self.calcs = calcs
 		self.niggli = niggli
@@ -83,11 +88,10 @@ class screener():
 			spin_levels = ['spin1','spin2']
 		self.spin_levels = spin_levels
 
-		pprint('-----STARTING '+mode.upper()+' SCREENING-----')
 		#Make sure MOF isn't running on other process
 		refcode = cif_file.split('.cif')[0]
 		working_cif_path = os.path.join(basepath,'working',refcode)
-		if os.path.isfile(working_cif_path) == True:
+		if os.path.isfile(working_cif_path):
 			pprint('SKIPPED: Running on another process')
 			return None
 
@@ -98,19 +102,30 @@ class screener():
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi
 		kpts_dict['gamma'] = gamma
+
+		#Initialize variables
 		E = np.inf
+		mof = None
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
 
-			#***********PREP FOR RUN***********
+			#Check if spin state should be skipped
 			if spin_level != spin_levels[0]:
 				prior_spin = spin_levels[i-1]
 			else:
 				prior_spin = None
+			if i > 0:
+				skip_low_spin = check_if_skip_low_spin(self,mof,refcode,prior_spin)
+				if (prior_spin == 'spin1' or prior_spin == 'high_spin') and skip_low_spin:
+					pprint('Skipping '+spin_level+' run')
+					continue
 			same_spin = False
 
+			#Set up workflow object
 			wf = workflows(self,cif_file,kpts_dict,spin_level,prior_spin)
+
+			#for each accuracy level, optimize structure
 			for acc_level in acc_levels:
 
 				if acc_level == 'scf_test':
@@ -158,16 +173,11 @@ class screener():
 					raise ValueError('Unsupported accuracy level')
 		
 			#***********SAVE and CONTINUE***********
-			if same_spin == True:
+			if same_spin:
 				continue
 			E_temp = mof.get_potential_energy()
 			if E_temp < E:
 				best_mof = deepcopy(mof)
-			if len(spin_levels) > 1:
-				skip_low_spin = check_if_skip_low_spin(self,mof,refcode,spin_levels[i])
-				if (spin_level == 'spin1' or spin_level == 'high_spin') and skip_low_spin == True:
-					pprint('Skipping '+spin_levels[i+1]+' run')
-					continue
 
 		return best_mof
 
@@ -176,6 +186,11 @@ class screener():
 		Run high-throughput TS calculation
 		Args:
 			name (string): name of CIF file
+			initial_atoms (ASE Atoms object): initial structure
+			final_atoms (ASE Atoms object): final structure
+			n_images (int): number of NEB images
+			cif_file (string): name of CIF file to generate kpoints if
+			set to 'Auto'
 			spin_levels (list of strings): spin states to consider
 			acc_levels (list of strings): accuracy levels to consider
 			calcs (function): function to call respective calculator
@@ -184,6 +199,7 @@ class screener():
 			MOF given by cif_file (lowest energy spin state)
 		"""
 
+		#Setup default parameters
 		basepath = self.basepath
 		self.spin_levels = spin_levels
 		self.calcs = calcs
@@ -205,14 +221,14 @@ class screener():
 			elif cif_file.split('.cif')[0] == name:
 				raise ValueError('Input name and name of CIF file must not be identical')
 
-		pprint('-----STARTING TS SCREENING-----')
-		#Make sure MOF isn't running on other process
+		#Ensure initial/final state have the same composition
 		if initial_atoms.get_chemical_formula() != final_atoms.get_chemical_formula():
 			pprint('SKIPPED: Atoms not identical between initial and final state')
 			return None
 
+		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',name)
-		if os.path.isfile(working_cif_path) == True:
+		if os.path.isfile(working_cif_path):
 			pprint('SKIPPED: Running on another process')
 			return None
 
@@ -223,19 +239,30 @@ class screener():
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi
 		kpts_dict['gamma'] = gamma
+
+		#Initialize variables
 		E = np.inf
+		mof = None
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
 
-			#***********PREP FOR RUN***********
+			#Check if spin state should be skipped
 			if spin_level != spin_levels[0]:
 				prior_spin = spin_levels[i-1]
 			else:
 				prior_spin = None
+			if i > 0:
+				skip_low_spin = check_if_skip_low_spin(self,mof,name,prior_spin)
+				if (prior_spin == 'spin1' or prior_spin == 'high_spin') and skip_low_spin:
+					pprint('Skipping '+spin_level+' run')
+					continue
 			same_spin = False
 
+			#Set up workflow object
 			wf = workflows(self,name,kpts_dict,spin_level,prior_spin)
+
+			#for each accuracy level, optimize structure
 			for acc_level in acc_levels:
 
 				if acc_level == 'scf_test':
@@ -271,15 +298,10 @@ class screener():
 						break
 
 			#***********SAVE and CONTINUE***********
-			if same_spin == True:
+			if same_spin:
 				continue
 			E_temp = mof.get_potential_energy()
 			if E_temp < E:
 				best_mof = deepcopy(mof)
-			if len(spin_levels) > 1:
-				skip_low_spin = check_if_skip_low_spin(self,mof,name,spin_levels[i])
-				if (spin_level == 'spin1' or spin_level == 'high_spin') and skip_low_spin == True:
-					pprint('Skipping '+spin_levels[i+1]+' run')
-					continue
 
 		return best_mof

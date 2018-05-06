@@ -63,16 +63,15 @@ def write_errors(workflow,mof,neb=False):
 	pprint('ERROR: '+spin_level+', '+acc_level+' failed')
 
 	if acc_level != 'scf_test' and 'neb' not in acc_level:
-		if mof == None:
+		if mof is None:
 			pprint('^ VASP crashed')
-		elif mof.calc.scf_converged == False:
+		elif not mof.calc.scf_converged:
 			pprint('^ SCF did not converge')
-		elif mof.calc.converged == False:
+		elif not mof.calc.converged:
 			pprint('^ Convergence not reached')
 	refcode = workflow.refcode
 	basepath = workflow.basepath
 	vasp_files = workflow.vasp_files
-	stdout_file = workflow.stdout_file
 	if not neb:
 		error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
 	elif neb:
@@ -81,9 +80,9 @@ def write_errors(workflow,mof,neb=False):
 		os.makedirs(error_path)
 	if not neb:
 		if 'dimer' in acc_level:
-			files_to_copy = vasp_files+[stdout_file,'DIMCAR','MODECAR','NEWMODECAR']
+			files_to_copy = vasp_files+['DIMCAR','MODECAR','NEWMODECAR']
 		else:
-			files_to_copy = vasp_files+[stdout_file]
+			files_to_copy = vasp_files
 		for file in files_to_copy:
 			if os.path.isfile(file) and os.stat(file).st_size > 0:
 				write_to_path = os.path.join(error_path,file)

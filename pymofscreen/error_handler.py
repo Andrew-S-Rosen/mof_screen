@@ -8,7 +8,7 @@ def get_error_msgs(outcarfile,refcode,stdout_file):
 	Args:
 		outcarfile (string): parth to OUTCAR file
 		refcode (string): name of MOF
-		stdout_file (string): name of stdout file
+		stdout_file (string): path to stdout file
 	Returns:
 		errormsg (list of strings): error messages in OUTCAR/stdout
 	"""
@@ -22,7 +22,7 @@ def get_error_msgs(outcarfile,refcode,stdout_file):
 		for line in rf:
 			if 'STARTING '+refcode in line:
 				start = True
-			if start == True:
+			if start:
 				errormsg = check_line_for_error(line,errormsg)
 	errormsg = list(set(errormsg))
 

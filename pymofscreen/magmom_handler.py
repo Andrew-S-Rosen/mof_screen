@@ -19,7 +19,7 @@ def get_incar_magmoms(incarpath,poscarpath):
 					mag = float(val.split('*')[1])
 					num = int(val.split('*')[0])
 					mof_mag_list.extend([mag]*num)
-	if bool(mof_mag_list) == False:
+	if not bool(mof_mag_list):
 		mof_mag_list = np.zeros(len(init_mof))
 	if len(mof_mag_list) != len(mof_mag_list):
 		raise ValueError('Error reading INCAR magnetic moments')
@@ -83,7 +83,7 @@ def get_abs_magmoms(mof,incarpath):
 				ispin = True
 				mof_magmoms = mof.get_magnetic_moments()
 				abs_magmoms = np.abs(mof_magmoms[mag_indices])
-	if ispin == False:
+	if not ispin:
 		abs_magmoms = np.zeros(len(mag_indices))
 
 	return abs_magmoms, mag_indices, ispin
@@ -113,7 +113,7 @@ def continue_failed_magmoms(mof):
 			line = line.strip()
 			if 'ISPIN = 2' in line:
 				ispin = True
-	if ispin == True and all(sorted_magmoms == 0.0) == True:
+	if ispin and all(sorted_magmoms == 0.0):
 		raise ValueError('Error reading magmoms from failed OUTCAR')
 	mof.set_initial_magnetic_moments(sorted_magmoms)
 
@@ -137,7 +137,7 @@ def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
 		old_mof = read(old_mof_path)
 		old_abs_magmoms, old_mag_indices, old_ispin = get_abs_magmoms(old_mof,old_incar_path)
 		mof_mag = mof.get_initial_magnetic_moments()[mag_indices]
-		if old_ispin == True:
+		if old_ispin:
 			old_mof_mag = old_mof.get_magnetic_moments()[mag_indices]
 		else:
 			old_mof_mag = [0]*len(mag_indices)
@@ -158,7 +158,7 @@ def check_if_skip_low_spin(screener,mof,refcode,spin_level):
 
 	abs_magmoms, mag_indices, ispin = get_abs_magmoms(mof,incarpath)
 	mag_nums = mof[mag_indices].get_atomic_numbers()
-	if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in spblock_metals+poor_metals for num in mag_nums) == True:
+	if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in spblock_metals+poor_metals for num in mag_nums):
 		skip_low_spin = True
 
 	return skip_low_spin

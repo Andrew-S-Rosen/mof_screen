@@ -16,6 +16,7 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 		mof (ASE Atoms object): ASE Atoms object for MOF
 		calc (dict): ASE Vasp calculator
 		kpts (list of ints): k-point grid
+		images (int): number of NEB images
 	Returns:
 		mof (ASE Atoms object): updated ASE Atoms object
 		calc_swaps (list of strings): calc swaps
@@ -91,7 +92,7 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 
 				old_error_len = error_len
 
-	if success == False:
+	if not success:
 		mof = None
 
 	return mof, calc_swaps
@@ -172,7 +173,7 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 
 				old_error_len = error_len
 
-	if success == False:
+	if not success:
 		mof = None
 
 	return mof, dyn, calc_swaps
