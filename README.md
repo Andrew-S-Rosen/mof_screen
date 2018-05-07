@@ -1,4 +1,4 @@
-# PyMOFScreen
+# Python MOF Screening
 Python workflow for high-throughput DFT screening of MOFs
 
 ## Setup
