@@ -14,7 +14,6 @@ def get_kpts(screener,cif_file,level):
 		kpts (list of ints): kpoint grid
 		gamma (bool): True for gamma-centered
 	"""
-
 	niggli = screener.niggli
 	mofpath = screener.mofpath
 	kpts_path = screener.kpts_path

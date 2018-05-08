@@ -14,13 +14,13 @@ class screener():
 	This class constructs a high-throughput screening workflow
 	"""
 
-	def __init__(self,mofpath,basepath,kpts_path='Auto',kppas=None,
+	def __init__(self,basepath,mofpath=None,kpts_path='Auto',kppas=None,
 		submit_script=None,stdout_file=None):
 		"""
 		Initialize variables that should be used on all MOFs in a databasehttp://sites.northwestern.edu/
 		Args:
-			mofpath (string): path to the directory containing the CIF files
 			basepath (string): path to the base directory for the DFT screening
+			mofpath (string): path to the directory containing the CIF files
 			kpts_path (string): can be either 'Auto' for an automatic generation
 			of the kpoints based on KPPAs or a string representing the path to a
 			text file with all the kpoint information
@@ -201,6 +201,7 @@ class screener():
 
 		#Setup default parameters
 		basepath = self.basepath
+		self.niggli = False
 		self.spin_levels = spin_levels
 		self.calcs = calcs
 		if spin_levels is None:
@@ -233,8 +234,8 @@ class screener():
 			return None
 
 		#Get the kpoints
-		kpts_lo, gamma = get_kpts(self,cif_file,'low')
-		kpts_hi, gamma = get_kpts(self,cif_file,'high')
+		kpts_lo, gamma = get_kpts(self,name,'low')
+		kpts_hi, gamma = get_kpts(self,name,'high')
 		kpts_dict = {}
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi

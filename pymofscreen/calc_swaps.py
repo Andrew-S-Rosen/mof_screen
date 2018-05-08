@@ -1,5 +1,4 @@
 from pymofscreen.default_calculators import defaults
-from pymofscreen.writers import pprint
 def update_calc(calc,calc_swaps):
 	"""
 	Update a calculator based on pre-defined "swaps"
