@@ -2,9 +2,9 @@ from pymofscreen.cif_handler import get_cif_files
 from pymofscreen.screen import screener
 
 #Set up paths
-mofpath = '../example_structures/'
-basepath = '../'
-submit_script = 'sub_screen.job'
+mofpath = 'folder_of_CIF_files'
+basepath = 'folder_to_store_data'
+submit_script = 'submit_screen.sh'
 
 #Get CIF files
 cif_files = get_cif_files(mofpath)

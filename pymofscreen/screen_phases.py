@@ -207,7 +207,6 @@ class workflows():
 				clean_files(['CHGCAR','WAVECAR'])
 			else:
 				manage_restart_files(prior_results_path)
-			mof = prep_new_run()
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('isif2_medacc'),kpts_hi)
 			if mof is not None and mof.calc.scf_converged and mof.calc.converged:
@@ -384,7 +383,7 @@ class workflows():
 
 		return mof
 
-	def final_spe(self,newmodecar=False):
+	def final_spe(self):
 		"""
 		Run final single point
 		Returns:
@@ -402,10 +401,7 @@ class workflows():
 
 		if os.path.isfile(outcar_paths[self.run_i-1]) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
 			mof = prep_new_run(self)
-			if newmodecar:
-				manage_restart_files(prior_results_path,dimer=True)
-			else:
-				manage_restart_files(prior_results_path)
+			manage_restart_files(prior_results_path)
 			pprint('Running '+spin_level+', '+acc_level)
 			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi)
 			if mof is not None and mof.calc.scf_converged:

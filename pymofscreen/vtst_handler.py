@@ -67,7 +67,9 @@ def nebef(ediffg):
 			max_F_temp = np.fromstring(line,dtype=float,sep=' ')[1]
 			if max_F_temp > max_F:
 				max_F = max_F_temp
-	if max_F <= ediffg:
+	if max_F == 0.0:
+		neb_conv = False
+	elif max_F <= ediffg:
 		neb_conv = True
 	else:
 		neb_conv = False

@@ -2,6 +2,7 @@ import os
 import numpy as np
 import sys
 from copy import deepcopy
+from shutil import copyfile
 from pymofscreen.writers import pprint
 from pymofscreen.kpts_handler import get_kpts
 from pymofscreen.screen_phases import workflows
@@ -286,9 +287,14 @@ class screener():
 						return None
 
 				elif acc_level == 'final_spe':
-					mof = wf.final_spe(newmodecar=True)
+					mof = wf.final_spe()
 					if mof is None:
 						return None
+					result_path = os.path.join(basepath,'results',name)
+					newmodecar = os.path.join(result_path,acc_levels[i-2],spin_level,'NEWMODECAR')
+					newmodecar_spe = os.path.join(result_path,acc_level,spin_level,'NEWMODECAR')
+					copyfile(newmodecar,newmodecar_spe)
+
 				else:
 					raise ValueError('Unsupported accuracy level')
 
