@@ -1,5 +1,5 @@
 import os
-from shutil import copyfile
+from shutil import copyfile, move
 
 def pprint(printstr):
 	"""
@@ -23,6 +23,7 @@ def write_success(workflow,neb=False):
 	refcode = workflow.refcode
 	basepath = workflow.basepath
 	vasp_files = workflow.vasp_files
+	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
 	if not neb:
 		success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
 	elif neb:
@@ -39,7 +40,12 @@ def write_success(workflow,neb=False):
 		for file in files_to_copy:
 			if os.path.isfile(file) and os.stat(file).st_size > 0:
 				write_to_path = os.path.join(success_path,file)
-				copyfile(file,write_to_path)
+				if file in gzip_list:
+					os.system('gzip < '+file+' > '+file+'.gz')
+					move(file+'.gz',write_to_path+'.gz')
+				else:
+					copyfile(file,write_to_path)
+
 	elif neb:
 		tar_file = 'neb.tar.gz'
 		os.system('tar -zcvf '+tar_file+' neb')
@@ -61,6 +67,7 @@ def write_errors(workflow,mof,neb=False):
 	spin_level = workflow.spin_level
 	acc_level = workflow.acc_levels[workflow.run_i]
 	pprint('ERROR: '+spin_level+', '+acc_level+' failed')
+	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
 
 	if acc_level != 'scf_test' and 'neb' not in acc_level:
 		if mof is None:
@@ -86,7 +93,11 @@ def write_errors(workflow,mof,neb=False):
 		for file in files_to_copy:
 			if os.path.isfile(file) and os.stat(file).st_size > 0:
 				write_to_path = os.path.join(error_path,file)
-				copyfile(file,write_to_path)
+				if file in gzip_list:
+					os.system('gzip < '+file+' > '+file+'.gz')
+					move(file+'.gz',write_to_path+'.gz')
+				else:
+					copyfile(file,write_to_path)
 	elif neb:
 		tar_file = 'neb.tar.gz'
 		os.system('tar -zcvf '+tar_file+' neb')

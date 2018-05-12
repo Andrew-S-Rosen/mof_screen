@@ -213,7 +213,7 @@ def calcs(calc_name):
 			prec=defaults['prec'],
 			algo=defaults['algo'],
 			ediff=1e-6,
-			nelm=defaults['nelm'],
+			nelm=100,
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ismear=defaults['ismear'],

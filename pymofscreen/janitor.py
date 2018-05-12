@@ -47,7 +47,7 @@ def prep_paths(basepath):
 		open(screen_results_path,'w').close()
 	if os.path.isfile(log_file):
 		open(log_file,'w').close()
-	clean_files(['run_vasp.py','neb.tar.gz','AECCAR0','AECCAR1','AECCAR2','CENTCAR','CHG','ase-sort.dat','DIMCAR','DOSCAR','EIGENVAL','IBZKPT','OSZICAR','PCDAT','PROCAR','REPORT','vasprun.xml','XDATCAR','WAVECAR','CHGCAR'])
+	clean_files(['run_vasp.py','neb.tar.gz','AECCAR0','AECCAR0.gz','AECCAR1','AECCAR2','AECCAR2.gz','CENTCAR','CHG','ase-sort.dat','DIMCAR','DOSCAR','EIGENVAL','IBZKPT','OSZICAR','PCDAT','PROCAR','REPORT','vasprun.xml','XDATCAR','WAVECAR','WAVECAR.gz','CHGCAR','CHGCAR.gz'])
 	vtst_cleanup()
 
 def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
@@ -57,6 +57,7 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 		file_path (string): path restart files
 	"""
 
+	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
 	if wavechg:
 		files = ['WAVECAR','CHGCAR']
 	else:
@@ -75,9 +76,13 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 			copyfile(full_path,'MODECAR')
 		else:
 			if not os.path.isfile(file) or os.stat(file).st_size == 0:
+				if file in gzip_list:
+					file += '.gz'
+					full_path += '.gz'
 				if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
 					copyfile(full_path,file)
-					if '.tar.gz' in file:
-						os.system('tar -zxvf '+file)
-					elif '.gz' in file:
+					extension = os.path.splitext(file)[1]
+					if extension == '.tar.gz':
+						os.system('tar -zxf '+file)
+					elif extension == '.gz':
 						os.system('gunzip '+file)
