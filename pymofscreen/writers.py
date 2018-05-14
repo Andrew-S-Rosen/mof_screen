@@ -45,7 +45,6 @@ def write_success(workflow,neb=False):
 					move(file+'.gz',write_to_path+'.gz')
 				else:
 					copyfile(file,write_to_path)
-
 	elif neb:
 		tar_file = 'neb.tar.gz'
 		os.system('tar -zcvf '+tar_file+' neb')
@@ -54,8 +53,6 @@ def write_success(workflow,neb=False):
 			copyfile(tar_file,write_to_path)
 		os.remove('neb.tar.gz')
 	os.remove(os.path.join(basepath,'working',refcode))
-	if os.path.exists('STOPCAR'):
-		os.remove('STOPCAR')
 
 def write_errors(workflow,mof,neb=False):
 	"""
@@ -68,7 +65,6 @@ def write_errors(workflow,mof,neb=False):
 	acc_level = workflow.acc_levels[workflow.run_i]
 	pprint('ERROR: '+spin_level+', '+acc_level+' failed')
 	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
-
 	if acc_level != 'scf_test' and 'neb' not in acc_level:
 		if mof is None:
 			pprint('^ VASP crashed')
@@ -105,5 +101,3 @@ def write_errors(workflow,mof,neb=False):
 			write_to_path = os.path.join(error_path,tar_file)
 			copyfile(tar_file,write_to_path)		
 	os.remove(os.path.join(basepath,'working',refcode))
-	if os.path.exists('STOPCAR'):
-		os.remove('STOPCAR')

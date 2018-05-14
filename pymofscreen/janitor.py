@@ -47,7 +47,7 @@ def prep_paths(basepath):
 		open(screen_results_path,'w').close()
 	if os.path.isfile(log_file):
 		open(log_file,'w').close()
-	clean_files(['run_vasp.py','neb.tar.gz','AECCAR0','AECCAR0.gz','AECCAR1','AECCAR2','AECCAR2.gz','CENTCAR','CHG','ase-sort.dat','DIMCAR','DOSCAR','EIGENVAL','IBZKPT','OSZICAR','PCDAT','PROCAR','REPORT','vasprun.xml','XDATCAR','WAVECAR','WAVECAR.gz','CHGCAR','CHGCAR.gz'])
+	clean_files(['run_vasp.py','neb.tar.gz','AECCAR0','AECCAR0.gz','AECCAR1','AECCAR2','AECCAR2.gz','CENTCAR','CHG','ase-sort.dat','DIMCAR','DOSCAR','EIGENVAL','IBZKPT','OSZICAR','PCDAT','PROCAR','REPORT','vasprun.xml','XDATCAR','WAVECAR','WAVECAR.gz','CHGCAR','CHGCAR.gz','STOPCAR'])
 	vtst_cleanup()
 
 def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):

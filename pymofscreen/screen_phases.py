@@ -34,7 +34,7 @@ class workflows():
 		self.spin_level = spin_level
 		if vasp_files is None:
 			self.vasp_files = ['INCAR','POSCAR','KPOINTS','POTCAR','OUTCAR',
-		'CONTCAR','CHGCAR','WAVECAR']
+		'CONTCAR','CHGCAR','WAVECAR','EIGENVAL']
 		self.calc_swaps = []
 		self.run_i = 0
 		self.refcode = cif_file.split('.cif')[0]

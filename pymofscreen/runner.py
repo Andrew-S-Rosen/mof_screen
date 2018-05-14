@@ -64,7 +64,6 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 
 			old_error_len = 0
 			restart_files = ['WAVECAR','CHGCAR']
-			clean_files(restart_files)
 
 			while True:
 
@@ -76,6 +75,7 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 				if error_len == old_error_len:
 					break
 
+				clean_files(restart_files)
 				mof = continue_mof()
 				choose_vasp_version(gpt_version,nprocs)
 				mof.set_calculator(calc)
@@ -149,7 +149,6 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 
 			old_error_len = 0
 			restart_files = ['WAVECAR','CHGCAR']
-			clean_files(restart_files)
 
 			while True:
 
@@ -161,6 +160,7 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 				if error_len == old_error_len:
 					break
 
+				clean_files(restart_files)
 				mof = continue_mof()
 				mof.set_calculator(calc)
 				dyn = BFGSLineSearch(mof,trajectory='opt.traj')
