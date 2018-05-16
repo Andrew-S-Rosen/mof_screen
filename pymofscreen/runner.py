@@ -46,8 +46,6 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 	calc.input_params['gamma'] = gamma
 	if calc.int_params['ncore'] is None and calc.int_params['npar'] is None:
 		calc.int_params['ncore'] = int(ppn/2.0)
-	working_file = os.path.join(basepath,'working',refcode)
-	open(working_file,'w').close()
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	success = False
@@ -119,7 +117,6 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	refcode = workflow.refcode
 	stdout_file = workflow.stdout_file
 	calc_swaps = workflow.calc_swaps
-	basepath = workflow.basepath
 	gamma = workflow.kpts_dict['gamma']
 
 	if sum(kpts) == 3:
@@ -133,8 +130,6 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	calc.input_params['gamma'] = gamma
 	if calc.int_params['ncore'] is None and calc.int_params['npar'] is None:
 		calc.int_params['ncore'] = int(ppn/2.0)
-	working_file = os.path.join(basepath,'working',refcode)
-	open(working_file,'w').close()
 	calc, calc_swaps = update_calc(calc,calc_swaps)
 	mof.set_calculator(calc)
 	dyn = BFGSLineSearch(mof,trajectory='opt.traj')

@@ -92,9 +92,11 @@ class screener():
 		#Make sure MOF isn't running on other process
 		refcode = cif_file.split('.cif')[0]
 		working_cif_path = os.path.join(basepath,'working',refcode)
+
 		if os.path.isfile(working_cif_path):
 			pprint('SKIPPED: Running on another process')
 			return None
+		open(working_cif_path,'w').close()
 
 		#Get the kpoints
 		kpts_lo, gamma = get_kpts(self,cif_file,'low')
@@ -233,6 +235,7 @@ class screener():
 		if os.path.isfile(working_cif_path):
 			pprint('SKIPPED: Running on another process')
 			return None
+		open(working_cif_path,'w').close()
 
 		#Get the kpoints
 		kpts_lo, gamma = get_kpts(self,name,'low')
