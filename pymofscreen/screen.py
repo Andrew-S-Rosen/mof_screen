@@ -134,11 +134,13 @@ class screener():
 				if acc_level == 'scf_test':
 					scf_pass = wf.scf_test()
 					if not scf_pass:
+						os.remove(working_cif_path)
 						return None
 
 				elif acc_level == 'isif2_lowacc' or (acc_level == 'isif2' and mode == 'volume_legacy'):
 					mof = wf.isif2_lowacc()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 
 					if i > 0:
@@ -150,26 +152,31 @@ class screener():
 				elif acc_level == 'isif2_medacc':
 					mof = wf.isif2_medacc()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 
 				elif acc_level == 'isif2_highacc' or (acc_level == 'final' and 'legacy' in mode):
 					mof = wf.isif2_highacc()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 				
 				elif acc_level == 'isif3_lowacc':
 					mof = wf.isif3_lowacc()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 
 				elif acc_level == 'isif3_highacc':
 					mof = wf.isif3_highacc()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 
 				elif acc_level == 'final_spe':
 					mof = wf.final_spe()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 
 				else:
@@ -182,6 +189,7 @@ class screener():
 			if E_temp < E:
 				best_mof = deepcopy(mof)
 
+		os.remove(working_cif_path)
 		return best_mof
 
 	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calcs=calcs):
@@ -273,11 +281,13 @@ class screener():
 				if acc_level == 'scf_test':
 					scf_pass = wf.scf_test(atoms_overwrite=initial_atoms,quick_test=True)
 					if not scf_pass:
+						os.remove(working_cif_path)
 						return None					
 
 				elif acc_level == 'cineb_lowacc' and i == 0:
 					neb_conv = wf.cineb_lowacc(initial_atoms,final_atoms,n_images)
 					if not neb_conv:
+						os.remove(working_cif_path)
 						return None
 
 				elif acc_level == 'cineb_lowacc' and i > 0:
@@ -287,11 +297,13 @@ class screener():
 				elif 'dimer' in acc_level:
 					mof = wf.dimer()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 
 				elif acc_level == 'final_spe':
 					mof = wf.final_spe()
 					if mof is None:
+						os.remove(working_cif_path)
 						return None
 					result_path = os.path.join(basepath,'results',name)
 					newmodecar = os.path.join(result_path,acc_levels[i-2],spin_level,'NEWMODECAR')
@@ -314,4 +326,5 @@ class screener():
 			if E_temp < E:
 				best_mof = deepcopy(mof)
 
+		os.remove(working_cif_path)
 		return best_mof

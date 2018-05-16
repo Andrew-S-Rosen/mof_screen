@@ -52,7 +52,6 @@ def write_success(workflow,neb=False):
 			write_to_path = os.path.join(success_path,tar_file)
 			copyfile(tar_file,write_to_path)
 		os.remove('neb.tar.gz')
-	os.remove(os.path.join(basepath,'working',refcode))
 
 def write_errors(workflow,mof,neb=False):
 	"""

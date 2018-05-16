@@ -76,7 +76,7 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 			copyfile(full_path,'MODECAR')
 		else:
 			if not os.path.isfile(file) or os.stat(file).st_size == 0:
-				if file in gzip_list:
+				if file in gzip_list and not os.path.isfile(full_path):
 					file += '.gz'
 					full_path += '.gz'
 				if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
