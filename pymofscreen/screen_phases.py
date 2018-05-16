@@ -73,7 +73,6 @@ class workflows():
 		else:
 			self.spin1_final_mof_path = os.path.join(results_partial_paths[-1],
 				prior_spin,'OUTCAR')
-		pprint('***STARTING '+self.refcode+': '+spin_level+'***')
 				
 	def scf_test(self,atoms_overwrite=None,quick_test=False):
 		"""

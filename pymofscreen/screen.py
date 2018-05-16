@@ -113,6 +113,8 @@ class screener():
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
 
+			pprint('***STARTING '+refcode+': '+spin_level+'***')
+
 			#Check if spin state should be skipped
 			if spin_level != spin_levels[0]:
 				prior_spin = spin_levels[i-1]
@@ -259,6 +261,8 @@ class screener():
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
+
+			pprint('***STARTING '+name+': '+spin_level+'***')
 
 			#Check if spin state should be skipped
 			if spin_level != spin_levels[0]:

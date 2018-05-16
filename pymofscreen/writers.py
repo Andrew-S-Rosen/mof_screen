@@ -99,4 +99,3 @@ def write_errors(workflow,mof,neb=False):
 		if os.path.isfile(tar_file) and os.stat(tar_file).st_size > 0:
 			write_to_path = os.path.join(error_path,tar_file)
 			copyfile(tar_file,write_to_path)		
-	os.remove(os.path.join(basepath,'working',refcode))
