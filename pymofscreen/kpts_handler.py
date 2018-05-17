@@ -41,7 +41,11 @@ def get_kpts(screener,cif_file,level):
 
 	else:
 
-		old_cif_name = cif_file.split('_spin')[0]
+		if '_spin' in cif_file:
+			old_cif_name = cif_file.split('_spin')[0]
+		else:
+			old_cif_name = cif_file.split('.cif')[0]
+			
 		infile = open(kpts_path,'r')
 		lines = infile.read().splitlines()
 		infile.close()
@@ -58,14 +62,14 @@ def get_kpts(screener,cif_file,level):
 					raise ValueError('Incompatible KPPA with prior runs')
 				break
 		kpts = np.squeeze(np.asarray(np.matrix(kpts))).tolist()
-		if len(kpts) != 3:
-			raise ValueError('Error parsing KPOINTS file')
+		if not kpts or len(kpts) != 3:
+			raise ValueError('Error parsing k-points for '+cif_file)
 
 		if gamma == 'True':
 			gamma = True
 		elif gamma == 'False':
 			gamma = False
 		else:
-			raise ValueError('Error parsing KPOINTS file')
+			raise ValueError('Error parsing gamma for '+cif_file)
 
 	return kpts, gamma
