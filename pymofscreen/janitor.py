@@ -81,8 +81,7 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 					full_path += '.gz'
 				if os.path.isfile(full_path) and os.stat(full_path).st_size > 0:
 					copyfile(full_path,file)
-					extension = os.path.splitext(file)[1]
-					if extension == '.tar.gz':
+					if '.tar.gz' in file:
 						os.system('tar -zxf '+file)
-					elif extension == '.gz':
+					elif '.gz' in file:
 						os.system('gunzip '+file)
