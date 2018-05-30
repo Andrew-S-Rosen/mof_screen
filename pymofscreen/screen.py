@@ -99,7 +99,7 @@ class screener():
 		working_cif_path = os.path.join(basepath,'working',refcode)
 
 		if os.path.isfile(working_cif_path):
-			pprint('SKIPPED: Running on another process')
+			pprint('SKIPPED '+refcode+': Running on another process')
 			return None
 		open(working_cif_path,'w').close()
 
@@ -248,7 +248,7 @@ class screener():
 		#Make sure MOF isn't running on other process
 		working_cif_path = os.path.join(basepath,'working',name)
 		if os.path.isfile(working_cif_path):
-			pprint('SKIPPED: Running on another process')
+			pprint('SKIPPED '+name+': Running on another process')
 			return None
 		open(working_cif_path,'w').close()
 
