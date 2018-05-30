@@ -90,7 +90,12 @@ class screener():
 		self.spin_levels = spin_levels
 
 		#Make sure MOF isn't running on other process
-		refcode = cif_file.split('.cif')[0]
+		if 'POSCAR_' in cif_file:
+			refcode = cif_file.split('POSCAR_')[1]
+		elif '.cif' in cif_file:
+			refcode = cif_file.split('.cif')[0]
+		else:
+			raise ValueError('Unknown file naming scheme')
 		working_cif_path = os.path.join(basepath,'working',refcode)
 
 		if os.path.isfile(working_cif_path):
@@ -232,7 +237,7 @@ class screener():
 		if kpts_path == 'Auto':
 			if cif_file is None:
 				raise ValueError('Specify a CIF file if not using automatic KPPA')
-			elif cif_file.split('.cif')[0] == name:
+			elif ('POSCAR_' in cif_file and cif_file.split('POSCAR_')[1] == name) or ('.cif' in cif_file and cif_file.split('.cif')[0] == name):
 				raise ValueError('Input name and name of CIF file must not be identical')
 
 		#Ensure initial/final state have the same composition

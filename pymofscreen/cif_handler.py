@@ -1,5 +1,6 @@
 import os
-from ase.io import read
+from ase.io import read, write
+import numpy as np
 import pymatgen as pm
 from pymatgen.io.cif import CifParser
 from pymofscreen.writers import pprint
@@ -18,8 +19,11 @@ def get_cif_files(mofpath,skip_mofs=None):
 		skip_mofs = []
 	for filename in os.listdir(mofpath):
 		filename = filename.strip()
-		if len(filename.split('.cif')) == 2:
-			refcode = filename.split('.cif')[0]
+		if '.cif' in filename or 'POSCAR_' in filename:
+			if '.cif' in filename:
+				refcode = filename.split('.cif')[0]
+			elif 'POSCAR_' in filename:
+				refcode = filename.split('POSCAR_')[1]
 			if refcode not in skip_mofs:
 				cif_files.append(filename)
 			else:
@@ -38,6 +42,8 @@ def cif_to_mof(filepath,niggli):
 	Returns:
 		sorted_cifs (list): alphabetized list of CIF files
 	"""
+
+	tol = 0.8
 	if niggli:
 		if '.cif' in os.path.basename(filepath):
 			parser = CifParser(filepath)
@@ -46,7 +52,15 @@ def cif_to_mof(filepath,niggli):
 			pm.Structure.from_file(filepath,primitive=True)
 		pm_mof.to(filename='POSCAR')
 		mof = read('POSCAR')
+		write('POSCAR',mof)
 	else:
 		mof = read(filepath)
+		write('POSCAR',mof)
+
+	mof = read('POSCAR')
+	d = mof.get_all_distances()
+	min_val = np.min(d[d>0])
+	if min_val < tol:
+		pprint('WARNING: Atoms overlap by '+str(min_val))
 
 	return mof

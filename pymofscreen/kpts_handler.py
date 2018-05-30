@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pymatgen as pm
 from pymatgen.io.cif import CifParser
 from pymatgen.io.vasp.inputs import Kpoints
 
@@ -28,9 +29,12 @@ def get_kpts(screener,cif_file,level):
 			kppa = kppas[1]
 		else:
 			raise ValueError('kpoints accuracy level not defined')
-
-		parser = CifParser(os.path.join(mofpath,cif_file))
-		pm_mof = parser.get_structures(primitive=niggli)[0]
+		filepath = os.path.join(mofpath,cif_file)
+		if '.cif' in cif_file:
+			parser = CifParser(filepath)
+			pm_mof = parser.get_structures(primitive=niggli)[0]
+		else:
+			pm_mof = pm.Structure.from_file(filepath,primitive=niggli)
 		pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
 		kpts = pm_kpts.kpts[0]
 
@@ -43,9 +47,12 @@ def get_kpts(screener,cif_file,level):
 
 		if '_spin' in cif_file:
 			old_cif_name = cif_file.split('_spin')[0]
-		else:
+		elif '.cif' in cif_file:
 			old_cif_name = cif_file.split('.cif')[0]
-			
+		elif 'POSCAR_' in cif_file:
+			old_cif_name = cif_file.split('POSCAR_')[1]
+		else:
+			raise ValueError('Unknown naming scheme')
 		infile = open(kpts_path,'r')
 		lines = infile.read().splitlines()
 		infile.close()

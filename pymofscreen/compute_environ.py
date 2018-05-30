@@ -17,7 +17,15 @@ def get_nprocs(submit_script):
 				ppn = int(line.split('nodes=')[1].split(':ppn=')[1])
 	nprocs = nodes*ppn
 
-	#Setup for NERSC
+	#Setup for NERSC (KNL)
+	# with open(submit_script,'r') as rf:
+	# 	for line in rf:
+	# 		if 'SBATCH -N' in line:
+	# 			nodes = int(line.split('-N ')[1])
+	# ppn = 64
+	# nprocs = nodes*ppn
+
+	#Setup for NERSC (SKX)
 	# with open(submit_script,'r') as rf:
 	# 	for line in rf:
 	# 		if 'SBATCH -N' in line:
@@ -55,7 +63,13 @@ def choose_vasp_version(gpt_version,nprocs):
 	vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
 	module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
 
-	#Setup for NERSC
+	#Setup for NERSC (KNL)
+	# parallel_cmd = 'srun -n'
+	# vasp_path = ''
+	# vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
+	# module_cmd = 'module load vasp-tpc/5.4.1-knl'
+
+	#Setup for NERSC (SKX)
 	# parallel_cmd = 'srun -n'
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']

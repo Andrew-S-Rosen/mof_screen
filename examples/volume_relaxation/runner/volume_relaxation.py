@@ -10,7 +10,7 @@ submit_script = 'submit_screen.sh'
 cif_files = get_cif_files(mofpath)
 
 #Construct screener object
-s = screener(mofpath,basepath,submit_script=submit_script)
+s = screener(basepath,mofpath,submit_script=submit_script)
 
 #Run screening
 for cif_file in cif_files:

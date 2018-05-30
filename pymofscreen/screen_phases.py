@@ -37,7 +37,12 @@ class workflows():
 		'CONTCAR','CHGCAR','WAVECAR','EIGENVAL']
 		self.calc_swaps = []
 		self.run_i = 0
-		self.refcode = cif_file.split('.cif')[0]
+		if '.cif' in cif_file:
+			self.refcode = cif_file.split('.cif')[0]
+		elif 'POSCAR_' in cif_file:
+			self.refcode = cif_file.split('POSCAR_')[1]
+		else:
+			raise ValueError('Unknown file naming scheme')
 		self.stdout_file = screener.stdout_file
 		self.mofpath = screener.mofpath
 		self.submit_script = screener.submit_script
