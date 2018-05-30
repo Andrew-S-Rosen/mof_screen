@@ -17,6 +17,7 @@ defaults = {
 	'ediffg': -0.03,
 	'lorbit': 11,
 	'isym': 0,
+	'symprec':1e-8,
 	'setups':{'base':'recommended','Li':''}
 	}
 
@@ -46,6 +47,7 @@ def calcs(calc_name):
 			lwave=True,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
+			symprec=defaults['symprec'],
 			nsw=0,
 			istart=0
 			)
@@ -65,7 +67,8 @@ def calcs(calc_name):
 			lcharg=False,
 			lwave=True,
 			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
+			isym=defaults['isym'],
+			symprec=defaults['symprec']
 			)
 	elif calc_name == 'isif2_lowacc':
 		calc = Vasp(
@@ -87,7 +90,8 @@ def calcs(calc_name):
 			nsw=250,
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
+			isym=defaults['isym'],
+			symprec=defaults['symprec']
 			)
 	elif calc_name == 'isif2_medacc':
 		calc = Vasp(
@@ -111,7 +115,8 @@ def calcs(calc_name):
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
+			isym=defaults['isym'],
+			symprec=defaults['symprec']
 			)
 	elif calc_name == 'isif2_highacc':
 		calc = Vasp(
@@ -136,7 +141,8 @@ def calcs(calc_name):
 			nsw=defaults['nsw'],
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
+			isym=defaults['isym'],
+			symprec=defaults['symprec']
 			)
 	elif calc_name == 'isif3_lowacc':
 		calc = Vasp(
@@ -159,7 +165,8 @@ def calcs(calc_name):
 			nsw=30,
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
+			isym=defaults['isym'],
+			symprec=defaults['symprec']
 			)
 	elif calc_name == 'isif3_highacc':
 		calc = Vasp(
@@ -182,7 +189,8 @@ def calcs(calc_name):
 			nsw=30,
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
-			isym=defaults['isym']
+			isym=defaults['isym'],
+			symprec=defaults['symprec']
 			)
 	elif calc_name == 'final_spe':
 		calc = Vasp(
@@ -203,6 +211,7 @@ def calcs(calc_name):
 			nsw=0,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
+			symprec=defaults['symprec'],
 			addgrid=False
 			)
 	elif calc_name == 'cineb_lowacc':
@@ -228,6 +237,7 @@ def calcs(calc_name):
 			lclimb=True,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
+			symprec=defaults['symprec'],
 			ichain=0
 			)
 	elif calc_name == 'dimer_lowacc':
@@ -252,6 +262,7 @@ def calcs(calc_name):
 			ediffg=-0.05,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
+			symprec=defaults['symprec'],
 			ichain=2
 			)
 	elif calc_name == 'dimer_medacc':
@@ -276,6 +287,7 @@ def calcs(calc_name):
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
+			symprec=defaults['symprec'],
 			ichain=2
 			)
 	elif calc_name == 'dimer_highacc':
@@ -301,6 +313,7 @@ def calcs(calc_name):
 			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
+			symprec=defaults['symprec'],
 			ichain=2
 			)
 	else:
