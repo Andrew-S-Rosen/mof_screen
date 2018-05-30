@@ -41,11 +41,7 @@ def update_calc(calc,calc_swaps):
 		elif swap == 'tetirr' or swap == 'incorrect_shift':
 			calc.input_params['gamma'] = True
 		
-		elif swap == 'rot_matrix':
-			calc.input_params['gamma'] = True
-			calc.int_params['isym'] = 0
-		
-		elif swap == 'pricel' or swap == 'srgcon' or swap == 'ibzkpt':
+		elif swap == 'pricel' or swap == 'sgrcon' or swap == 'ibzkpt':
 			calc.exp_params['symprec'] = 1e-8
 			calc.int_params['isym'] = 0
 		

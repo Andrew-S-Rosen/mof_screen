@@ -72,8 +72,6 @@ def check_line_for_error(line,errormsg):
 		errormsg.append('dentet')
 	elif 'TOO FEW BANDS' in line:
 		errormsg.append('too_few_bands')
-	elif 'Found some non-integer element in rotation matrix' in line:
-		errormsg.append('rot_matrix')
 	elif 'BRIONS problems: POTIM should be increased' in line:
 		errormsg.append('brions')
 	elif 'internal error in subroutine PRICEL' in line:
