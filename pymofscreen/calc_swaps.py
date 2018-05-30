@@ -45,7 +45,7 @@ def update_calc(calc,calc_swaps):
 			calc.input_params['gamma'] = True
 			calc.int_params['isym'] = 0
 		
-		elif swap == 'pricel':
+		elif swap == 'pricel' or swap == 'srgcon' or swap == 'ibzkpt':
 			calc.exp_params['symprec'] = 1e-8
 			calc.int_params['isym'] = 0
 		
