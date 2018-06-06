@@ -28,7 +28,6 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 	refcode = workflow.refcode
 	stdout_file = workflow.stdout_file
 	calc_swaps = workflow.calc_swaps
-	basepath = workflow.basepath
 	gamma = workflow.kpts_dict['gamma']
 	if sum(kpts) == 3:
 		gpt_version = True

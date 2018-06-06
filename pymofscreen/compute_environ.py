@@ -44,6 +44,15 @@ def get_nprocs(submit_script):
 	# 			ppn = int(line.split('=')[1])
 	# nprocs = nodes*ppn
 
+	#Setup for Thunder
+	# with open(submit_script,'r') as rf:
+	# 	for line in rf:
+	# 		if 'select' in line:
+	# 			line = line.strip().replace(' ','')
+	# 			nodes = int(line.split('=')[1].split(':')[0])
+	# 			ppn = int(line.split('=')[1].split(':')[1])
+	# nprocs = nodes*ppn
+
 	return nprocs, ppn
 
 def choose_vasp_version(gpt_version,nprocs):
@@ -80,6 +89,12 @@ def choose_vasp_version(gpt_version,nprocs):
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp_std_vtst',vasp_path+'vasp_gam_vtst']
 	# module_cmd = 'module load vasp/5.4.4'
+
+	#Setup for Thunder
+	# parallel_cmd = ''
+	# vasp_path = ''
+	# vasp_ex = [vasp_path+'vasp-vtst_3.2',vasp_path+'vasp_real-vtst_3.2']
+	# module_cmd = 'module load VASP/5.4.1'
 
 	#Setting up run_vasp.py
 	base = parallel_cmd+' '+str(nprocs)+' '

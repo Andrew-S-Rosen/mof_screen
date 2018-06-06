@@ -42,7 +42,7 @@ class workflows():
 		elif 'POSCAR_' in cif_file:
 			self.refcode = cif_file.split('POSCAR_')[1]
 		else:
-			raise ValueError('Unknown file naming scheme')
+			self.refcode = cif_file
 		self.stdout_file = screener.stdout_file
 		self.mofpath = screener.mofpath
 		self.submit_script = screener.submit_script
