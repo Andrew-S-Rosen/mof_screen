@@ -143,6 +143,8 @@ class screener():
 					if not scf_pass:
 						os.remove(working_cif_path)
 						return None
+					if acc_levels[-1] == 'scf_test':
+						return scf_pass
 
 				elif acc_level == 'isif2_lowacc' or (acc_level == 'isif2' and mode == 'volume_legacy'):
 					mof = wf.isif2_lowacc()
@@ -190,7 +192,7 @@ class screener():
 					raise ValueError('Unsupported accuracy level')
 		
 			#***********SAVE and CONTINUE***********
-			if same_spin or acc_levels[-1] == 'scf_test':
+			if same_spin:
 				continue
 			E_temp = mof.get_potential_energy()
 			if E_temp < E:
@@ -291,13 +293,17 @@ class screener():
 					scf_pass = wf.scf_test(atoms_overwrite=initial_atoms,quick_test=True)
 					if not scf_pass:
 						os.remove(working_cif_path)
-						return None					
+						return None
+					if acc_levels[-1] == 'scf_test':
+						return scf_pass
 
 				elif acc_level == 'cineb_lowacc' and i == 0:
 					neb_conv = wf.cineb_lowacc(initial_atoms,final_atoms,n_images)
 					if not neb_conv:
 						os.remove(working_cif_path)
 						return None
+					if acc_levels[-1] == 'cineb_lowacc':
+						return neb_conv
 
 				elif acc_level == 'cineb_lowacc' and i > 0:
 					wf.run_i += 1
@@ -329,7 +335,7 @@ class screener():
 						break
 
 			#***********SAVE and CONTINUE***********
-			if same_spin or acc_levels[-1] == 'scf_test' or acc_levels[-1] == 'cineb_lowacc':
+			if same_spin:
 				continue
 			E_temp = mof.get_potential_energy()
 			if E_temp < E:
