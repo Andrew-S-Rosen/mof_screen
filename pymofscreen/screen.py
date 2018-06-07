@@ -190,7 +190,7 @@ class screener():
 					raise ValueError('Unsupported accuracy level')
 		
 			#***********SAVE and CONTINUE***********
-			if same_spin:
+			if same_spin or acc_levels[-1] == 'scf_test':
 				continue
 			E_temp = mof.get_potential_energy()
 			if E_temp < E:
@@ -329,7 +329,7 @@ class screener():
 						break
 
 			#***********SAVE and CONTINUE***********
-			if same_spin:
+			if same_spin or acc_levels[-1] == 'scf_test' or acc_levels[-1] == 'cineb_lowacc':
 				continue
 			E_temp = mof.get_potential_energy()
 			if E_temp < E:
