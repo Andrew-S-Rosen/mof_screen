@@ -144,6 +144,7 @@ class screener():
 						os.remove(working_cif_path)
 						return None
 					if acc_levels[-1] == 'scf_test':
+						os.remove(working_cif_path)
 						return scf_pass
 
 				elif acc_level == 'isif2_lowacc' or (acc_level == 'isif2' and mode == 'volume_legacy'):
@@ -295,6 +296,7 @@ class screener():
 						os.remove(working_cif_path)
 						return None
 					if acc_levels[-1] == 'scf_test':
+						os.remove(working_cif_path)
 						return scf_pass
 
 				elif acc_level == 'cineb_lowacc' and i == 0:
@@ -303,6 +305,7 @@ class screener():
 						os.remove(working_cif_path)
 						return None
 					if acc_levels[-1] == 'cineb_lowacc':
+						os.remove(working_cif_path)
 						return neb_conv
 
 				elif acc_level == 'cineb_lowacc' and i > 0:
