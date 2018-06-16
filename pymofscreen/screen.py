@@ -324,7 +324,7 @@ class screener():
 						os.remove(working_cif_path)
 						return None
 					result_path = os.path.join(basepath,'results',name)
-					newmodecar = os.path.join(result_path,acc_levels[i-2],spin_level,'NEWMODECAR')
+					newmodecar = os.path.join(result_path,acc_levels[-2],spin_level,'NEWMODECAR')
 					newmodecar_spe = os.path.join(result_path,acc_level,spin_level,'NEWMODECAR')
 					copyfile(newmodecar,newmodecar_spe)
 
