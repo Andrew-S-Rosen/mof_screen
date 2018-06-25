@@ -50,7 +50,7 @@ def get_nprocs(submit_script):
 	# 		if 'select' in line:
 	# 			line = line.strip().replace(' ','')
 	# 			nodes = int(line.split('=')[1].split(':')[0])
-	# 			ppn = int(line.split('=')[1].split(':')[1])
+	# 			ppn = int(line.split('=')[2])
 	# nprocs = nodes*ppn
 
 	return nprocs, ppn

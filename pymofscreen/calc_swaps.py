@@ -115,6 +115,10 @@ def update_calc(calc,calc_swaps):
 			elif swap_val == 'false':
 				calc.bool_params['lwave'] = False
 				
+		elif 'nelect=' in swap:
+			swap_val = swap.split('=')[-1].lower()
+			calc.float_params['nelect'] = float(swap.split('=')[-1])
+
 		else:
 			raise ValueError('Unknown calc swap')
 
