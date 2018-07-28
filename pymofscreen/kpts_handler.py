@@ -52,7 +52,7 @@ def get_kpts(screener,cif_file,level):
 		elif 'POSCAR_' in cif_file:
 			old_cif_name = cif_file.split('POSCAR_')[1]
 		else:
-			raise ValueError('Unknown naming scheme')
+			old_cif_name = cif_file
 		infile = open(kpts_path,'r')
 		lines = infile.read().splitlines()
 		infile.close()

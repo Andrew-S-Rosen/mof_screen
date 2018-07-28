@@ -43,6 +43,8 @@ class screener():
 		self.kpts_path = kpts_path
 		if kppas is None:
 			self.kppas = [100,1000]
+		else:
+			self.kppas = kppas
 		prep_paths(basepath)
 
 	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
@@ -256,8 +258,8 @@ class screener():
 		open(working_cif_path,'w').close()
 
 		#Get the kpoints
-		kpts_lo, gamma = get_kpts(self,name,'low')
-		kpts_hi, gamma = get_kpts(self,name,'high')
+		kpts_lo, gamma = get_kpts(self,name.split('_TS')[0],'low')
+		kpts_hi, gamma = get_kpts(self,name.split('_TS')[0],'high')
 		kpts_dict = {}
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi

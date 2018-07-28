@@ -53,7 +53,7 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 		mof.get_potential_energy()
 		niter = get_niter('OUTCAR')
 		if niter < mof.calc.int_params['nsw'] and mof.calc.converged != True:
-			raise SystemError('VASP stopped but did not crash and burn')
+			raise SystemError('VASP stopped but did not die')
 		success = True
 	except:
 
