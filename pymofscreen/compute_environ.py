@@ -70,7 +70,7 @@ def choose_vasp_version(gpt_version,nprocs):
 	parallel_cmd = 'mpirun -n'
 	vasp_path = '/home/asr731/software/vasp_builds/bin/'
 	vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
-	module_cmd = 'module load mpi/openmpi-1.10.5-intel2013.2'
+	module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
 
 	#Setup for NERSC (KNL)
 	# parallel_cmd = 'srun -n'
