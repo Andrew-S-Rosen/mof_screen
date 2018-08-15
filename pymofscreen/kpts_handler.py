@@ -20,7 +20,9 @@ def get_kpts(screener,cif_file,level):
 	kpts_path = screener.kpts_path
 	kppas = screener.kppas
 	kpts = None
-
+	if not mofpath:
+		mofpath = ''
+		
 	if kpts_path == 'Auto':
 
 		if level == 'low':

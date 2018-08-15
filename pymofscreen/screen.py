@@ -239,11 +239,8 @@ class screener():
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
 		kpts_path = self.kpts_path
-		if kpts_path == 'Auto':
-			if cif_file is None:
-				raise ValueError('Specify a CIF file if not using automatic KPPA')
-			elif ('POSCAR_' in cif_file and cif_file.split('POSCAR_')[1] == name) or ('.cif' in cif_file and cif_file.split('.cif')[0] == name):
-				raise ValueError('Input name and name of CIF file must not be identical')
+		if kpts_path == 'Auto' and cif_file is None:
+			raise ValueError('Specify a CIF file if using automatic KPPA')
 
 		#Ensure initial/final state have the same composition
 		if initial_atoms.get_chemical_formula() != final_atoms.get_chemical_formula():
@@ -258,8 +255,12 @@ class screener():
 		open(working_cif_path,'w').close()
 
 		#Get the kpoints
-		kpts_lo, gamma = get_kpts(self,name.split('_TS')[0],'low')
-		kpts_hi, gamma = get_kpts(self,name.split('_TS')[0],'high')
+		if kpts_path == 'Auto':
+			kpts_lo, gamma = get_kpts(self,cif_file,'low')
+			kpts_hi, gamma = get_kpts(self,cif_file,'high')
+		else:
+			kpts_lo, gamma = get_kpts(self,name.split('_TS')[0],'low')
+			kpts_hi, gamma = get_kpts(self,name.split('_TS')[0],'high')
 		kpts_dict = {}
 		kpts_dict['kpts_lo'] = kpts_lo
 		kpts_dict['kpts_hi'] = kpts_hi
