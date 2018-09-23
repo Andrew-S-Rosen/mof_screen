@@ -80,14 +80,18 @@ Now, that was a bit abstract. It's pretty easy in practice though! A minimal exa
 ```python
 from pymofscreen.cif_handler import get_cif_files
 from pymofscreen.screen import screener
+
 #Set up paths
 mofpath = 'PathToCIFs'
 basepath = 'PathToStoreResults'
 submit_script = 'PathToSubmitScript'
+
 #Get CIF files
 cif_files = get_cif_files(mofpath)
+
 #Construct screener object
 s = screener(basepath,mofpath,submit_script=submit_script)
+
 #Run screening
 for cif_file in cif_files:
 	mof = s.run_screen(cif_file,'volume')
@@ -101,18 +105,23 @@ Of course, it is essential to specify default parameters that should be used in 
 from pymofscreen.cif_handler import get_cif_files
 from pymofscreen.screen import screener
 from pymofscreen.default_calculators import defaults
+
 #Set up paths
 mofpath = 'PathToCIFs'
 basepath = 'PathToStoreResults'
 submit_script = 'PathToSubmitScript'
+
 #Define defaults
 defaults['xc'] = 'M06L'
 defaults['ivdw'] = 11
 defaults['ediffg'] = -0.02 #and so on...
+
 #Get CIF files
 cif_files = get_cif_files(mofpath)
+
 #Construct screener object
 s = screener(basepath,mofpath,submit_script=submit_script)
+
 #Run screening
 for cif_file in cif_files:
 	mof = s.run_screen(cif_file,'volume')
