@@ -1,0 +1,20 @@
+#This is an example kpoints file
+#The format is:
+#MOF name
+#k-point grid (low-accuracy)
+#Boolean for Gamma parameter (low-accuracy)
+#k-point grid (high-accuracy)
+#Boolean for Gamma parameter (high-accuracy)
+#An example is shown below:
+
+MFU-4l
+[1, 1, 1]
+True
+[1, 1, 1]
+True
+Sc-MIL-88B
+[1, 1, 1]
+True
+[2, 2, 1]
+True
+#and so on...
