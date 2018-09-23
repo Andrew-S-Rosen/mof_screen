@@ -1,4 +1,6 @@
 import numpy as np
+
+#Refer to magmom_handler.py for usage of variables defined here
 spblock_metals = [3,4,11,12,19,20,37,38,55,56,87,88]
 dblock_metals = np.concatenate((np.arange(21,30,1),np.arange(39,48,1),
 	np.arange(71,80,1),np.arange(103,112,1)),axis=0).tolist()

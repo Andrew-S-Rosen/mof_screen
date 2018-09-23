@@ -13,12 +13,18 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 	Run an atoms.get_potential_energy() calculation
 	Args:
 		workflow (class): pymofscreen.screen_phases.worfklow class
+
 		mof (ASE Atoms object): ASE Atoms object for MOF
+
 		calc (dict): ASE Vasp calculator
+
 		kpts (list of ints): k-point grid
+
 		images (int): number of NEB images
+
 	Returns:
 		mof (ASE Atoms object): updated ASE Atoms object
+
 		calc_swaps (list of strings): calc swaps
 	"""
 
@@ -99,14 +105,22 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	Run ASE BFGSLineSearch calculation
 	Args:
 		workflow (class): pymofscreen.screen_phases.worfklow class
+
 		mof (ASE Atoms object): ASE Atoms object for MOF
+
 		calc (dict): ASE Vasp calculator
+
 		kpts (list of ints): k-point grid
+
 		steps (int): maximum number of steps
+
 		fmax (int): force tolerance
+
 	Returns:
 		mof (ASE Atoms object): updated ASE Atoms object
+
 		dyn (class): ASE dynamics class
+
 		calc_swaps (list of strings): calc swaps
 	"""
 
@@ -177,6 +191,7 @@ def prep_next_run(workflow):
 	Prepare for the next run
 	Args:
 		workflow (class): pymofscreen.screen_phases.worfklow class
+		
 	Returns:
 		mof (ASE Atoms object): updated ASE Atoms object
 	"""

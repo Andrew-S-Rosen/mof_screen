@@ -58,6 +58,7 @@ def write_errors(workflow,mof,neb=False):
 	Write out the unsuccesful job files
 	Args:
 		workflow (class): pymofscreen.screen_phases.worfklow class
+		
 		mof (ASE Atoms object): ASE Atoms object
 	"""
 	spin_level = workflow.spin_level

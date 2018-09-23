@@ -6,8 +6,16 @@ from pymofscreen.metal_types import mag_list, spblock_metals, dblock_metals, fbl
 from pymofscreen.writers import pprint
 
 def get_incar_magmoms(incarpath,poscarpath):
-#Get the magnetic moments from the POSCAR
+	"""
+	Read in the magnetic moments in the INCAR
+	Args:
+		incarpath (string): path to INCAR
 
+		poscarpath (string): path to POSCAR
+
+	Returns:
+		mof_mag_list (list of floats): magnetic moments
+	"""
 	mof_mag_list = []
 	init_mof = read(poscarpath)
 	with open(incarpath,'r') as incarfile:
@@ -27,8 +35,14 @@ def get_incar_magmoms(incarpath,poscarpath):
 	return mof_mag_list
 
 def get_mag_indices(mof):
-#Get indices of potentially magnetic atoms
+	"""
+	Get the indices of metals that could be magnetic
+	Args:
+		mof (ASE Atoms object): MOF structure
 
+	Returns:
+		mag_indices (list of ints): indices of aforementioned metlas
+	"""
 	mag_indices = []
 	for i, atom in enumerate(mof):
 		if atom.number in mag_list:
@@ -37,8 +51,16 @@ def get_mag_indices(mof):
 	return mag_indices
 
 def set_initial_magmoms(mof,spin_level):
-#Add initial magnetic moments to atoms object
+	"""
+	Set the initial magnetic moments for each atom
+	Args:
+		mof (ASE Atoms object): MOF structure
+		
+		spin_level (string): determines default spins
 
+	Returns:
+		mof (ASE Atoms object): MOF structure with initial magmoms
+	"""
 	mag_indices = get_mag_indices(mof)
 	mof.set_initial_magnetic_moments(np.zeros(len(mof)))
 	for i, atom in enumerate(mof):
@@ -61,8 +83,16 @@ def set_initial_magmoms(mof,spin_level):
 	return mof
 
 def continue_magmoms(mof,incarpath):
-#Read in the old magmoms
+	"""
+	Continue magmoms from prior run
+	Args:
+		mof (ASE Atoms object): MOF structure
+		
+		incarpath (string): path to INCAR
 
+	Returns:
+		mof (ASE Atoms object): MOF structure with initial magmoms
+	"""
 	with open(incarpath,'r') as incarfile:
 		for line in incarfile:
 			line = line.strip()
@@ -73,7 +103,20 @@ def continue_magmoms(mof,incarpath):
 	return mof
 
 def get_abs_magmoms(mof,incarpath):
+	"""
+	Get absolute magmoms, indices, and ispin value from INCAR
+	Args:
+		mof (ASE Atoms object): MOF structure
+		
+		incarpath (string): path to INCAR
 
+	Returns:
+		abs_magmoms (list of floats): absolute values of magmoms
+
+		mag_indices (list of ints): ASE indices
+
+		ispin (bool): True if ispin = 2 in INCAR
+	"""
 	mag_indices = get_mag_indices(mof)
 	ispin = False
 	with open(incarpath,'r') as incarfile:
@@ -89,8 +132,14 @@ def get_abs_magmoms(mof,incarpath):
 	return abs_magmoms, mag_indices, ispin
 
 def continue_failed_magmoms(mof):
-#If job failed, try to read magmoms from OUTCAR
-
+	"""
+	If job failed, try to read magmoms from OUTCAR
+	Args:
+		mof (ASE Atoms object): MOF structure
+	
+	Returns:
+		mof (ASE Atoms object): MOF structure with old magmoms
+	"""
 	self_resort = []
 	file = open('ase-sort.dat', 'r')
 	lines = file.readlines()
@@ -120,6 +169,22 @@ def continue_failed_magmoms(mof):
 	return mof
 
 def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
+	"""
+	Check if new spin converged to old spin
+	Args:
+		screener (class): pymofscreen.screen.screener class
+
+		mof (ASE Atoms object): MOF structure
+
+		refcode (string): name of MOF
+
+		acc_level (string): current accuracy level
+
+		current_spin (string): current spin level
+
+	Returns:
+		True or False depending on if new spin converged to old spin
+	"""
 	basepath = screener.basepath
 	spin_levels = screener.spin_levels
 	results_partial_path = os.path.join(basepath,'results',refcode,acc_level)
@@ -149,6 +214,20 @@ def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
 	return True
 
 def check_if_skip_low_spin(screener,mof,refcode,spin_level):
+	"""
+	Check if low spin job should be skipped
+	Args:
+		screener (class): pymofscreen.screen.screener class
+
+		mof (ASE Atoms object): MOF structure
+
+		refcode (string): name of MOF
+
+		spin_level (string): current spin level
+
+	Returns:
+		skip_low_spin (bool): True if low spin should be skipped
+	"""
 	acc_levels = screener.acc_levels
 	acc_level = acc_levels[-1]
 	basepath = screener.basepath

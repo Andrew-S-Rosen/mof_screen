@@ -14,22 +14,28 @@ class screener():
 	"""
 	This class constructs a high-throughput screening workflow
 	"""
-
 	def __init__(self,basepath,mofpath=None,kpts_path='Auto',kppas=None,
 		submit_script=None,stdout_file=None):
 		"""
-		Initialize variables that should be used on all MOFs in a databasehttp://sites.northwestern.edu/
+		Initialize variables that should be used on all MOFs in a database
 		Args:
 			basepath (string): path to the base directory for the DFT screening
+
 			mofpath (string): path to the directory containing the CIF files
+
 			kpts_path (string): can be either 'Auto' for an automatic generation
 			of the kpoints based on KPPAs or a string representing the path to a
-			text file with all the kpoint information
-			kppas (list of ints): KPPAs to use if kpts_path == 'Auto'
-			submit_script (string): path to job submission script
-			stdout_file (string): path to the stdout file
-		"""
+			text file with all the kpoint information (refer to examples/kpts.txt)
 
+			kppas (list of ints): KPPAs to use if kpts_path == 'Auto' (defaults
+			to kppas = [100, 1000] for 100 and 1000 KPPA for the low and high
+			accuracy runs)
+
+			submit_script (string): path to job submission script
+
+			stdout_file (string): path to the stdout file (defualts to the 
+			name of the Python job with a .out extension instead of .py)
+		"""
 		#Setup default parameters
 		self.mofpath = mofpath
 		self.basepath = basepath
@@ -52,16 +58,24 @@ class screener():
 		Run high-throughput ionic or volume relaxations
 		Args:
 			cif_file (string): name of CIF file
-			mode (string): 'ionic' or 'volume'
-			spin_levels (list of strings): spin states to consider
-			acc_levels (list of strings): accuracy levels to consider
-			niggli (bool): True/False if Niggli-reduction should be done
-			calcs (function): function to call respective calculator
-		Returns:
-			best_mof (ASE Atoms objects): ASE Atoms object for optimized
-			MOF given by cif_file (lowest energy spin state)
-		"""
 
+			mode (string): 'ionic' or 'volume'
+
+			spin_levels (list of strings): spin states to consider (defaults
+			to ['spin1','spin2'])
+
+			acc_levels (list of strings): accuracy levels to consider (defaults
+			to ['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe'])
+
+			niggli (bool): True/False if Niggli-reduction should be done (defaults
+			to niggli=True)
+
+			calcs (function): function to call respective calculator (defaults to
+			automatically importing from pymofscreen.default_calculators.calcs)
+
+		Returns:
+			best_mof (ASE Atoms objects): ASE Atoms object for optimized MOF
+		"""
 		#Setup default parameters
 		basepath = self.basepath
 		self.calcs = calcs
@@ -209,14 +223,23 @@ class screener():
 		Run high-throughput TS calculation
 		Args:
 			name (string): name of CIF file
+
 			initial_atoms (ASE Atoms object): initial structure
+
 			final_atoms (ASE Atoms object): final structure
+
 			n_images (int): number of NEB images
+
 			cif_file (string): name of CIF file to generate kpoints if
 			set to 'Auto'
+
 			spin_levels (list of strings): spin states to consider
+
 			acc_levels (list of strings): accuracy levels to consider
-			calcs (function): function to call respective calculator
+
+			calcs (function): function to call respective calculator (defaults to
+			automatically importing from pymofscreen.default_calculators.calcs)
+						
 		Returns:
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized
 			MOF given by cif_file (lowest energy spin state)

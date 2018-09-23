@@ -9,10 +9,14 @@ def get_kpts(screener,cif_file,level):
 	Obtain the number of kpoints
 	Args:
 		screener (class): pymofscreen.screener class
+
 		cif_file (string): name of CIF file
+
 		level (string): accuracy level
+
 	Returns:
 		kpts (list of ints): kpoint grid
+		
 		gamma (bool): True for gamma-centered
 	"""
 	niggli = screener.niggli

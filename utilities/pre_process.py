@@ -3,7 +3,11 @@ import numpy as np
 from pymatgen.io.cif import CifParser
 from pymatgen.analysis.structure_matcher import StructureMatcher
 
-mofpath = '/projects/p30148/vasp_jobs/structures/CoRE1-DFT-OMS-v2/'
+#This code will check to make sure all MOFs in mofpath have
+#at least 1 C atom and will check for duplicate structures
+#via Pymatgen's structure_matcher
+
+mofpath = 'PathToMOFs'
 refcodes = []
 stoichs = []
 for filename in os.listdir(mofpath):

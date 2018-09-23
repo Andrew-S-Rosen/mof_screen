@@ -3,8 +3,10 @@ def get_nprocs(submit_script):
 	Get the number of processors from submit script
 	Args:
 		submit_script (string): name of submission script
+
 	Returns:
 		nprocs (int): number of total processors
+
 		ppn (int): number of processors per node
 	"""
 
@@ -61,6 +63,7 @@ def choose_vasp_version(gpt_version,nprocs):
 	Args:
 		gpt_version (bool): True if gamma-point only or False
 		if standard version
+		
 		nprocs (int): total number of processors
 	"""
 

@@ -10,7 +10,9 @@ def get_cif_files(mofpath,skip_mofs=None):
 	Get the list of CIF files
 	Args:
 		mofpath (string): directory to CIF files 
+
 		skip_mofs (list): list of MOFs to ignore
+
 	Returns:
 		sorted_cifs (list): alphabetized list of CIF files
 	"""
@@ -38,7 +40,9 @@ def cif_to_mof(filepath,niggli):
 	Convert file to ASE Atoms object
 	Args:
 		filepath (string): full path to structure file
+
 		niggli (bool): if Niggli-reduction should be performed
+		
 	Returns:
 		sorted_cifs (list): alphabetized list of CIF files
 	"""

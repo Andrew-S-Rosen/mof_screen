@@ -6,6 +6,15 @@ from ase.io import read, write
 from pymofscreen.janitor import clean_files
 
 def nebmake(initial_atoms,final_atoms,n_images):
+	"""
+	Make interpolated images for NEB
+	Args:
+		initial_atoms (ASE Atoms object): initial MOF structure
+		
+		final_atoms (ASE Atoms object): final MOF structure
+
+		n_images (int): number of NEB images
+	"""
 	pwd = os.getcwd()
 	neb_path = os.path.join(pwd,'neb')
 	if os.path.exists(neb_path):
@@ -23,10 +32,20 @@ def nebmake(initial_atoms,final_atoms,n_images):
 	write_dummy_outcar(os.path.join(neb_path,last_image,'OUTCAR'),final_atoms.get_potential_energy())
 
 def write_dummy_outcar(name,E):
+	"""
+	Construct a dummy OUTCAR for images 0 and n
+	Args:
+		name (string): name of file to write
+
+		E (float): energy to write out in dummy OUTCAR
+	"""
 	with open(name,'w') as wf:
 		wf.write('  energy  without entropy=                   energy(sigma->0) =     '+str(E)+'\n')
 
 def neb2dim():
+	"""
+	Construct initial dimer job from NEB
+	"""
 	pwd = os.getcwd()
 	neb_path = os.path.join(pwd,'neb')
 	os.chdir(neb_path)
@@ -48,12 +67,24 @@ def neb2dim():
 	return mof
 
 def dimmins(dis):
-	#probably wont work without all files
+	"""
+	Run dimmins.pl
+	Args:
+		dis (float): displacement vector
+	"""
 	os.system('vfin.pl dim_fin')
 	rmtree('dim_fin')
 	os.system('dimmins.pl POSCAR MODECAR '+str(dis))
 
 def nebef(ediffg):
+	"""
+	Run nebef.pl
+	Args:
+		ediffg (float): specified EDIFFG vlaue in VASP
+
+	Returns:
+		neb_conv (bool): True if NEB converged within EDIFFG
+	"""
 	ediffg = abs(ediffg)
 	clean_files(['POSCAR'])
 	open('nebef.dat','w').close()

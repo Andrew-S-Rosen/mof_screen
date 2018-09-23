@@ -18,15 +18,17 @@ defaults = {
 	'lorbit': 11,
 	'isym': 0,
 	'symprec':1e-8,
-	'setups':{'base':'recommended','Li':''}
+	'setups':{'base':'recommended','Li':'','W':'_sv'}
 	}
 
 def calcs(calc_name):
 	"""
 	Define the default calculators for relaxations
 	Note: it should not include the kpts, gamma, or images keywords!
+
 	Args:
 		calc_name (string): name of calculator
+		
 	Returns:
 		calc (dict): ASE Vasp calculator dictionary
 	"""

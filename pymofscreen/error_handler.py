@@ -7,8 +7,11 @@ def get_error_msgs(outcarfile,refcode,stdout_file):
 	Parse error messages from VASP
 	Args:
 		outcarfile (string): parth to OUTCAR file
+
 		refcode (string): name of MOF
+
 		stdout_file (string): path to stdout file
+
 	Returns:
 		errormsg (list of strings): error messages in OUTCAR/stdout
 	"""
@@ -33,6 +36,7 @@ def get_warning_msgs(outcarfile):
 	Parse warning messages from VASP
 	Args:
 		outcarfile (string): parth to OUTCAR file
+
 	Returns:
 		warningmsg (list of strings): warning messages in OUTCAR
 	"""
@@ -51,6 +55,7 @@ def check_line_for_error(line,errormsg):
 	Parse given line for VASP error code
 	Args:
 		line (string): error statement
+
 	Returns:
 		errormsg (string): VASP error code
 	"""
@@ -110,10 +115,14 @@ def update_calc_after_errors(calc,calc_swaps,errormsg):
 	Update an ASE Vasp calculators object based on error messages
 	Args:
 		calc (dict): ASE Vasp calculator dictionary
+
 		calc_swaps (list of strings): list of calc swaps
+
 		errormsg (list of strings): list of error messages
+
 	Returns:
 		calc (dict): updated ASE Vasp calculator
+
 		errormsg (list of strings): list of error messages
 	"""
 
@@ -187,6 +196,7 @@ def get_niter(outcarfile):
 	Get the number of ionic steps that were run
 	Args:
 		outcarfile (string): full path to OUTCAR file
+		
 	Returns:
 		niter (int): number of ionic iterations
 	"""

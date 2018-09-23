@@ -1,0 +1,1 @@
+The `vasp.py` file of `ase/calculators/vasp/vasp.py` needs to have a feature that allows for the ability to check for convergence via `atoms.scf_converged` and `atoms.nsw_converged`, as shown in this `vasp.py` file. 

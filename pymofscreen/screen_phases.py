@@ -22,10 +22,15 @@ class workflows():
 		Initialize variables that should be used on all MOFs in a database
 		Args:
 			screener (class): pymofscreen.screen.screener class
+
 			cif_file (string): name of CIF file
+
 			kpts_dict (dict): dictionary containing kpoint and gamma information
+
 			spin_level (string): name of spin level
+
 			prior_spin (string): name of previous spin level (if applicable)
+			
 			vasp_files (list of strings): VASP files to save
 		"""
 		self.cif_file = cif_file

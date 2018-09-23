@@ -4,9 +4,12 @@ def update_calc(calc,calc_swaps):
 	Update a calculator based on pre-defined "swaps"
 	Args:
 		calc (dictionary): ASE Vasp calculators dictionary
+
 		calc_swaps (list): list of pre-existing calc swaps
+
 	Returns:
 		calc (dictionary): updated ASE Vasp calculator
+
 		calc_swaps (list): updated list of swaps
 	"""
 	for swap in calc_swaps:
@@ -129,8 +132,11 @@ def check_nprocs(n_atoms,nprocs,ppn):
 	Reduce processors if the structure is too small
 	Args:
 		n_atoms (int): number of atoms in structure
+
 		nprocs (int): total number of processors
+
 		ppn (int): processors per node
+		
 	Returns:
 		nprocs (int): updated total number of processors
 	"""
