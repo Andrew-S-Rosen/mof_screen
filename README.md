@@ -46,7 +46,7 @@ class screener():
 		"""
 ```
 
-Within the `screener` class is a function named `run_screen`, which is described below. It informs the `screener` what type of job should be run and on what CIF file. Generally, two parameters need to be changed: the name of the CIF file (`cif_file`) and the type of job to be run (`mode`), which can be either `volume` or `ionic`. By default `spin_levels` parameter is set to `[spin1,spin2]` such that a high-spin and then low-spin job is performed. By default, `acc_levels` is set to `['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']` such that this sequence of jobs is performed (as discussed below). Also, `niggli` specifies whether the unit cell should be Niggli-reduced and defaults to `True`.
+Within the `screener` class is a function named `run_screen`, which is described below. It informs the `screener` what type of job should be run and on what CIF file. Generally, two parameters need to be changed: the name of the CIF file (`cif_file`) and the type of job to be run (`mode`), which can be either `volume` or `ionic`. By default, the `spin_levels` parameter is set to `[spin1,spin2]` such that a high-spin and then low-spin job is performed. By default, `acc_levels` is set to `['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']` such that this sequence of jobs is performed (as discussed below). Also, `niggli` specifies whether the unit cell should be Niggli-reduced and defaults to `True`.
 
 ```python
 def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
