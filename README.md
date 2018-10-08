@@ -3,6 +3,8 @@ Python workflow for high-throughput DFT screening of MOFs using VASP. Relevant d
 
 A.S. Rosen, J.M. Notestein, R.Q. Snurr. "Identifying Promising Metal-Organic Frameworks for Heterogeneous Catalysis via High-Throughput Periodic Density Functional Theory." In preparation. 
 
+[![DOI](https://zenodo.org/badge/113722940.svg)](https://zenodo.org/badge/latestdoi/113722940)
+
 ![TOC](toc.png)
 
 ## What is PyMOFScreen?
