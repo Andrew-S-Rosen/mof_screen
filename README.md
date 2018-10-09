@@ -131,7 +131,7 @@ for cif_file in cif_files:
 	mof = s.run_screen(cif_file,'volume')
 ```
 
-The parameters in the `defaults` dictionary are used in the `pymofscreen.default_calculators.calcs` function, which we suggest looking at before running PyMOFScreen for the first time. The `pymofscreen.default_calculators.calcs` function defines each job type previously specified in `acc_levels` within `run_screen`. For instance, it defines `isif2_lowacc` as an low accuracy ionic relaxation and `final_spe` as a high accuracy, single point energy calculation using the parameters stored in `defaults`. The job specifications and parameters can be freely changed using any of [ASE's parameters for VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
+The parameters in the `defaults` dictionary are used in the `pymofscreen.default_calculators.calcs` function, which we suggest looking at before running PyMOFScreen for the first time. The `pymofscreen.default_calculators.calcs` function defines each job type previously specified in `acc_levels` within `run_screen`. For instance, it defines `isif2_lowacc` as a low accuracy ionic relaxation and `final_spe` as a high accuracy, single point energy calculation using the parameters stored in `defaults`. The job specifications and parameters can be freely changed using any of [ASE's parameters for VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
 
 ## Setup
 
