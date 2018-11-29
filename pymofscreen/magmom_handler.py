@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from ase.io import read
-from copy import deepcopy
+from copy import copy, deepcopy
 from pymofscreen.metal_types import mag_list, spblock_metals, dblock_metals, fblock_metals, poor_metals
 from pymofscreen.writers import pprint
 
@@ -43,10 +43,7 @@ def get_mag_indices(mof):
 	Returns:
 		mag_indices (list of ints): indices of aforementioned metlas
 	"""
-	mag_indices = []
-	for i, atom in enumerate(mof):
-		if atom.number in mag_list:
-			mag_indices.append(i)
+	mag_indices = [atom.index for atom in mof if atom.number in mag_list]
 
 	return mag_indices
 
@@ -61,24 +58,56 @@ def set_initial_magmoms(mof,spin_level):
 	Returns:
 		mof (ASE Atoms object): MOF structure with initial magmoms
 	"""
+	spin_level = spin_level.lower()
 	mag_indices = get_mag_indices(mof)
 	mof.set_initial_magnetic_moments(np.zeros(len(mof)))
-	for i, atom in enumerate(mof):
-		if i in mag_indices:
-			mag_number = atom.number
-			if spin_level == 'spin1':
+	AFM_cutoff = 5
+
+	if spin_level == 'afm_high':
+		Mi = mag_indices[0]
+		M_distances = mof.get_distances(Mi,mag_indices,mic=True,vector=False).tolist()
+		mag_indices = [mag_indices[i] for i in np.argsort(M_distances).tolist()]
+		mags = copy(mag_indices)
+		sign = 1
+		del mags[0]
+		for i, mag_idx in enumerate(mag_indices):
+			if i != 0:
+				M_distances = mof.get_distances(Mi,mags,mic=True,vector=False).tolist()
+				min_idx = np.argmin(M_distances)
+				Mj = mags[min_idx]
+				d = M_distances[min_idx]
+				if d <= AFM_cutoff:
+					sign = -sign
+				else:
+					sign = 1
+				Mi = Mj
+				mags.remove(Mj)
+				del M_distances[min_idx]
+			mag_number = mof[mag_idx].number
+			if mag_number in dblock_metals:
+				mof[mag_idx].magmom = sign*5.0
+			elif mag_number in fblock_metals:
+				mof[mag_idx].magmom = sign*7.0
+			elif mag_number in poor_metals:
+				mof[mag_idx].magmom = sign*0.1
+			else:
+				raise ValueError('Metal not properly classified')
+	else:
+		for mag_idx in mag_indices:
+			mag_number = mof[mag_idx].number
+			if spin_level == 'high' or spin_level == 'spin1':
 				if mag_number in dblock_metals:
-					atom.magmom = 5.0
+					mof[mag_idx].magmom = 5.0
 				elif mag_number in fblock_metals:
-					atom.magmom = 7.0
+					mof[mag_idx].magmom = 7.0
 				elif mag_number in poor_metals:
-					atom.magmom = 0.1
+					mof[mag_idx].magmom = 0.1
 				else:
 					raise ValueError('Metal not properly classified')
-			elif spin_level == 'spin2':
-				atom.magmom = 0.1
+			elif spin_level == 'low' or spin_level == 'spin2':
+				mof[mag_idx].magmom = 0.1
 			else:
-				raise ValueError('Spin iteration out of range')
+				raise ValueError('Undefined spin level')
 
 	return mof
 
