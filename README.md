@@ -1,13 +1,15 @@
 # PyMOFScreen
 Python workflow for high-throughput DFT screening of MOFs using VASP. Relevant details for the code can be found in the following manuscript (once published):
 
-A.S. Rosen, J.M. Notestein, R.Q. Snurr. "Identifying Promising Metal-Organic Frameworks for Heterogeneous Catalysis via High-Throughput Periodic Density Functional Theory." In preparation. 
+A.S. Rosen, J.M. Notestein, R.Q. Snurr. "Identifying Promising Metal-Organic Frameworks for Heterogeneous Catalysis via High-Throughput Periodic Density Functional Theory." Submitted. 
+
+[![DOI](https://zenodo.org/badge/113722940.svg)](https://zenodo.org/badge/latestdoi/113722940)
 
 ![TOC](toc.png)
 
 ## What is PyMOFScreen?
 
-High-throughput computational catalysis involving MOFs is a tricky business. Their large unit cells, diverse structures, and widely varying compositions make it challenging to achieve both a robust and high-performing workflow with little human interactions. PyMOFScreen solves this problem through multi-stage structural optimizations, a robust selection of optimization algorithms that are chosen on-the-fly, automatic error-handling, and much more. In the Snurr group, we have used PyMOFScreen to screen hundreds of MOFs using periodic DFT in a fully automated fashion.
+High-throughput computational catalysis involving MOFs is a tricky business. Their large unit cells, diverse structures, and widely varying compositions make it challenging to achieve both a robust and high-performing workflow with little human interactions. PyMOFScreen solves this problem through multi-stage structural optimizations, a robust selection of optimization algorithms that are chosen on-the-fly, automatic error-handling, and much more. In the Snurr group, we have used PyMOFScreen to screen hundreds of MOFs using periodic DFT in a fully automated fashion. To automate the adsorbate construction process, refer to our [MOF-Adsorbate-Initializer](https://github.com/arosen93/mof-adsorbate-initializer) code.
 
 ## Ready-to-Run Examples
 
@@ -129,7 +131,7 @@ for cif_file in cif_files:
 	mof = s.run_screen(cif_file,'volume')
 ```
 
-The parameters in the `defaults` dictionary are used in the `pymofscreen.default_calculators.calcs` function, which we suggest looking at before running PyMOFScreen for the first time. The `pymofscreen.default_calculators.calcs` function defines each job type previously specified in `acc_levels` within `run_screen`. For instance, it defines `isif2_lowacc` as an low accuracy ionic relaxation and `final_spe` as a high accuracy, single point energy calculation using the parameters stored in `defaults`. The job specifications and parameters can be freely changed using any of [ASE's parameters for VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
+The parameters in the `defaults` dictionary are used in the `pymofscreen.default_calculators.calcs` function, which we suggest looking at before running PyMOFScreen for the first time. The `pymofscreen.default_calculators.calcs` function defines each job type previously specified in `acc_levels` within `run_screen`. For instance, it defines `isif2_lowacc` as a low accuracy ionic relaxation and `final_spe` as a high accuracy, single point energy calculation using the parameters stored in `defaults`. The job specifications and parameters can be freely changed using any of [ASE's parameters for VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
 
 ## Setup
 
