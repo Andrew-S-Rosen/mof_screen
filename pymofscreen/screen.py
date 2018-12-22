@@ -7,7 +7,6 @@ from pymofscreen.writers import pprint
 from pymofscreen.kpts_handler import get_kpts
 from pymofscreen.screen_phases import workflows
 from pymofscreen.janitor import prep_paths
-from pymofscreen.default_calculators import calcs
 from pymofscreen.magmom_handler import check_if_new_spin, check_if_skip_low_spin
 
 class screener():
@@ -53,7 +52,7 @@ class screener():
 			self.kppas = kppas
 		prep_paths(basepath)
 
-	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
+	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calculators=None):
 		"""
 		Run high-throughput ionic or volume relaxations
 		Args:
@@ -70,15 +69,18 @@ class screener():
 			niggli (bool): True/False if Niggli-reduction should be done (defaults
 			to niggli=True)
 
-			calcs (function): function to call respective calculator (defaults to
+			calculators (function): function to call respective calculator (defaults to
 			automatically importing from pymofscreen.default_calculators.calcs)
 
 		Returns:
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized MOF
 		"""
 		#Setup default parameters
+		from pymofscreen.default_calculators import calcs
+		if calculators is None:
+			calculators = calcs
+		self.calcs = calculators
 		basepath = self.basepath
-		self.calcs = calcs
 		self.niggli = niggli
 		if mode == 'ionic':
 			if acc_levels is None:
@@ -218,7 +220,7 @@ class screener():
 		os.remove(working_cif_path)
 		return best_mof
 
-	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calcs=calcs):
+	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calculators=None):
 		"""
 		Run high-throughput TS calculation
 		Args:
@@ -237,7 +239,7 @@ class screener():
 
 			acc_levels (list of strings): accuracy levels to consider
 
-			calcs (function): function to call respective calculator (defaults to
+			calculators (function): function to call respective calculator (defaults to
 			automatically importing from pymofscreen.default_calculators.calcs)
 						
 		Returns:
@@ -246,10 +248,13 @@ class screener():
 		"""
 
 		#Setup default parameters
+		from pymofscreen.default_calculators import calcs
+		if calculators is None:
+			calculators = calcs
+		self.calcs = calculators
 		basepath = self.basepath
 		self.niggli = False
 		self.spin_levels = spin_levels
-		self.calcs = calcs
 		if spin_levels is None:
 			spin_levels = ['spin1','spin2']
 		self.spin_levels = spin_levels
