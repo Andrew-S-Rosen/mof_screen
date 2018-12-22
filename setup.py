@@ -6,6 +6,7 @@ setup(name='PyMOFScreen',
       author_email='rosen@u.northwestern.edu',
       url='https://github.com/arosen93/mof_screen',
       requires_python='>=3.6.0',
+      version='1.0',
       packages=find_packages(),
       license='MIT'
      )
