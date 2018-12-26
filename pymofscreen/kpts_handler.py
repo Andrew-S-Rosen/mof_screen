@@ -50,15 +50,7 @@ def get_kpts(screener,cif_file,level):
 			gamma = None
 
 	else:
-
-		if '_spin' in cif_file:
-			old_cif_name = cif_file.split('_spin')[0]
-		elif '.cif' in cif_file:
-			old_cif_name = cif_file.split('.cif')[0]
-		elif 'POSCAR_' in cif_file:
-			old_cif_name = cif_file.split('POSCAR_')[1]
-		else:
-			old_cif_name = cif_file
+		old_cif_name = cif_file.split('.cif')[0].split('_')[0]
 		infile = open(kpts_path,'r')
 		lines = infile.read().splitlines()
 		infile.close()
