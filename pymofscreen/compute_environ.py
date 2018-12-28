@@ -76,33 +76,32 @@ def choose_vasp_version(gpt_version,nprocs):
 	module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
 
 	#Setup for NERSC (KNL)
-	# parallel_cmd = 'srun -n'
+	# parallel_cmd = 'srun -n'+' '+str(nprocs)+' '
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
 	# module_cmd = 'module load vasp-tpc/5.4.1-knl'
 
 	#Setup for NERSC (SKX)
-	# parallel_cmd = 'srun -n'
+	# parallel_cmd = 'srun -n'+' '+str(nprocs)+' '
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
 	# module_cmd = 'module load vasp-tpc/5.4.1'
 
 	#Setup for Stampede2
-	# parallel_cmd = 'ibrun -n'
+	# parallel_cmd = 'ibrun -n'+' '+str(nprocs)+' '
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp_std_vtst',vasp_path+'vasp_gam_vtst']
 	# module_cmd = 'module load vasp/5.4.4'
 
 	#Setup for Thunder
-	# parallel_cmd = ''
+	# parallel_cmd = 'export VASP_NPROCS='+str(nprocs)+' && '
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp-vtst_3.2',vasp_path+'vasp_real-vtst_3.2']
 	# module_cmd = 'module load VASP/5.4.1'
 
 	#Setting up run_vasp.py
-	base = parallel_cmd+' '+str(nprocs)+' '
-	vasp_cmd = base+vasp_ex[0]
-	gamvasp_cmd = base+vasp_ex[1]
+	vasp_cmd = parallel_cmd+vasp_ex[0]
+	gamvasp_cmd = parallel_cmd+vasp_ex[1]
 	if gpt_version:
 		runvasp_file.write("import os\nexitcode = os.system("
 			+"'"+module_cmd+' && '+gamvasp_cmd+"'"+')')
