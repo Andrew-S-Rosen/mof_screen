@@ -56,7 +56,7 @@ class workflows():
 		self.calcs = screener.calcs
 		self.nprocs, self.ppn = get_nprocs(self.submit_script)
 
-		clean_files(self.vasp_files)
+		clean_files(self.vasp_files+['CHG','AECCAR0','AECCAR1','AECCAR2'])
 
 		results_partial_paths = []
 		error_partial_paths = []
