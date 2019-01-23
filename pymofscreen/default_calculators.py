@@ -19,7 +19,8 @@ defaults = {
 	'isym': 0,
 	'symprec':1e-8,
 	'setups':{'base':'recommended','Li':'','W':'_sv'},
-	'ldau_luj':None
+	'ldau_luj':None,
+	'lasph':False
 	}
 
 def calcs(calc_name):
@@ -52,7 +53,8 @@ def calcs(calc_name):
 			symprec=defaults['symprec'],
 			nsw=0,
 			istart=0,
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'ase_bfgs':
 		calc = Vasp(
@@ -72,7 +74,8 @@ def calcs(calc_name):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'isif2_lowacc':
 		calc = Vasp(
@@ -96,7 +99,8 @@ def calcs(calc_name):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'isif2_medacc':
 		calc = Vasp(
@@ -122,7 +126,8 @@ def calcs(calc_name):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'isif2_highacc':
 		calc = Vasp(
@@ -149,7 +154,8 @@ def calcs(calc_name):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'isif3_lowacc':
 		calc = Vasp(
@@ -174,7 +180,8 @@ def calcs(calc_name):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'isif3_highacc':
 		calc = Vasp(
@@ -199,7 +206,8 @@ def calcs(calc_name):
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'final_spe':
 		calc = Vasp(
@@ -222,7 +230,8 @@ def calcs(calc_name):
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
 			addgrid=False,
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'cineb_lowacc':
 		calc = Vasp(
@@ -249,7 +258,8 @@ def calcs(calc_name):
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
 			ichain=0,
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'dimer_lowacc':
 		calc = Vasp(
@@ -275,7 +285,8 @@ def calcs(calc_name):
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
 			ichain=2,
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'dimer_medacc':
 		calc = Vasp(
@@ -301,7 +312,8 @@ def calcs(calc_name):
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
 			ichain=2,
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	elif calc_name == 'dimer_highacc':
 		calc = Vasp(
@@ -328,7 +340,8 @@ def calcs(calc_name):
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
 			ichain=2,
-			ldau_luj=defaults['ldau_luj']
+			ldau_luj=defaults['ldau_luj'],
+			lasph=defaults['lasph']
 			)
 	else:
 		raise ValueError('Out of range for calculators')
