@@ -164,7 +164,7 @@ class workflows():
 			pprint('Running '+spin_level+', '+acc_level)
 			mof, dyn, self.calc_swaps = mof_bfgs_run(self,mof,calcs('ase_bfgs'),
 				kpts_lo,fmax=fmax)
-			if mof is not None and dyn and mof.calc.scf_converged:
+			if mof is not None and dyn:
 				loop_i = 0
 				converged = False
 				clean_files(['opt.traj'])
