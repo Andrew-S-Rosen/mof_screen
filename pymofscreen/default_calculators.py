@@ -9,7 +9,7 @@ defaults = {
 	'algo': 'All',
 	'ediff': 1e-4,
 	'nelm': 150,
-	'nelmin': 6,
+	'nelmin': 3,
 	'lreal': False,
 	'ismear': 0,
 	'sigma': 0.01,
