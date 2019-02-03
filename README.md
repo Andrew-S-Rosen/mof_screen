@@ -19,7 +19,12 @@ To get started, sample scripts are provided in `/examples` and include:
 
 ## The screener
 
-The main tool to initialize a screening workflow is the `pymofscreen.screener` class, which is described below. At the bare minimum, you must provide it the base directory where the DFT screening results should be stored (`basepath`), the path to where the MOF CIF files are located (`mofpath`), the name of the job submission script (`submit_script`), and the name of the standard output (`stdout_file`). All the results are stored in `basepath/results`, and any errors are stored in `basepath/errors`. The `screener` also requires that the user specify the k-points per atom (KPPA) that should be used. By default, it will use 100 KPPA and 1000 KPPA for the low- and high-accuracy phases of the workflow, respectively. Generally, `kpts_path` does not need to be altered unless you wish to manually specify the k-points for each CIF.
+The main tool to initialize a screening workflow is the `pymofscreen.screener` class. At the bare minimum, you must provide it the following arguments and keywords:
+	1. `basepath`: The base directory where the DFT screening results should be stored. The results are stored in `/basepath/results`, and any errors are stored in `/basepath/errors`.
+	2. `mofpath`: The path where the MOF CIF files are located.
+	3. `kpts_path` and/or `kppas`: If `kpts_path` is set to `auto`, PyMOFScreen will automatically generate a kpoint grid using the k-points per atom (KPPA) specified via the `kppas` keyword argument. The `kppas` argument should be a list with two entries: the low- and high-accuracy KPPAs to use (defaults to [100,1000]). Alternatively, one can provide a text file of all the desired k-points, specifying the path explicitly via `kpts_path` (see the `/examples` folder for an example k-points file.)
+	4. `submit_script`: The name of the job submission script.
+	5. `stdout_file`: The name of the standard output.
 
 ```python
 class screener():
@@ -28,67 +33,36 @@ class screener():
 	"""
 	def __init__(self,basepath,mofpath=None,kpts_path='Auto',kppas=None,
 		submit_script=None,stdout_file=None):
-		"""
-		Initialize variables that should be used on all MOFs in a database
-		Args:
-			basepath (string): path to the base directory for the DFT screening
-
-			mofpath (string): path to the directory containing the CIF files
-
-			kpts_path (string): can be either 'Auto' for an automatic generation
-			of the kpoints based on KPPAs or a string representing the path to a
-			text file with all the kpoint information (refer to examples/kpts.txt)
-
-			kppas (list of ints): KPPAs to use if kpts_path == 'Auto' (defaults
-			to kppas = [100, 1000] for 100 and 1000 KPPA for the low and high
-			accuracy runs)
-
-			submit_script (string): path to job submission script
-
-			stdout_file (string): path to the stdout file (defualts to the 
-			name of the Python job with a .out extension instead of .py)
-		"""
 ```
 
-Within the `screener` class is a function named `run_screen`, which is described below. It informs the `screener` what type of job should be run and on what CIF file. Generally, two parameters need to be changed: the name of the CIF file (`cif_file`) and the type of job to be run (`mode`), which can be either `volume` or `ionic`. By default, the `spin_levels` parameter is set to `[spin1,spin2]` such that a high-spin and then low-spin job is performed. By default, `acc_levels` is set to `['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']` such that this sequence of jobs is performed (as discussed below). Also, `niggli` specifies whether the unit cell should be Niggli-reduced and defaults to `True`.
+Within the `screener` class is a function named `run_screen`. It informs the `screener` what type of job should be run and on what CIF file. Generally, only two parameters need to be changed:
+	1. `cif_file`: The name of the CIF file to optimize.
+	2. `mode`: The type of job to run, which can be either `mode='volume'` or `mode='ionic'`.
+
+There are a few additional, optional paremeters:
+	1. `spin_levels`: By default, it is set to `spin_levels=['spin1','spin2']`, which tells PyMOFScreen to run a high-spin job followed by a low-spin job.
+	2. `acc_levels`: By default, it is set to `acc_levels=['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']` and is the list of jobs to run for each MOF.
+	3. `niggli`: By default, it is set to `niggli=True` and tells PyMOFScreen to make a Niggli-reduced cell of your input file before running. This can be disabled with `niggli=False`.
+	4. `calcs`. This is series of ASE calculators that correspond to each entry in `acc_levels`. This automatically pulls the calculators from `pymofscreen.default_calculators.calcs`.
 
 ```python
 def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
 	"""
 	Run high-throughput ionic or volume relaxations
-	Args:
-		cif_file (string): name of CIF file
-
-		mode (string): 'ionic' or 'volume'
-
-		spin_levels (list of strings): spin states to consider (defaults
-		to ['spin1','spin2'])
-
-		acc_levels (list of strings): accuracy levels to consider (defaults
-		to ['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe'])
-
-		niggli (bool): True/False if Niggli-reduction should be done (defaults
-		to niggli=True)
-
-		calcs (function): function to call respective calculator (defaults to
-		automatically importing from pymofscreen.default_calculators.calcs)
-
-	Returns:
-		best_mof (ASE Atoms objects): ASE Atoms object for optimized MOF
 	"""
 ```
 ## Example
 
-Now, that was a bit abstract. It's pretty easy in practice though! A minimal example for performing a volume relaxation is shown below. There is a function `pymofscreen.cif_handler.get_cif_files`, which will automatically make a list of the names of all CIF files in `mofpath`. Then, the `screener` is first initialized, and `run_screen` is performed for every CIF file. 
+Now, that was a bit abstract. It's pretty easy in practice though! A minimal example for performing a volume relaxation is shown below.
 
 ```python
 from pymofscreen.cif_handler import get_cif_files
 from pymofscreen.screen import screener
 
 #Set up paths
-mofpath = 'PathToCIFs'
-basepath = 'PathToStoreResults'
-submit_script = 'PathToSubmitScript'
+mofpath = '/path/to/my/CIFs/'
+basepath = '/path/to/store/output/'
+submit_script = '/path/to/submission/script/submit.sh'
 
 #Get CIF files
 cif_files = get_cif_files(mofpath)
@@ -111,13 +85,13 @@ from pymofscreen.screen import screener
 from pymofscreen.default_calculators import defaults
 
 #Set up paths
-mofpath = 'PathToCIFs'
-basepath = 'PathToStoreResults'
-submit_script = 'PathToSubmitScript'
+mofpath = '/path/to/my/CIFs/'
+basepath = '/path/to/store/output/'
+submit_script = '/path/to/submission/script/submit.sh'
 
 #Define defaults
-defaults['xc'] = 'M06L'
-defaults['ivdw'] = 11
+defaults['xc'] = 'BEEF-vdW'
+defaults['ivdw'] = 0
 defaults['ediffg'] = -0.02 #and so on...
 
 #Get CIF files
@@ -131,25 +105,23 @@ for cif_file in cif_files:
 	mof = s.run_screen(cif_file,'volume')
 ```
 
-The parameters in the `defaults` dictionary are used in the `pymofscreen.default_calculators.calcs` function, which we suggest looking at before running PyMOFScreen for the first time. The `pymofscreen.default_calculators.calcs` function defines each job type previously specified in `acc_levels` within `run_screen`. For instance, it defines `isif2_lowacc` as a low accuracy ionic relaxation and `final_spe` as a high accuracy, single point energy calculation using the parameters stored in `defaults`. The job specifications and parameters can be freely changed using any of [ASE's parameters for VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
+The parameters in the `defaults` dictionary are used in the `pymofscreen.default_calculators.calcs` function, which we suggest looking at before running PyMOFScreen for the first time. The `pymofscreen.default_calculators.calcs` function defines each job type previously specified in `acc_levels` and can be modified directly, if desired. The job specifications and parameters can be freely changed using any of [ASE's parameters for VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
 
 ## Setup
 
 ### Installing PyMOFScreen
 
 1. PyMOFScreen requires [Python](https://www.python.org/) 3.6 or newer. If you do not already have Python installed, the easiest option is to download the [Anaconda](https://www.anaconda.com/download/) distribution.
-2. Download or clone the PyMOFScreen repository and run `pip install -r requirements.txt` followed by `pip install .` from the PyMOFScreen base directory. This will install PyMOFScreen and the required dependencies (rASE, Pymatgen).
+2. Download or clone the PyMOFScreen repository and run `pip install -r requirements.txt` followed by `pip install .` from the PyMOFScreen base directory. This will install PyMOFScreen and the required dependencies.
+3. Since PyMOFscreen is built on [ASE](https://wiki.fysik.dtu.dk/ase/), you must make sure that your `VASP_PP_PATH` is set appropriately, as described [here](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
+4. PyMOFScreen requires that VASP is installed on your compute cluster. The VASP build must be compiled with [VTSTools](http://theory.cm.utexas.edu/vtsttools/index.html) and must include both gamma-point only and standard builds. Follow the `compute_environ` instructions below to set up PyMOFScreen to run on your compute environment.
 
 ### Required Dependencies
 
-PyMOFScreen requires the following Python packages. Both are automatically installed by using `pip install -r requirements.txt`, but if you're curious, the details are below:
-1. A slightly modified build of [ASE](https://wiki.fysik.dtu.dk/ase/) 3.16.2 or newer. The required modification adds support for checking if a VASP job has failed due to SCF convergence issues (via `atoms.calc.scf_converged`) and if it has reached the maximum number of ionic steps (via `atoms.calc.nsw_converged`). The custom build, denoted rASE, can be found [at this link](https://github.com/arosen93/rASE). Alternatively, you can directly patch `vasp.py` in `ase/ase/calculators/vasp/vasp.py` using the `vasp.py` script found [here](https://github.com/arosen93/rASE/blob/master/ase/calculators/vasp/vasp.py). Regardless, ensure that the `VASP_PP_PATH` environment variable is set according to the details [here](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
-2. [Pymatgen](http://pymatgen.org/) 2018.5.22 or newer. This is required for making primitive unit cells and generating automatic k-point grids but is technically optional if neither feature is required.
-
-PyMOFScreen also requires that VASP is installed on your compute cluster. The VASP build must be compiled with [VTSTools](http://theory.cm.utexas.edu/vtsttools/index.html) and must include both gamma-point only and standard builds. Follow the `compute_environ` instructions below to set up PyMOFScreen to run on your compute environment.
+PyMOFScreen will automatically install all the dependencies for you with the `pip install -r requirements.txt` command, but if you wish to do this manually or encounter issues, the required dependencies are as follows:
+1. A slightly modified build of [ASE](https://wiki.fysik.dtu.dk/ase/) 3.16.2 or newer. The required modification adds support for checking if a VASP job has failed due to SCF convergence issues (via `atoms.calc.scf_converged`) and if it has reached the maximum number of ionic steps (via `atoms.calc.nsw_converged`). The custom build, denoted rASE, can be found [at this link](https://github.com/arosen93/rASE). Alternatively, you can directly patch `vasp.py` in `ase/ase/calculators/vasp/vasp.py` using the `vasp.py` script found [here](https://github.com/arosen93/rASE/blob/master/ase/calculators/vasp/vasp.py). 
+2. [Pymatgen](http://pymatgen.org/) 2018.5.22 or newer. This is required for making primitive unit cells and generating automatic k-point grids but is technically optional if neither feature is desired.
 
 ### Compute Environments
 
-Every compute environment is unique, with different ways to run VASP and different job submission systems. To address this, the `pymofscreen/compute_environ` file must be altered. Templates have been provided for Quest at Northwestern, Cori at NERSC, Stampede2 at TACC, and Thunder at AFRL that you can uncomment as needed. If you are using another machine, follow the instructions below.
-
-In `compute_environ.get_nprocs`, the variable `nprocs` must be able to determine the number of processors for a given job from the submission script. In `compute_environ.choose_vasp_version`, you must inform PyMOFScreen how to properly run VASP on the given machine (i.e. how to correctly set up ASE's `run_vasp.py` file). See [here](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html) for details of the `run_vasp.py` file that ASE requires. Generally, you will just need to tell `choose_vasp_version` the module name of VASP, the names of the executables for the gamma-point and standard versions of the VTST-enabled VASP builds, and how to run VASP on the given machine.
+Every compute environment is unique, with different ways to run VASP and different job submission systems. To address this, the `/pymofscreen/compute_environ.py` file must be altered before compiling PyMOFScreen. A variety of templates have been provided for you to make it easier to install with different job schedulers. In the end, the variable `nprocs` must be able to determine the number of processors for a given job from the submission script. In addition, `choose_vasp_version`, informs PyMOFScreen how to properly run VASP on the given machine (i.e. how to correctly set up ASE's `run_vasp.py` file). See [here](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html) for details of the `run_vasp.py` file that ASE requires.
