@@ -19,13 +19,6 @@ To get started, sample scripts are provided in `/examples` and include:
 
 ## The screener
 
-The main tool to initialize a screening workflow is the `pymofscreen.screener` class. At the bare minimum, you must provide it the following arguments and keywords:
-	1. `basepath`: The base directory where the DFT screening results should be stored. The results are stored in `/basepath/results`, and any errors are stored in `/basepath/errors`.
-	2. `mofpath`: The path where the MOF CIF files are located.
-	3. `kpts_path` and/or `kppas`: If `kpts_path` is set to `auto`, PyMOFScreen will automatically generate a kpoint grid using the k-points per atom (KPPA) specified via the `kppas` keyword argument. The `kppas` argument should be a list with two entries: the low- and high-accuracy KPPAs to use (defaults to [100,1000]). Alternatively, one can provide a text file of all the desired k-points, specifying the path explicitly via `kpts_path` (see the `/examples` folder for an example k-points file.)
-	4. `submit_script`: The name of the job submission script.
-	5. `stdout_file`: The name of the standard output.
-
 ```python
 class screener():
 	"""
@@ -34,7 +27,19 @@ class screener():
 	def __init__(self,basepath,mofpath=None,kpts_path='Auto',kppas=None,
 		submit_script=None,stdout_file=None):
 ```
+The main tool to initialize a screening workflow is the `pymofscreen.screener` class. At the bare minimum, you must provide it the following arguments and keywords:
+	1. `basepath`: The base directory where the DFT screening results should be stored. The results are stored in `/basepath/results`, and any errors are stored in `/basepath/errors`.
+	2. `mofpath`: The path where the MOF CIF files are located.
+	3. `kpts_path` and/or `kppas`: If `kpts_path` is set to `auto`, PyMOFScreen will automatically generate a kpoint grid using the k-points per atom (KPPA) specified via the `kppas` keyword argument. The `kppas` argument should be a list with two entries: the low- and high-accuracy KPPAs to use (defaults to [100,1000]). Alternatively, one can provide a text file of all the desired k-points, specifying the path explicitly via `kpts_path` (see the `/examples` folder for an example k-points file.)
+	4. `submit_script`: The name of the job submission script.
+	5. `stdout_file`: The name of the standard output.
 
+```python
+def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
+	"""
+	Run high-throughput ionic or volume relaxations
+	"""
+```
 Within the `screener` class is a function named `run_screen`. It informs the `screener` what type of job should be run and on what CIF file. Generally, only two parameters need to be changed:
 	1. `cif_file`: The name of the CIF file to optimize.
 	2. `mode`: The type of job to run, which can be either `mode='volume'` or `mode='ionic'`.
@@ -45,12 +50,6 @@ There are a few additional, optional paremeters:
 	3. `niggli`: By default, it is set to `niggli=True` and tells PyMOFScreen to make a Niggli-reduced cell of your input file before running. This can be disabled with `niggli=False`.
 	4. `calcs`. This is series of ASE calculators that correspond to each entry in `acc_levels`. This automatically pulls the calculators from `pymofscreen.default_calculators.calcs`.
 
-```python
-def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
-	"""
-	Run high-throughput ionic or volume relaxations
-	"""
-```
 ## Example
 
 Now, that was a bit abstract. It's pretty easy in practice though! A minimal example for performing a volume relaxation is shown below.
