@@ -1,8 +1,13 @@
 import numpy as np
 import os
-import pymatgen as pm
-from pymatgen.io.cif import CifParser
-from pymatgen.io.vasp.inputs import Kpoints
+try:
+	import pymatgen as pm
+	from pymatgen.io.cif import CifParser
+	from pymatgen.io.vasp.inputs import Kpoints
+	has_pm = True
+except:
+	has_pm = False
+	pass
 
 def get_kpts(screener,cif_file,level):
 	"""
@@ -27,7 +32,7 @@ def get_kpts(screener,cif_file,level):
 	if not mofpath:
 		mofpath = ''
 		
-	if kpts_path == 'Auto':
+	if kpts_path == 'Auto' and has_pm:
 
 		if level == 'low':
 			kppa = kppas[0]
@@ -48,7 +53,8 @@ def get_kpts(screener,cif_file,level):
 			gamma = True
 		else:
 			gamma = None
-
+	elif kpts_path == 'Auto' and not has_pm:
+		raise ValueError('Pymatgen not installed. Please provide a kpts file.')
 	else:
 		old_cif_name = cif_file.split('.cif')[0].split('_')[0]
 		infile = open(kpts_path,'r')

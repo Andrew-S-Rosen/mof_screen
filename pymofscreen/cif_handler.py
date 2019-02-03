@@ -1,9 +1,15 @@
 import os
 from ase.io import read, write
 import numpy as np
-import pymatgen as pm
-from pymatgen.io.cif import CifParser
 from pymofscreen.writers import pprint
+try:
+	import pymatgen as pm
+	from pymatgen.io.cif import CifParser
+	has_pm = True
+except:
+	no_pm = False
+	import warnings
+	pass
 
 def get_cif_files(mofpath,skip_mofs=None):
 	"""
@@ -48,7 +54,7 @@ def cif_to_mof(filepath,niggli):
 	"""
 
 	tol = 0.8
-	if niggli:
+	if niggli and has_pm:
 		if '.cif' in os.path.basename(filepath):
 			parser = CifParser(filepath)
 			pm_mof = parser.get_structures(primitive=True)[0]
@@ -57,6 +63,8 @@ def cif_to_mof(filepath,niggli):
 		pm_mof.to(filename='POSCAR')
 		mof = read('POSCAR')
 		write('POSCAR',mof)
+	elif niggli and not has_pm:
+		warnings.warn('Pymatgen not installed. Niggli set to False',Warning)
 	else:
 		mof = read(filepath)
 		write('POSCAR',mof)

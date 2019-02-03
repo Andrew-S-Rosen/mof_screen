@@ -142,9 +142,9 @@ The parameters in the `defaults` dictionary are used in the `pymofscreen.default
 
 ### Required Dependencies
 
-PyMOFScreen requires the following Python packages. Both are installed by using `pip install -r requirements.txt`.
-1. [Pymatgen](http://pymatgen.org/) 2018.5.22 or newer.
-2. A slightly modified build of [ASE](https://wiki.fysik.dtu.dk/ase/) 3.16.2 or newer. The required modification adds support for checking if a VASP job has failed due to SCF convergence issues (via `atoms.calc.scf_converged`) and if it has reached the maximum number of ionic steps (via `atoms.calc.nsw_converged`). The custom build, denoted rASE, can be found [at this link](https://github.com/arosen93/rASE). Alternatively, you can directly patch `vasp.py` in `ase/ase/calculators/vasp/vasp.py` using the `vasp.py` script found [here](https://github.com/arosen93/rASE/blob/master/ase/calculators/vasp/vasp.py). Regardless, ensure that the `VASP_PP_PATH` environment variable is set according to the details [here](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
+PyMOFScreen requires the following Python packages. Both are automatically installed by using `pip install -r requirements.txt`, but if you're curious, the details are below:
+1. A slightly modified build of [ASE](https://wiki.fysik.dtu.dk/ase/) 3.16.2 or newer. The required modification adds support for checking if a VASP job has failed due to SCF convergence issues (via `atoms.calc.scf_converged`) and if it has reached the maximum number of ionic steps (via `atoms.calc.nsw_converged`). The custom build, denoted rASE, can be found [at this link](https://github.com/arosen93/rASE). Alternatively, you can directly patch `vasp.py` in `ase/ase/calculators/vasp/vasp.py` using the `vasp.py` script found [here](https://github.com/arosen93/rASE/blob/master/ase/calculators/vasp/vasp.py). Regardless, ensure that the `VASP_PP_PATH` environment variable is set according to the details [here](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html).
+2. [Pymatgen](http://pymatgen.org/) 2018.5.22 or newer. This is required for making primitive unit cells and generating automatic k-point grids but is technically optional if neither feature is required.
 
 PyMOFScreen also requires that VASP is installed on your compute cluster. The VASP build must be compiled with [VTSTools](http://theory.cm.utexas.edu/vtsttools/index.html) and must include both gamma-point only and standard builds. Follow the `compute_environ` instructions below to set up PyMOFScreen to run on your compute environment.
 
