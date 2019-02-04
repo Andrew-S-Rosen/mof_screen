@@ -54,7 +54,7 @@ def choose_vasp_version(gpt_version,nprocs):
 	runvasp_file = open('run_vasp.py','w')
 
 	#Setup for A.S. Rosen on Quest
-	parallel_cmd = 'mpirun -n'
+	parallel_cmd = 'mpirun -n'+' '+str(nprocs)+' '
 	vasp_path = '/home/asr731/software/vasp_builds/bin/'
 	vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
 	module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
