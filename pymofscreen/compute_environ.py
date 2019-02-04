@@ -10,7 +10,7 @@ def get_nprocs(submit_script):
 		ppn (int): number of processors per node
 	"""
 
-	#Setup for MOAB at Quest
+	#Setup for MOAB
 	# with open(submit_script,'r') as rf:
 	# 	for line in rf:
 	# 		if 'nodes' in line or 'ppn' in line:
@@ -18,6 +18,17 @@ def get_nprocs(submit_script):
 	# 			nodes = int(line.split('nodes=')[1].split(':ppn=')[0])
 	# 			ppn = int(line.split('nodes=')[1].split(':ppn=')[1])
 	# nprocs = nodes*ppn
+
+	#Setup for SLURM
+	with open(submit_script,'r') as rf:
+		for line in rf:
+			if '-N' in line:
+				line = line.strip().replace(' ','')
+				nodes = int(line.split('-N')[1])
+			if '--ntasks-per-node' in line:
+				line = line.strip().replace(' ','')
+				ppn = int(line.split('=')[1])
+	nprocs = nodes*ppn
 
 	#Setup for SLURM at Cori/KNL
 	# with open(submit_script,'r') as rf:
@@ -33,17 +44,6 @@ def get_nprocs(submit_script):
 	# 		if 'SBATCH -N' in line:
 	# 			nodes = int(line.split('-N ')[1])
 	# ppn = 32
-	# nprocs = nodes*ppn
-
-	#Setup for SLURM at Stampede2
-	# with open(submit_script,'r') as rf:
-	# 	for line in rf:
-	# 		if '-N' in line:
-	# 			line = line.strip().replace(' ','')
-	# 			nodes = int(line.split('-N')[1])
-	# 		if '--ntasks-per-node' in line:
-	# 			line = line.strip().replace(' ','')
-	# 			ppn = int(line.split('=')[1])
 	# nprocs = nodes*ppn
 
 	#Setup for MOAB at Thunder/Mustang
@@ -70,10 +70,10 @@ def choose_vasp_version(gpt_version,nprocs):
 	runvasp_file = open('run_vasp.py','w')
 
 	#Setup for A.S. Rosen on Quest
-	# parallel_cmd = 'mpirun -n'
-	# vasp_path = '/home/asr731/software/vasp_builds/bin/'
-	# vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
-	# module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
+	parallel_cmd = 'mpirun -n'
+	vasp_path = '/home/asr731/software/vasp_builds/bin/'
+	vasp_ex = [vasp_path+'vasp_std',vasp_path+'vasp_gam']
+	module_cmd = 'module load mpi/openmpi-1.8.3-intel2013.2'
 
 	#Setup for Cori/KNL
 	# parallel_cmd = 'srun -n'+' '+str(nprocs)+' '
