@@ -30,22 +30,6 @@ def get_nprocs(submit_script):
 				ppn = int(line.split('=')[1])
 	nprocs = nodes*ppn
 
-	#Setup for SLURM at Cori/KNL
-	# with open(submit_script,'r') as rf:
-	# 	for line in rf:
-	# 		if 'SBATCH -N' in line:
-	# 			nodes = int(line.split('-N ')[1])
-	# ppn = 64
-	# nprocs = nodes*ppn
-
-	#Setup for SLURM at Cori/SKX
-	# with open(submit_script,'r') as rf:
-	# 	for line in rf:
-	# 		if 'SBATCH -N' in line:
-	# 			nodes = int(line.split('-N ')[1])
-	# ppn = 32
-	# nprocs = nodes*ppn
-
 	#Setup for MOAB at Thunder/Mustang
 	# with open(submit_script,'r') as rf:
 	# 	for line in rf:
