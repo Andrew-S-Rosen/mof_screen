@@ -9,7 +9,6 @@ try:
 except:
 	no_pm = False
 	import warnings
-	pass
 
 def get_cif_files(mofpath,skip_mofs=None):
 	"""

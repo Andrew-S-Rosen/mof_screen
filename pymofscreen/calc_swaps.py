@@ -1,4 +1,5 @@
 from pymofscreen.default_calculators import defaults
+
 def update_calc(calc,calc_swaps):
 	"""
 	Update a calculator based on pre-defined "swaps"

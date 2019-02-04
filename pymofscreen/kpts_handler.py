@@ -7,7 +7,6 @@ try:
 	has_pm = True
 except:
 	has_pm = False
-	pass
 
 def get_kpts(screener,cif_file,level):
 	"""
