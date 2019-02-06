@@ -77,7 +77,7 @@ for cif_file in cif_files:
 	mof = s.run_screen(cif_file,'volume')
 ```
 
-## Defaults
+## VASP Parameters
 
 Of course, it is essential to specify default parameters that should be used in VASP, such as the exchange-correlation functional, convergence criteria, and so on. This is done by importing `pymofscreen.default_calculators.defaults` and making modifications to the default parameters in the `defaults` dictionary. An example is shown below.
 
