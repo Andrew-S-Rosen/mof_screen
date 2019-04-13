@@ -48,7 +48,7 @@ Within the `screener` class is a function named `run_screen`. It informs the `sc
 
 There are a few additional, optional paremeters:
 
-3. `spin_levels`: By default, it is set to `spin_levels=['spin1','spin2']`, which tells PyMOFScreen to run a high-spin job followed by a low-spin job.
+3. `spin_levels`: By default, it is set to `spin_levels=['high','low']`, which tells PyMOFScreen to run a high-spin job followed by a low-spin job.
 4. `acc_levels`: By default, it is set to `acc_levels=['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']` and is the list of jobs to run for each MOF.
 5. `niggli`: By default, it is set to `niggli=True` and tells PyMOFScreen to make a Niggli-reduced cell of your input file before running. This can be disabled with `niggli=False`.
 6. `calcs`. This is series of ASE calculators that correspond to each entry in `acc_levels`. This automatically pulls the calculators from `pymofscreen.default_calculators.calcs`.
