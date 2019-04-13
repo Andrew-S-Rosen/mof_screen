@@ -199,11 +199,11 @@ def prep_next_run(workflow):
 	acc_levels = workflow.acc_levels
 	acc_level = acc_levels[workflow.run_i]
 	refcode = workflow.refcode
-	spin_level = workflow.spin_level
+	spin_label = workflow.spin_label
 	basepath = workflow.basepath
-	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_label)
 	outcarpath = os.path.join(success_path,'OUTCAR')
-	errorpath = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
+	errorpath = os.path.join(basepath,'errors',refcode,acc_level,spin_label)
 
 	if os.path.exists(errorpath):
 		mof = None
@@ -217,9 +217,9 @@ def prep_new_run(workflow):
 	acc_levels = workflow.acc_levels
 	acc_level = acc_levels[workflow.run_i-1]
 	refcode = workflow.refcode
-	spin_level = workflow.spin_level
+	spin_label = workflow.spin_label
 	basepath = workflow.basepath
-	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_label)
 	outcarpath = os.path.join(success_path,'OUTCAR')
 	incarpath = os.path.join(success_path,'INCAR')
 

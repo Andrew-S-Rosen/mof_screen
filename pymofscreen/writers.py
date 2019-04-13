@@ -17,15 +17,15 @@ def write_success(workflow,neb=False):
 	Args:
 		workflow (class): pymofscreen.screen_phases.worfklow class
 	"""
-	spin_level = workflow.spin_level
+	spin_label = workflow.spin_label
 	acc_level = workflow.acc_levels[workflow.run_i]
-	pprint('SUCCESS: '+spin_level+', '+acc_level)
+	pprint('SUCCESS: '+spin_label+', '+acc_level)
 	refcode = workflow.refcode
 	basepath = workflow.basepath
 	vasp_files = workflow.vasp_files
 	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
 	if not neb:
-		success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+		success_path = os.path.join(basepath,'results',refcode,acc_level,spin_label)
 	elif neb:
 		success_path = os.path.join(basepath,'results',refcode,acc_level)
 	if not os.path.exists(success_path):
@@ -61,9 +61,9 @@ def write_errors(workflow,mof,neb=False):
 		
 		mof (ASE Atoms object): ASE Atoms object
 	"""
-	spin_level = workflow.spin_level
+	spin_label = workflow.spin_label
 	acc_level = workflow.acc_levels[workflow.run_i]
-	pprint('ERROR: '+spin_level+', '+acc_level+' failed')
+	pprint('ERROR: '+spin_label+', '+acc_level+' failed')
 	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
 	if acc_level != 'scf_test' and 'neb' not in acc_level:
 		if mof is None:
@@ -74,9 +74,9 @@ def write_errors(workflow,mof,neb=False):
 	basepath = workflow.basepath
 	vasp_files = workflow.vasp_files
 	if not neb:
-		error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
+		error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_label)
 	elif neb:
-		error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_level)
+		error_path = os.path.join(basepath,'errors',refcode,acc_level,spin_label)
 	if not os.path.exists(error_path):
 		os.makedirs(error_path)
 	if not neb:

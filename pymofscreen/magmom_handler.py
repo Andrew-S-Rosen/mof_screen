@@ -58,58 +58,68 @@ def set_initial_magmoms(mof,spin_level):
 	Returns:
 		mof (ASE Atoms object): MOF structure with initial magmoms
 	"""
-	spin_level = spin_level.lower()
-	mag_indices = get_mag_indices(mof)
-	mof.set_initial_magnetic_moments(np.zeros(len(mof)))
-	AFM_cutoff = 5
 
-	if 'afm' not in spin_level:
-		for mag_idx in mag_indices:
-			mag_number = mof[mag_idx].number
-			if spin_level == 'high' or spin_level == 'spin1':
-				if mag_number in dblock_metals:
-					mof[mag_idx].magmom = 5.0
-				elif mag_number in fblock_metals:
-					mof[mag_idx].magmom = 7.0
-				elif mag_number in poor_metals:
+	if isinstance(spin_level,list):
+		if len(spin_level) != len(mof):
+			raise ValueError('Magmom list is incompatible with number of atoms')
+		mof.set_initial_magnetic_moments(spin_level)
+
+	elif isinstance(spin_level,str):
+		spin_level = spin_level.lower()
+		mag_indices = get_mag_indices(mof)
+		mof.set_initial_magnetic_moments(np.zeros(len(mof)))
+
+		if 'afm' not in spin_level:
+			for mag_idx in mag_indices:
+				mag_number = mof[mag_idx].number
+				if spin_level == 'high':
+					if mag_number in dblock_metals:
+						mof[mag_idx].magmom = 5.0
+					elif mag_number in fblock_metals:
+						mof[mag_idx].magmom = 7.0
+					elif mag_number in poor_metals:
+						mof[mag_idx].magmom = 0.1
+					else:
+						raise ValueError('Metal not properly classified')
+				elif spin_level == 'low':
 					mof[mag_idx].magmom = 0.1
 				else:
-					raise ValueError('Metal not properly classified')
-			elif spin_level == 'low' or spin_level == 'spin2':
-				mof[mag_idx].magmom = 0.1
-			else:
-				raise ValueError('Undefined spin level')
-	elif spin_level == 'afm_high':
-		Mi = mag_indices[0]
-		M_distances = mof.get_distances(Mi,mag_indices,mic=True,vector=False).tolist()
-		mag_indices = [mag_indices[i] for i in np.argsort(M_distances).tolist()]
-		mags = copy(mag_indices)
-		sign = 1
-		del mags[0]
-		for i, mag_idx in enumerate(mag_indices):
-			if i != 0:
-				M_distances = mof.get_distances(Mi,mags,mic=True,vector=False).tolist()
-				min_idx = np.argmin(M_distances)
-				Mj = mags[min_idx]
-				d = M_distances[min_idx]
-				if d <= AFM_cutoff:
-					sign = -sign
+					raise ValueError('Undefined spin level')
+		elif spin_level == 'afm_high':
+			AFM_cutoff = 5
+			Mi = mag_indices[0]
+			M_distances = mof.get_distances(Mi,mag_indices,mic=True,vector=False).tolist()
+			mag_indices = [mag_indices[i] for i in np.argsort(M_distances).tolist()]
+			mags = copy(mag_indices)
+			sign = 1
+			del mags[0]
+			for i, mag_idx in enumerate(mag_indices):
+				if i != 0:
+					M_distances = mof.get_distances(Mi,mags,mic=True,vector=False).tolist()
+					min_idx = np.argmin(M_distances)
+					Mj = mags[min_idx]
+					d = M_distances[min_idx]
+					if d <= AFM_cutoff:
+						sign = -sign
+					else:
+						sign = 1
+					Mi = Mj
+					mags.remove(Mj)
+					del M_distances[min_idx]
+				mag_number = mof[mag_idx].number
+				if mag_number in dblock_metals:
+					mof[mag_idx].magmom = sign*5.0
+				elif mag_number in fblock_metals:
+					mof[mag_idx].magmom = sign*7.0
+				elif mag_number in poor_metals:
+					mof[mag_idx].magmom = sign*0.1
 				else:
-					sign = 1
-				Mi = Mj
-				mags.remove(Mj)
-				del M_distances[min_idx]
-			mag_number = mof[mag_idx].number
-			if mag_number in dblock_metals:
-				mof[mag_idx].magmom = sign*5.0
-			elif mag_number in fblock_metals:
-				mof[mag_idx].magmom = sign*7.0
-			elif mag_number in poor_metals:
-				mof[mag_idx].magmom = sign*0.1
-			else:
-				raise ValueError('Metal not properly classified')
+					raise ValueError('Metal not properly classified')
+		else:
+			raise ValueError('Undefined AFM spin level')
+
 	else:
-		raise ValueError('Undefined AFM spin level')
+		raise TypeError('spin_level has wrong type')
 
 	return mof
 
@@ -237,14 +247,14 @@ def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
 			old_mof_mag = old_mof.get_magnetic_moments()[mag_indices]
 		else:
 			old_mof_mag = [0]*len(mag_indices)
-		mag_tol = 0.05
+		mag_tol = 0.1
 		if np.sum(np.abs(mof_mag - old_mof_mag) >= mag_tol) == 0:
 			pprint('Skipping rest because '+current_spin+' converged to '+prior_spin)
 			return False
 
 	return True
 
-def check_if_skip_low_spin(screener,mof,refcode,spin_level):
+def check_if_skip_low_spin(screener,mof,refcode,spin_label):
 	"""
 	Check if low spin job should be skipped
 	Args:
@@ -254,7 +264,7 @@ def check_if_skip_low_spin(screener,mof,refcode,spin_level):
 
 		refcode (string): name of MOF
 
-		spin_level (string): current spin level
+		spin_label (string): current spin label
 
 	Returns:
 		skip_low_spin (bool): True if low spin should be skipped
@@ -262,7 +272,7 @@ def check_if_skip_low_spin(screener,mof,refcode,spin_level):
 	acc_levels = screener.acc_levels
 	acc_level = acc_levels[-1]
 	basepath = screener.basepath
-	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_level)
+	success_path = os.path.join(basepath,'results',refcode,acc_level,spin_label)
 	incarpath = os.path.join(success_path,'INCAR')
 	skip_low_spin = False
 

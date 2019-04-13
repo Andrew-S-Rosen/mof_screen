@@ -60,8 +60,10 @@ class screener():
 
 			mode (string): 'ionic' or 'volume'
 
-			spin_levels (list of strings): spin states to consider (defaults
-			to ['spin1','spin2'])
+			spin_levels (list of lists or list of strings): spin states to consider. If provided
+			as a list of lists, each sub-list represents the initial magmom for each atom
+			in cif_file. If a list of string, the strings must be 'high', 'low', or 'AFM_high'
+			to use pre-set initial magmoms (defaults to ['high','low']) 
 
 			acc_levels (list of strings): accuracy levels to consider (defaults
 			to ['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe'])
@@ -104,7 +106,7 @@ class screener():
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
 		if spin_levels is None:
-			spin_levels = ['spin1','spin2']
+			spin_levels = ['high','low']
 		self.spin_levels = spin_levels
 
 		#Make sure MOF isn't running on other process
@@ -132,22 +134,24 @@ class screener():
 		#Initialize variables
 		E = np.inf
 		mof = None
+		prior_spin = None
+		spin_labels = ['spin'+str(i+1) for i in spin_levels]
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
 
-			pprint('***STARTING '+refcode+': '+spin_level+'***')
+			spin_label = spin_labels[i]
+			self.spin_label = spin_label
+			pprint('***STARTING '+refcode+': '+spin_label+'***')
 
 			#Check if spin state should be skipped
-			if spin_level != spin_levels[0]:
-				prior_spin = spin_levels[i-1]
-			else:
-				prior_spin = None
 			if i > 0:
-				skip_low_spin = check_if_skip_low_spin(self,mof,refcode,prior_spin)
-				if (prior_spin == 'spin1' or prior_spin == 'high_spin') and skip_low_spin:
-					pprint('Skipping '+spin_level+' run')
-					continue
+				prior_spin = spin_labels[i-1]
+				if prior_spin == 'high':
+					skip_low_spin = check_if_skip_low_spin(self,mof,refcode,prior_spin)
+					if skip_low_spin:
+						pprint('Skipping low spin due to low magmoms in prior run')
+						continue
 			same_spin = False
 
 			#Set up workflow object
@@ -172,7 +176,7 @@ class screener():
 						return None
 
 					if i > 0:
-						is_new_spin = check_if_new_spin(self,mof,refcode,acc_level,spin_level)
+						is_new_spin = check_if_new_spin(self,mof,refcode,acc_level,spin_label)
 						if not is_new_spin:
 							same_spin = True
 							break
@@ -254,9 +258,8 @@ class screener():
 		self.calcs = calculators
 		basepath = self.basepath
 		self.niggli = False
-		self.spin_levels = spin_levels
 		if spin_levels is None:
-			spin_levels = ['spin1','spin2']
+			spin_levels = ['high','low']
 		self.spin_levels = spin_levels
 		if acc_levels is None:
 			acc_levels = ['scf_test','cineb_lowacc','dimer_lowacc','dimer_medacc',
@@ -297,22 +300,24 @@ class screener():
 		#Initialize variables
 		E = np.inf
 		mof = None
+		prior_spin = None
+		spin_labels = ['spin'+str(i+1) for i in spin_levels]
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
 
-			pprint('***STARTING '+name+': '+spin_level+'***')
+			spin_label = spin_labels[i]
+			self.spin_label = spin_label
+			pprint('***STARTING '+name+': '+spin_label+'***')
 
 			#Check if spin state should be skipped
-			if spin_level != spin_levels[0]:
-				prior_spin = spin_levels[i-1]
-			else:
-				prior_spin = None
 			if i > 0:
-				skip_low_spin = check_if_skip_low_spin(self,mof,name,prior_spin)
-				if (prior_spin == 'spin1' or prior_spin == 'high_spin') and skip_low_spin:
-					pprint('Skipping '+spin_level+' run')
-					continue
+				prior_spin = spin_labels[i-1]
+				if prior_spin == 'high':
+					skip_low_spin = check_if_skip_low_spin(self,mof,name,prior_spin)
+					if skip_low_spin:
+						pprint('Skipping low spin due to low magmoms in prior run')
+						continue
 			same_spin = False
 
 			#Set up workflow object
@@ -355,15 +360,15 @@ class screener():
 						os.remove(working_cif_path)
 						return None
 					result_path = os.path.join(basepath,'results',name)
-					newmodecar = os.path.join(result_path,acc_levels[-2],spin_level,'NEWMODECAR')
-					newmodecar_spe = os.path.join(result_path,acc_level,spin_level,'NEWMODECAR')
+					newmodecar = os.path.join(result_path,acc_levels[-2],spin_label,'NEWMODECAR')
+					newmodecar_spe = os.path.join(result_path,acc_level,spin_label,'NEWMODECAR')
 					copyfile(newmodecar,newmodecar_spe)
 
 				else:
 					raise ValueError('Unsupported accuracy level')
 
 				if acc_level == 'dimer_lowacc' and i > 0:
-					is_new_spin = check_if_new_spin(self,mof,name,acc_level,spin_level)
+					is_new_spin = check_if_new_spin(self,mof,name,acc_level,spin_label)
 					if not is_new_spin:
 						same_spin = True
 						break
