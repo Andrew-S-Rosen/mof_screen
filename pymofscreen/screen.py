@@ -107,6 +107,8 @@ class screener():
 		self.acc_levels = acc_levels
 		if spin_levels is None:
 			spin_levels = ['high','low']
+		if not isinstance(spin_levels,list):
+			spin_levels = [spin_levels] 
 		self.spin_levels = spin_levels
 
 		#Make sure MOF isn't running on other process
@@ -260,6 +262,8 @@ class screener():
 		self.niggli = False
 		if spin_levels is None:
 			spin_levels = ['high','low']
+		if not isinstance(spin_levels,list):
+			spin_levels = [spin_levels] 
 		self.spin_levels = spin_levels
 		if acc_levels is None:
 			acc_levels = ['scf_test','cineb_lowacc','dimer_lowacc','dimer_medacc',
