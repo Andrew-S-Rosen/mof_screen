@@ -135,7 +135,7 @@ class screener():
 		E = np.inf
 		mof = None
 		prior_spin = None
-		spin_labels = ['spin'+str(i+1) for i in spin_levels]
+		spin_labels = ['spin'+str(i+1) for i,j in enumerate(spin_levels)]
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
@@ -301,7 +301,7 @@ class screener():
 		E = np.inf
 		mof = None
 		prior_spin = None
-		spin_labels = ['spin'+str(i+1) for i in spin_levels]
+		spin_labels = ['spin'+str(i+1) for i,j in enumerate(spin_levels)]
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
