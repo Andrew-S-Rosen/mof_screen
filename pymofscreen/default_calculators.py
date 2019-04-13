@@ -35,8 +35,10 @@ def calcs(calc_name):
 		calc (dict): ASE Vasp calculator dictionary
 	"""
 	if calc_name == 'scf_test':
+		if 'xc_start' not in defaults:
+			defaults['xc_start'] = defaults['xc']
 		calc = Vasp(
-			xc=defaults['xc'],
+			xc=defaults['xc_start'],
 			setups=defaults['setups'],
 			ivdw=defaults['ivdw'],
 			prec=defaults['prec'],
