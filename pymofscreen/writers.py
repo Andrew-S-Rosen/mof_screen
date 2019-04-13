@@ -32,7 +32,7 @@ def write_success(workflow,neb=False):
 		os.makedirs(success_path)
 	if not neb:
 		if acc_level == 'final_spe':
-			files_to_copy = vasp_files+['DOSCAR','AECCAR0','AECCAR2']
+			files_to_copy = vasp_files+['DOSCAR','AECCAR0','AECCAR2','vasprun.xml']
 		elif 'dimer' in acc_level:
 			files_to_copy = vasp_files+['DIMCAR','MODECAR','NEWMODECAR']
 		else:
