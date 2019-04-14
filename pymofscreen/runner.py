@@ -43,9 +43,6 @@ def mof_run(workflow,mof,calc,kpts,images=None,force_nupdown=False):
 		init_mags = mof.get_initial_magnetic_moments()
 		summed_mags = np.sum(np.abs(init_mags))
 		nupdown = int(np.round(summed_mags,0))
-		if np.abs(nupdown-summed_mags) > 0.05:
-			print(nupdown,summed_mags)
-			raise ValueError('Forced NUPDOWN varies from initial magmoms by '+str(nupdown))
 		calc.int_params['nupdown'] = nupdown
 	elif workflow.nupdown is not None:
 		calc.int_params['nupdown'] = workflow.nupdown
