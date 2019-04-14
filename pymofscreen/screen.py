@@ -52,7 +52,7 @@ class screener():
 			self.kppas = kppas
 		prep_paths(basepath)
 
-	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calculators=None):
+	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calculators=None,nupdowns=None):
 		"""
 		Run high-throughput ionic or volume relaxations
 		Args:
@@ -74,6 +74,8 @@ class screener():
 			calculators (function): function to call respective calculator (defaults to
 			automatically importing from pymofscreen.default_calculators.calcs)
 
+			nupdowns (list of ints): value to set NUPDOWN (defaults to None)
+
 		Returns:
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized MOF
 		"""
@@ -82,8 +84,9 @@ class screener():
 		if calculators is None:
 			calculators = calcs
 		self.calcs = calculators
-		basepath = self.basepath
 		self.niggli = niggli
+		basepath = self.basepath
+
 		if mode == 'ionic':
 			if acc_levels is None:
 				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc',
@@ -105,11 +108,18 @@ class screener():
 		if 'scf_test' not in acc_levels:
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
+
 		if spin_levels is None:
 			spin_levels = ['high','low']
 		if not isinstance(spin_levels,list):
 			spin_levels = [spin_levels] 
 		self.spin_levels = spin_levels
+
+		if len(nupdowns) == 1 and nupdowns is None:
+			nupdowns = [None]*len(spin_levels)
+		elif nupdowns is not None and len(nupdowns) != len(spin_levels):
+			raise ValueError('Length of nupdowns must equal spin_levels')
+		self.nupdowns = nupdowns
 
 		#Make sure MOF isn't running on other process
 		if 'POSCAR_' in cif_file:
@@ -144,6 +154,7 @@ class screener():
 
 			spin_label = spin_labels[i]
 			self.spin_label = spin_label
+			self.nupdown = nupdowns[i]
 			pprint('***STARTING '+refcode+': '+spin_label+'***')
 
 			#Check if spin state should be skipped
@@ -226,7 +237,7 @@ class screener():
 		os.remove(working_cif_path)
 		return best_mof
 
-	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calculators=None):
+	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calculators=None,nupdowns=None):
 		"""
 		Run high-throughput TS calculation
 		Args:
@@ -258,13 +269,15 @@ class screener():
 		if calculators is None:
 			calculators = calcs
 		self.calcs = calculators
-		basepath = self.basepath
 		self.niggli = False
+		basepath = self.basepath
+
 		if spin_levels is None:
 			spin_levels = ['high','low']
 		if not isinstance(spin_levels,list):
 			spin_levels = [spin_levels] 
 		self.spin_levels = spin_levels
+
 		if acc_levels is None:
 			acc_levels = ['scf_test','cineb_lowacc','dimer_lowacc','dimer_medacc',
 			'dimer_highacc','final_spe']
@@ -273,6 +286,14 @@ class screener():
 		if 'scf_test' not in acc_levels:
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
+
+
+		if len(nupdowns) == 1 and nupdowns is None:
+			nupdowns = [None]*len(spin_levels)
+		elif nupdowns is not None and len(nupdowns) != len(spin_levels):
+			raise ValueError('Length of nupdowns must equal spin_levels')
+		self.nupdowns = nupdowns
+
 		kpts_path = self.kpts_path
 		if kpts_path == 'Auto' and cif_file is None:
 			raise ValueError('Specify a CIF file if using automatic KPPA')
@@ -312,6 +333,7 @@ class screener():
 
 			spin_label = spin_labels[i]
 			self.spin_label = spin_label
+			self.nupdown = nupdowns[i]
 			pprint('***STARTING '+name+': '+spin_label+'***')
 
 			#Check if spin state should be skipped

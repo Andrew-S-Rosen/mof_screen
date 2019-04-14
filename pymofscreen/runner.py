@@ -1,6 +1,7 @@
 import os
-from ase.io import read
 from copy import deepcopy
+import numpy as np
+from ase.io import read
 from ase.optimize import BFGSLineSearch
 from pymofscreen.calc_swaps import update_calc, check_nprocs
 from pymofscreen.error_handler import get_niter, get_error_msgs, update_calc_after_errors, continue_mof
@@ -8,7 +9,7 @@ from pymofscreen.compute_environ import choose_vasp_version
 from pymofscreen.janitor import clean_files
 from pymofscreen.magmom_handler import continue_magmoms
 
-def mof_run(workflow,mof,calc,kpts,images=None):
+def mof_run(workflow,mof,calc,kpts,images=None,force_nupdown=False):
 	"""
 	Run an atoms.get_potential_energy() calculation
 	Args:
@@ -21,6 +22,8 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 		kpts (list of ints): k-point grid
 
 		images (int): number of NEB images
+
+		force_nupdown (bool): force NUPDOWN to nearest int
 
 	Returns:
 		mof (ASE Atoms object): updated ASE Atoms object
@@ -35,6 +38,16 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 	stdout_file = workflow.stdout_file
 	calc_swaps = workflow.calc_swaps
 	gamma = workflow.kpts_dict['gamma']
+
+	if force_nupdown:
+		init_mags = mof.get_initial_magnetic_moments()
+		nupdown = round(np.sum(np.abs(init_mags)))
+		if np.abs(nupdown-init_mags) > 0.05:
+			raise ValueError('Forced NUPDOWN varies from initial magmoms')
+		calc.int_params['nupdown'] = nupdown
+	elif workflow.nupdown is not None:
+		calc.int_params['nupdown'] = workflow.nupdown
+
 	if sum(kpts) == 3:
 		gpt_version = True
 	else:
@@ -100,7 +113,7 @@ def mof_run(workflow,mof,calc,kpts,images=None):
 
 	return mof, calc_swaps
 
-def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
+def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05,force_nupdown=False):
 	"""
 	Run ASE BFGSLineSearch calculation
 	Args:
@@ -115,6 +128,8 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 		steps (int): maximum number of steps
 
 		fmax (int): force tolerance
+
+		force_nupdown (bool): force NUPDOWN to nearest int
 
 	Returns:
 		mof (ASE Atoms object): updated ASE Atoms object
@@ -131,6 +146,15 @@ def mof_bfgs_run(workflow,mof,calc,kpts,steps=100,fmax=0.05):
 	stdout_file = workflow.stdout_file
 	calc_swaps = workflow.calc_swaps
 	gamma = workflow.kpts_dict['gamma']
+
+	if force_nupdown:
+		init_mags = mof.get_initial_magnetic_moments()
+		nupdown = round(np.sum(np.abs(init_mags)))
+		if np.abs(nupdown-init_mags) > 0.05:
+			raise ValueError('Forced NUPDOWN varies from initial magmoms')
+		calc.int_params['nupdown'] = nupdown
+	elif workflow.nupdown is not None:
+		calc.int_params['nupdown'] = workflow.nupdown
 
 	if sum(kpts) == 3:
 		gpt_version = True

@@ -56,6 +56,7 @@ class workflows():
 		self.niggli = screener.niggli
 		self.calcs = screener.calcs
 		self.nprocs, self.ppn = get_nprocs(self.submit_script)
+		self.nupdown = screener.nupdown
 
 		clean_files(self.vasp_files+['CHG','AECCAR0','AECCAR1','AECCAR2'])
 
@@ -415,7 +416,7 @@ class workflows():
 			mof = prep_new_run(self)
 			manage_restart_files(prior_results_path)
 			pprint('Running '+spin_label+', '+acc_level)
-			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi)
+			mof,self.calc_swaps = mof_run(self,mof,calcs('final_spe'),kpts_hi,force_nupdown=True)
 			if mof is not None and mof.calc.scf_converged:
 				write_success(self)
 			else:
