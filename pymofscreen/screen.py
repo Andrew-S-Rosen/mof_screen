@@ -120,6 +120,8 @@ class screener():
 		elif nupdowns is not None and len(nupdowns) != len(spin_levels):
 			raise ValueError('Length of nupdowns must equal spin_levels')
 		self.nupdowns = nupdowns
+		spin_labels = ['spin'+str(i+1) for i,j in enumerate(spin_levels)]
+		self.spin_labels = spin_labels
 
 		#Make sure MOF isn't running on other process
 		if 'POSCAR_' in cif_file:
@@ -147,7 +149,6 @@ class screener():
 		E = np.inf
 		mof = None
 		prior_spin = None
-		spin_labels = ['spin'+str(i+1) for i,j in enumerate(spin_levels)]
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):
@@ -287,12 +288,13 @@ class screener():
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
 
-
 		if len(nupdowns) == 1 and nupdowns is None:
 			nupdowns = [None]*len(spin_levels)
 		elif nupdowns is not None and len(nupdowns) != len(spin_levels):
 			raise ValueError('Length of nupdowns must equal spin_levels')
 		self.nupdowns = nupdowns
+		spin_labels = ['spin'+str(i+1) for i,j in enumerate(spin_levels)]
+		self.spin_labels = spin_labels
 
 		kpts_path = self.kpts_path
 		if kpts_path == 'Auto' and cif_file is None:
@@ -326,7 +328,6 @@ class screener():
 		E = np.inf
 		mof = None
 		prior_spin = None
-		spin_labels = ['spin'+str(i+1) for i,j in enumerate(spin_levels)]
 
 		#for each spin level, optimize the structure
 		for i, spin_level in enumerate(spin_levels):

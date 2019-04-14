@@ -227,14 +227,14 @@ def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
 		True or False depending on if new spin converged to old spin
 	"""
 	basepath = screener.basepath
-	spin_levels = screener.spin_levels
+	spin_labels = screener.spin_labels
 	results_partial_path = os.path.join(basepath,'results',refcode,acc_level)
 	success_path = os.path.join(results_partial_path,current_spin)
 	incarpath = os.path.join(success_path,'INCAR')
 	mof = deepcopy(mof)
 	mof = continue_magmoms(mof,incarpath)
 
-	for prior_spin in spin_levels:
+	for prior_spin in spin_labels:
 		if prior_spin == current_spin:
 			continue
 		old_mof_path = os.path.join(results_partial_path,prior_spin,'OUTCAR')
