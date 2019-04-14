@@ -67,7 +67,10 @@ def update_calc(calc,calc_swaps):
 		
 		elif swap == 'posmap':
 			calc.exp_params['symprec'] = 1e-6
-		
+	
+		elif 'pwave' in swap:
+			calc.int_params['istart'] = 0
+
 		elif 'sigma=' in swap:
 			calc.float_params['sigma'] = float(swap.split('=')[-1])
 		

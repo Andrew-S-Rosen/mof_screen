@@ -108,6 +108,8 @@ def check_line_for_error(line,errormsg):
 		errormsg.append('ibzkpt')
 	elif 'internal error in subroutine SGRCON' in line:
 		errormsg.append('sgrcon')
+	elif 'plane wave coefficients changed' in line:
+		errormsg.append('pwave')
 	return errormsg
 
 def update_calc_after_errors(calc,calc_swaps,errormsg):
