@@ -9,7 +9,7 @@ A.S. Rosen, J.M. Notestein, R.Q. Snurr. "Identifying Promising Metal-Organic Fra
 
 ## What is PyMOFScreen?
 
-High-throughput computational catalysis involving MOFs is a tricky business. Their large unit cells, diverse structures, and widely varying compositions make it challenging to achieve both a robust and high-performing workflow with little human interactions. PyMOFScreen solves this problem through multi-stage structural optimizations, a robust selection of optimization algorithms that are chosen on-the-fly, automatic error-handling, and much more. In the Snurr group, we have used PyMOFScreen to screen hundreds of MOFs using periodic DFT in a fully automated fashion. To automate the adsorbate construction process, refer to our [MOF-Adsorbate-Initializer](https://github.com/arosen93/mof-adsorbate-initializer) code.
+High-throughput DFT involving MOFs is a tricky business. Their large unit cells, diverse structures, and widely varying compositions make it challenging to achieve both a robust and high-performing workflow with little human interactions. PyMOFScreen solves this problem through multi-stage structural optimizations, a robust selection of optimization algorithms that are chosen on-the-fly, automatic error-handling, and much more. In the Snurr group, we have used PyMOFScreen to screen hundreds of MOFs using periodic DFT in a fully automated fashion. To automate the adsorbate construction process, refer to our [MOF-Adsorbate-Initializer](https://github.com/arosen93/mof-adsorbate-initializer) code.
 
 ## Ready-to-Run Examples
 
@@ -27,31 +27,29 @@ class screener():
 	def __init__(self,basepath,mofpath=None,kpts_path='Auto',kppas=None,
 		submit_script=None,stdout_file=None):
 ```
-The main tool to initialize a screening workflow is the `pymofscreen.screener` class. At the bare minimum, you must provide it the following arguments and keywords:
+The main tool to initialize a screening workflow is the `pymofscreen.screener` class, which takes the following arguments and keywords:
 	
 1. `basepath`: The base directory where the DFT screening results should be stored. The results are stored in `/basepath/results`, and any errors are stored in `/basepath/errors`.
-2. `mofpath`: The path where the MOF CIF files are located.
-3. `kpts_path` and/or `kppas`: If `kpts_path` is set to `auto`, PyMOFScreen will automatically generate a kpoint grid using the k-points per atom (KPPA) specified via the `kppas` keyword argument. The `kppas` argument should be a list with two entries: the low- and high-accuracy KPPAs to use (defaults to [100,1000]). Alternatively, one can provide a text file of all the desired k-points, specifying the path explicitly via `kpts_path` (see the `/examples` folder for an example k-points file.)
-4. `submit_script`: The name of the job submission script.
-5. `stdout_file`: The name of the standard output.
+2. `mofpath`: The path where the starting MOF CIF files are located.
+3. `kpts_path` and/or `kppas`: If `kpts_path` is set to `Auto`, PyMOFScreen will automatically generate a k-point grid using the k-points per atom (KPPA) specified via the `kppas` keyword argument. The `kppas` argument should be a list with two entries consisting of the low- and high-accuracy KPPAs to use (defaults to `kppas=[100,1000]`). Alternatively, one leave `kppas=None` and instead provide a text file of the desired k-point grid for each CIF, specifying the path to this file via `kpts_path` (see the `/examples` folder for an example k-points file).
+4. `submit_script`: The name of the HPC job submission script.
+5. `stdout_file`: The name of the standard output file.
 
 ```python
-def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calcs=calcs):
+def run_screen(self,cif_file,mode,niggli=True,spin_levels=None,nupdowns=None,acc_levels=None,calculators=calcs):
 	"""
 	Run high-throughput ionic or volume relaxations
 	"""
 ```
-Within the `screener` class is a function named `run_screen`. It informs the `screener` what type of job should be run and on what CIF file. Generally, only two parameters need to be changed:
-	
+Within the `screener` class is a function named `run_screen`. It informs the `screener` what type of job should be run and on what CIF file. This function takes the following arguments and keywords:
+
 1. `cif_file`: The name of the CIF file to optimize.
-2. `mode`: The type of job to run, which can be either `mode='volume'` or `mode='ionic'`.
-
-There are a few additional, optional paremeters:
-
-3. `spin_levels`: By default, it is set to `spin_levels=['high','low']`, which tells PyMOFScreen to run a high-spin job followed by a low-spin job.
-4. `acc_levels`: By default, it is set to `acc_levels=['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']` and is the list of jobs to run for each MOF.
-5. `niggli`: By default, it is set to `niggli=True` and tells PyMOFScreen to make a Niggli-reduced cell of your input file before running. This can be disabled with `niggli=False`.
-6. `calcs`. This is series of ASE calculators that correspond to each entry in `acc_levels`. This automatically pulls the calculators from `pymofscreen.default_calculators.calcs`.
+2. `mode`: The type of job to run, which can be either `mode='volume'` or `mode='ionic'` for a volume or ionic relaxaxtion, respectively.
+3. `niggli`: By default, it is set to `niggli=True` and tells PyMOFScreen to make a Niggli-reduced cell of your input file before running. This can be disabled with `niggli=False`.
+4. `spin_levels`: This argument is used to set the desired spin states. By default, it is set to `spin_levels=['high','low']`, which tells PyMOFScreen to run a high-spin job followed by a low-spin job. Alternatively, a list of initial magnetic moments can be provided for each spin initialization to run. For instance, `spin_levels=[[0.0,0.0,1.0],[0.0,0.0,5.0]]` would tell PyMOFScreen to run two different spin state calculations, where the first job has initialized magnetic moments of [0,0,1] and the second has [0,0,5].
+5. `nupdowns`: This argument is used if the user wishes to force a given spin state. It defaults to `nupdowns=None`, which disables the keyword. If desired, `nupdowns` can be used in an analagous way to `spin_levels`, such that `nupdowns=[[0,0,1],[0,0,5]]` would ensure that NUPDOWN is set to 1 and 5 for the two spin state calculations, respectively.
+5. `acc_levels`: This is a list of strings representing each job type to perform and in what order (can consist of `scf_test`, `isif2_lowacc`, `isif2_highacc`, `isif3_lowacc`, `isif3_highacc`, or `final_spe`). Generally, this does not need to be changed and defaults to `acc_levels=['scf_test','isif2_lowacc','isif3_lowacc','isif3_highacc','final_spe`] for volume relaxations and `acc_levels=['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe']` for ionic relaxations.
+6. `calculators`. This is function containing the [ASE calculators](https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html) that are used to define the VASP parameters for each entry in `acc_levels`. By default, it will automatically pull the calculators from `pymofscreen.default_calculators.calcs`. This variable does not typically need to be modified.
 
 ## Example
 
@@ -79,7 +77,7 @@ for cif_file in cif_files:
 
 ## VASP Parameters
 
-Of course, it is essential to specify default parameters that should be used in VASP, such as the exchange-correlation functional, convergence criteria, and so on. This is done by importing `pymofscreen.default_calculators.defaults` and making modifications to the default parameters in the `defaults` dictionary. An example is shown below.
+Of course, it is essential to specify parameters such as the exchange-correlation functional, convergence criteria, and so on. This is most easily done by importing `pymofscreen.default_calculators.defaults` and making modifications to the default parameters in the `defaults` dictionary. An example is shown below.
 
 ```python
 from pymofscreen.cif_handler import get_cif_files

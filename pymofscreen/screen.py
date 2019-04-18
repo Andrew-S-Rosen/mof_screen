@@ -52,7 +52,7 @@ class screener():
 			self.kppas = kppas
 		prep_paths(basepath)
 
-	def run_screen(self,cif_file,mode,spin_levels=None,acc_levels=None,niggli=True,calculators=None,nupdowns=None):
+	def run_screen(self,cif_file,mode,niggli=True,spin_levels=None,nupdowns=None,acc_levels=None,calculators=None):
 		"""
 		Run high-throughput ionic or volume relaxations
 		Args:
@@ -60,21 +60,21 @@ class screener():
 
 			mode (string): 'ionic' or 'volume'
 
+			niggli (bool): True/False if Niggli-reduction should be done (defaults
+			to niggli=True)
+			
 			spin_levels (list of lists or list of strings): spin states to consider. If provided
 			as a list of lists, each sub-list represents the initial magmom for each atom
 			in cif_file. If a list of string, the strings must be 'high', 'low', or 'AFM_high'
 			to use pre-set initial magmoms (defaults to ['high','low']) 
 
+			nupdowns (list of ints): value to set NUPDOWN (defaults to None)
+
 			acc_levels (list of strings): accuracy levels to consider (defaults
 			to ['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe'])
 
-			niggli (bool): True/False if Niggli-reduction should be done (defaults
-			to niggli=True)
-
 			calculators (function): function to call respective calculator (defaults to
 			automatically importing from pymofscreen.default_calculators.calcs)
-
-			nupdowns (list of ints): value to set NUPDOWN (defaults to None)
 
 		Returns:
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized MOF
