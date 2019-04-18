@@ -183,7 +183,7 @@ class screener():
 						os.remove(working_cif_path)
 						return scf_pass
 
-				elif acc_level == 'isif2_lowacc' or (acc_level == 'isif2' and mode == 'volume_legacy'):
+				elif acc_level == 'isif2_lowacc':
 					mof = wf.isif2_lowacc()
 					if mof is None:
 						os.remove(working_cif_path)
@@ -201,7 +201,7 @@ class screener():
 						os.remove(working_cif_path)
 						return None
 
-				elif acc_level == 'isif2_highacc' or (acc_level == 'final' and 'legacy' in mode):
+				elif acc_level == 'isif2_highacc':
 					mof = wf.isif2_highacc()
 					if mof is None:
 						os.remove(working_cif_path)

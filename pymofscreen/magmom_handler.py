@@ -236,7 +236,7 @@ def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
 
 	for prior_spin in spin_labels:
 		if prior_spin == current_spin:
-			continue
+			break
 		old_mof_path = os.path.join(results_partial_path,prior_spin,'OUTCAR')
 		old_incar_path = os.path.join(results_partial_path,prior_spin,'INCAR')
 		mag_indices = get_mag_indices(mof)
@@ -251,7 +251,6 @@ def check_if_new_spin(screener,mof,refcode,acc_level,current_spin):
 		if np.sum(np.abs(mof_mag - old_mof_mag) >= mag_tol) == 0:
 			pprint('Skipping rest because '+current_spin+' converged to '+prior_spin)
 			return False
-
 	return True
 
 def check_if_skip_low_spin(screener,mof,refcode,spin_label):
