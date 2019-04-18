@@ -44,7 +44,7 @@ def run_screen(self,cif_file,mode,niggli=True,spin_levels=None,nupdowns=None,acc
 Within the `screener` class is a function named `run_screen`. It informs the `screener` what type of job should be run and on what CIF file. This function takes the following arguments and keywords:
 
 1. `cif_file`: The name of the CIF file to optimize.
-2. `mode`: The type of job to run, which can be either `mode='volume'` or `mode='ionic'` for a volume or ionic relaxaxtion, respectively.
+2. `mode`: The type of job to run, which can be either `'volume'` or `'ionic'` for a volume or ionic relaxaxtion, respectively.
 3. `niggli`: By default, it is set to `niggli=True` and tells PyMOFScreen to make a Niggli-reduced cell of your input file before running. This can be disabled with `niggli=False`.
 4. `spin_levels`: This argument is used to set the desired spin states. By default, it is set to `spin_levels=['high','low']`, which tells PyMOFScreen to run a high-spin job followed by a low-spin job. Alternatively, a list of initial magnetic moments can be provided for each spin initialization to run. For instance, `spin_levels=[[0.0,0.0,1.0],[0.0,0.0,5.0]]` would tell PyMOFScreen to run two different spin state calculations, where the first job has initialized magnetic moments of [0,0,1] and the second has [0,0,5].
 5. `nupdowns`: This argument is used if the user wishes to force a given spin state. It defaults to `nupdowns=None`, which disables the keyword. If desired, `nupdowns` can be used in an analagous way to `spin_levels`, such that `nupdowns=[[0,0,1],[0,0,5]]` would ensure that NUPDOWN is set to 1 and 5 for the two spin state calculations, respectively.
