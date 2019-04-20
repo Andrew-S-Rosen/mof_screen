@@ -91,18 +91,10 @@ class screener():
 			if acc_levels is None:
 				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc',
 				'isif2_highacc','final_spe']
-		elif mode == 'ionic_legacy':
-			if acc_levels is None:
-				acc_levels = ['scf_test','isif2_lowacc','isif2_medacc',
-				'final','final_spe']
 		elif mode == 'volume':
 			if acc_levels is None:
 				acc_levels = ['scf_test','isif2_lowacc','isif3_lowacc',
 				'isif3_highacc','final_spe']
-		elif mode == 'volume_legacy':
-			if acc_levels is None:
-				acc_levels = ['scf_test','isif2','isif3_lowacc',
-				'isif3_highacc','final','final_spe']
 		else:
 			raise ValueError('Unsupported DFT screening mode')
 		if 'scf_test' not in acc_levels:
