@@ -31,7 +31,7 @@ The main tool to initialize a screening workflow is the `pymofscreen.screener` c
 	
 1. `basepath`: The base directory where the DFT screening results should be stored. The results are stored in `/basepath/results`, and any errors are stored in `/basepath/errors`.
 2. `mofpath`: The path where the starting MOF CIF files are located.
-3. `kpts_path` and/or `kppas`: If `kpts_path` is set to `Auto`, PyMOFScreen will automatically generate a k-point grid using the k-points per atom (KPPA) specified via the `kppas` keyword argument. The `kppas` argument should be a list with two entries consisting of the low- and high-accuracy KPPAs to use (defaults to `kppas=[100,1000]`). Alternatively, one leave `kppas=None` and instead provide a text file of the desired k-point grid for each CIF, specifying the path to this file via `kpts_path` (see the `/examples` folder for an example k-points file).
+3. `kpts_path` and/or `kppas`: If `kpts_path` is set to `Auto`, PyMOFScreen will automatically generate a k-point grid using the k-points per atom (KPPA) specified via the `kppas` keyword argument. The `kppas` argument should be a list with two entries consisting of the low- and high-accuracy KPPAs to use (defaults to `kppas=[100,1000]`). Alternatively, one can set `kppas=None` and instead provide a text file of the desired k-point grid for each CIF, specifying the path to this file via `kpts_path` (see the `/examples` folder for an example k-points file).
 4. `submit_script`: The name of the HPC job submission script.
 5. `stdout_file`: The name of the standard output file.
 

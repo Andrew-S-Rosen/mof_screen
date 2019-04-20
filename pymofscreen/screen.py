@@ -115,7 +115,7 @@ class screener():
 			spin_levels = [spin_levels] 
 		self.spin_levels = spin_levels
 
-		if len(nupdowns) == 1 and nupdowns is None:
+		if nupdowns is None:
 			nupdowns = [None]*len(spin_levels)
 		elif nupdowns is not None and len(nupdowns) != len(spin_levels):
 			raise ValueError('Length of nupdowns must equal spin_levels')
