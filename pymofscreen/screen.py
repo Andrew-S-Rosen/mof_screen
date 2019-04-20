@@ -161,7 +161,7 @@ class screener():
 			#Check if spin state should be skipped
 			if i > 0:
 				prior_spin = spin_labels[i-1]
-				if prior_spin == 'high':
+				if spin_levels[i-1] == 'high':
 					skip_low_spin = check_if_skip_low_spin(self,mof,refcode,prior_spin)
 					if skip_low_spin:
 						pprint('Skipping low spin due to low magmoms in prior run')
@@ -340,7 +340,7 @@ class screener():
 			#Check if spin state should be skipped
 			if i > 0:
 				prior_spin = spin_labels[i-1]
-				if prior_spin == 'high':
+				if spin_levels[i-1] == 'high':
 					skip_low_spin = check_if_skip_low_spin(self,mof,name,prior_spin)
 					if skip_low_spin:
 						pprint('Skipping low spin due to low magmoms in prior run')
