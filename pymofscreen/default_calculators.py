@@ -44,7 +44,7 @@ def calcs(calc_name):
 			prec=defaults['prec'],
 			algo=defaults['algo'],
 			ediff=defaults['ediff'],
-			nelm=defaults['nelm']*1.5,
+			nelm=defaults['nelm']*2,
 			nelmin=defaults['nelmin'],
 			lreal=defaults['lreal'],
 			ismear=defaults['ismear'],

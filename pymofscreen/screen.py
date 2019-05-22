@@ -58,7 +58,7 @@ class screener():
 		Args:
 			cif_file (string): name of CIF file
 
-			mode (string): 'ionic' or 'volume'
+			mode (string): 'ionic', 'volume', or 'ts'
 
 			niggli (bool): True/False if Niggli-reduction should be done (defaults
 			to niggli=True)
@@ -70,8 +70,7 @@ class screener():
 
 			nupdowns (list of ints): value to set NUPDOWN (defaults to None)
 
-			acc_levels (list of strings): accuracy levels to consider (defaults
-			to ['scf_test','isif2_lowacc','isif2_medacc','isif2_highacc','final_spe'])
+			acc_levels (list of strings): accuracy levels to consider
 
 			calculators (function): function to call respective calculator (defaults to
 			automatically importing from pymofscreen.default_calculators.calcs)
@@ -95,8 +94,13 @@ class screener():
 			if acc_levels is None:
 				acc_levels = ['scf_test','isif2_lowacc','isif3_lowacc',
 				'isif3_highacc','final_spe']
+		elif mode == 'ts':
+			if acc_levels is None:
+				acc_levels = ['scf_test','dimer_lowacc','dimer_medacc',
+				'dimer_highacc','final_spe']				
 		else:
 			raise ValueError('Unsupported DFT screening mode')
+			
 		if 'scf_test' not in acc_levels:
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
@@ -211,6 +215,12 @@ class screener():
 						os.remove(working_cif_path)
 						return None
 
+				elif 'dimer' in acc_level:
+					mof = wf.dimer()
+					if mof is None:
+						os.remove(working_cif_path)
+						return None	
+
 				elif acc_level == 'final_spe':
 					mof = wf.final_spe()
 					if mof is None:
@@ -219,7 +229,7 @@ class screener():
 
 				else:
 					raise ValueError('Unsupported accuracy level')
-		
+
 			#***********SAVE and CONTINUE***********
 			if same_spin:
 				continue
@@ -230,9 +240,9 @@ class screener():
 		os.remove(working_cif_path)
 		return best_mof
 
-	def run_ts_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calculators=None,nupdowns=None):
+	def run_neb_screen(self,name,initial_atoms,final_atoms,n_images=4,cif_file=None,spin_levels=None,acc_levels=None,calculators=None,nupdowns=None):
 		"""
-		Run high-throughput TS calculation
+		Run high-throughput NEB (followed by dimer) calculation
 		Args:
 			name (string): name of CIF file
 
