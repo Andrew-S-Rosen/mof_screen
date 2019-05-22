@@ -226,7 +226,12 @@ class screener():
 					if mof is None:
 						os.remove(working_cif_path)
 						return None
-
+					if 'dimer' in acc_levels[-2]:
+						result_path = os.path.join(basepath,'results',refcode)
+						newmodecar = os.path.join(result_path,acc_levels[-2],spin_label,'NEWMODECAR')
+						newmodecar_spe = os.path.join(result_path,acc_level,spin_label,'NEWMODECAR')
+						copyfile(newmodecar,newmodecar_spe)
+						
 				else:
 					raise ValueError('Unsupported accuracy level')
 
