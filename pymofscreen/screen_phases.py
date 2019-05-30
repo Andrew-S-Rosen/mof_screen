@@ -486,6 +486,7 @@ class workflows():
 		spin_label = self.spin_label
 		prior_spin = self.prior_spin
 		acc_level = acc_levels[self.run_i]
+		prior_acc_level = acc_levels[self.run_i-1]
 		results_partial_paths = self.results_partial_paths
 		pwd = os.getcwd()
 		if 'lowacc' in acc_level:
@@ -494,7 +495,7 @@ class workflows():
 			kpts_lo = self.kpts_dict['kpts_lo']
 			kpts = self.kpts_dict['kpts_hi']
 		calcs = self.calcs
-		if 'lowacc' in acc_level and prior_spin is None:
+		if 'neb' in prior_acc_level and prior_spin is None:
 			prior_results_path = os.path.join(results_partial_paths[self.run_i-1])
 			prior_results_file = os.path.join(prior_results_path,'neb.tar.gz')
 		elif 'lowacc' in acc_level and prior_spin is not None:
@@ -504,7 +505,10 @@ class workflows():
 			prior_results_file = outcar_paths[self.run_i-1]
 			prior_results_path = os.path.join(results_partial_paths[self.run_i-1],spin_label)
 		if os.path.isfile(prior_results_file) and not os.path.isfile(outcar_paths[self.run_i]) and not os.path.isfile(error_outcar_paths[self.run_i]):
-			if 'lowacc' in acc_level and prior_spin is None:
+			if 'scf_test' in prior_acc_level:
+				mof = prep_new_run(self)
+				manage_restart_files(prior_results_path,dimer=False)
+			elif 'neb' in prior_acc_level and prior_spin is None:
 				manage_restart_files(prior_results_path,neb=True)
 				mof = neb2dim()
 				mof = set_initial_magmoms(mof,spin_level)
