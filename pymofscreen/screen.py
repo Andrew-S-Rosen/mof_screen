@@ -96,8 +96,7 @@ class screener():
 				'isif3_highacc','final_spe']
 		elif mode == 'ts':
 			if acc_levels is None:
-				acc_levels = ['scf_test','dimer_lowacc','dimer_medacc',
-				'dimer_highacc','final_spe']				
+				acc_levels = ['scf_test','dimer_lowacc']			
 		else:
 			raise ValueError('Unsupported DFT screening mode')
 			
