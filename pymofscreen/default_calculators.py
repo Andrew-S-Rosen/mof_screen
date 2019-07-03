@@ -290,7 +290,7 @@ def calcs(calc_name):
 			lwave=True,
 			ibrion=3,
 			potim=0,
-			iopt=3,
+			iopt=7,
 			nsw=defaults['nsw']*4,
 			ediffg=-0.075,
 			lorbit=defaults['lorbit'],

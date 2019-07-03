@@ -294,7 +294,7 @@ class screener():
 			acc_levels = ['scf_test']+acc_levels
 		self.acc_levels = acc_levels
 
-		if len(nupdowns) == 1 and nupdowns is None:
+		if nupdowns is None:
 			nupdowns = [None]*len(spin_levels)
 		elif nupdowns is not None and len(nupdowns) != len(spin_levels):
 			raise ValueError('Length of nupdowns must equal spin_levels')

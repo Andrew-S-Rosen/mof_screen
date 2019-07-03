@@ -57,7 +57,10 @@ def mof_run(workflow,mof,calc,kpts,images=None,force_nupdown=False):
 	else:
 		neb = False
 	if not neb:
-		nprocs = check_nprocs(len(mof),nprocs,ppn)
+		try:
+			nprocs = check_nprocs(len(mof),nprocs,ppn)
+		except:
+			pass
 	choose_vasp_version(gpt_version,nprocs)
 	calc.input_params['kpts'] = kpts
 	calc.input_params['gamma'] = gamma
