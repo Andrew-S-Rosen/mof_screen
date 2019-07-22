@@ -21,7 +21,7 @@ defaults = {
 	'setups': {'base':'recommended','Li':'','W':'_sv'},
 	'ldau_luj': None,
 	'lasph': False,
-	'nupdown': -1,
+	'nupdown': -1
 	}
 
 def calcs(calc_name):
