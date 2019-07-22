@@ -3,6 +3,7 @@ import numpy as np
 import time
 from shutil import copyfile, rmtree, move
 from ase.io import read, write
+from ase.neb import NEB
 from pymofscreen.janitor import clean_files
 
 def nebmake(initial_atoms,final_atoms,n_images):
@@ -21,15 +22,23 @@ def nebmake(initial_atoms,final_atoms,n_images):
 		rmtree(neb_path)
 	os.makedirs(neb_path)
 	os.chdir(neb_path)
-	if n_images < 10:
-		last_image = '0'+str(n_images+1)
-	else:
-		last_image = str(n_images+1)
-	write(os.path.join(neb_path,'POSCAR1'),initial_atoms,format='vasp')
-	write(os.path.join(neb_path,'POSCAR2'),final_atoms,format='vasp')
-	os.system('nebmake.pl POSCAR1 POSCAR2 '+str(n_images))
+
+	images = [initial_atoms]
+	for i in range(n_images):
+		images.append(initial_atoms.copy())
+	images.append(final_atoms)
+
+	neb = NEB(images)
+	neb.interpolate('idpp',mic=True)
+	for i, neb_image in enumerate(neb.images):
+		if i < 10:
+			ii = '0'+str(i)
+		else:
+			ii = str(i)
+		os.mkdir(os.path.join(neb_path,ii))
+		write(os.path.join(neb_path,ii,'POSCAR'),neb_image,format='vasp')
 	write_dummy_outcar(os.path.join(neb_path,'00','OUTCAR'),initial_atoms.get_potential_energy())
-	write_dummy_outcar(os.path.join(neb_path,last_image,'OUTCAR'),final_atoms.get_potential_energy())
+	write_dummy_outcar(os.path.join(neb_path,ii,'OUTCAR'),final_atoms.get_potential_energy())
 
 def write_dummy_outcar(name,E):
 	"""

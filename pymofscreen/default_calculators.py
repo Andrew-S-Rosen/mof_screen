@@ -21,7 +21,7 @@ defaults = {
 	'setups': {'base':'recommended','Li':'','W':'_sv'},
 	'ldau_luj': None,
 	'lasph': False,
-	'nupdown': -1
+	'nupdown': -1,
 	}
 
 def calcs(calc_name):
@@ -263,7 +263,7 @@ def calcs(calc_name):
 			potim=0,
 			iopt=1,
 			nsw=defaults['nsw'],
-			ediffg=-0.5,
+			ediffg=-0.1,
 			lclimb=True,
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
@@ -349,7 +349,7 @@ def calcs(calc_name):
 			potim=0,
 			iopt=7,
 			nsw=defaults['nsw']*2,
-			ediffg=defaults['ediffg'],
+			ediffg=defaults['ediffg_dimerhigh'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
