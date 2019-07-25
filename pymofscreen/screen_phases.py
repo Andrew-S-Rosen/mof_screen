@@ -524,11 +524,6 @@ class workflows():
 			if 'highacc' in acc_level and 'large_supercell' in self.calc_swaps:
 				self.calc_swaps.remove('large_supercell')
 			pprint('Running '+spin_label+', '+acc_level)
-			if 'lowacc' in acc_level:
-				self.calc_swaps.append('nsw=100')
-				mof,self.calc_swaps = mof_run(self,mof,calcs(acc_level),kpts)
-				os.system('mv NEWMODECAR MODECAR')
-				self.calc_swaps.remove('nsw=100')
 			mof,self.calc_swaps = mof_run(self,mof,calcs(acc_level),kpts)
 			if mof is not None and mof.calc.scf_converged and mof.calc.converged:
 				write_success(self)
