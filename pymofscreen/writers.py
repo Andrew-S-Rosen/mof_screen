@@ -34,7 +34,7 @@ def write_success(workflow,neb=False):
 		if acc_level == 'final_spe':
 			files_to_copy = vasp_files+['DOSCAR','AECCAR0','AECCAR2','vasprun.xml']
 		elif 'dimer' in acc_level:
-			files_to_copy = vasp_files+['DIMCAR','MODECAR','NEWMODECAR']
+			files_to_copy = vasp_files+['DIMCAR','MODECAR','NEWMODECAR','CENTCAR']
 		else:
 			files_to_copy = vasp_files
 		for file in files_to_copy:
@@ -81,7 +81,7 @@ def write_errors(workflow,mof,neb=False):
 		os.makedirs(error_path)
 	if not neb:
 		if 'dimer' in acc_level:
-			files_to_copy = vasp_files+['DIMCAR','MODECAR','NEWMODECAR']
+			files_to_copy = vasp_files+['DIMCAR','MODECAR','NEWMODECAR','CENTCAR']
 		else:
 			files_to_copy = vasp_files
 		for file in files_to_copy:

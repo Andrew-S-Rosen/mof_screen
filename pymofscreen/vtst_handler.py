@@ -72,7 +72,29 @@ def neb2dim():
 	new_dim_path = os.path.join(pwd,'dim')
 	move(old_dim_path,new_dim_path)
 	os.chdir(new_dim_path)
-	mof = read('POSCAR')	
+	mof = read('POSCAR')
+
+	max_F = 0
+	high_i = 0
+	if os.stat(os.path.join(neb_fin_path,'nebef.dat')).st_size == 0:
+		raise ValueError('nebef.dat not written')
+	with open(os.path.join(neb_fin_path,'nebef.dat'),'r') as rf:
+		for i, line in enumerate(rf):
+			line = line.strip()
+			max_F_temp = np.fromstring(line,dtype=float,sep=' ')[1]
+			if max_F_temp > max_F:
+				max_F = max_F_temp
+				high_i = i
+	try:
+		if high_i < 10:
+			str_high_i = '0'+str(high_i)
+		else:
+			str_high_i = str(high_i)
+		move(os.path.join(neb_fin_path,str_high_i,'WAVECAR.gz'),os.path.join(new_dim_path,'WAVECAR.gz'))
+		os.system('gunzip WAVECAR.gz')
+	except:
+		pass
+
 	return mof
 
 def dimmins(dis):

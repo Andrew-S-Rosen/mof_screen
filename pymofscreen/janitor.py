@@ -65,7 +65,7 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 	if dimer and neb:
 		raise ValueError('Cannot be both NEB and dimer')
 	if dimer:
-		files += ['NEWMODECAR']
+		files += ['NEWMODECAR','CENTCAR']
 	if neb:
 		files = ['neb.tar.gz']
 	for file in files:

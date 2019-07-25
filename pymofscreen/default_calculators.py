@@ -258,7 +258,7 @@ def calcs(calc_name):
 			ismear=defaults['ismear'],
 			sigma=defaults['sigma'],
 			lcharg=False,
-			lwave=False,
+			lwave=True,
 			ibrion=3,
 			potim=0,
 			iopt=1,
