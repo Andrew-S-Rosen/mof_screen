@@ -276,8 +276,11 @@ def check_if_skip_low_spin(screener,mof,refcode,spin_label):
 	skip_low_spin = False
 
 	abs_magmoms, mag_indices, ispin = get_abs_magmoms(mof,incarpath)
-	mag_nums = mof[mag_indices].get_atomic_numbers()
-	if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in spblock_metals+poor_metals for num in mag_nums):
+	if not mag_indices:
 		skip_low_spin = True
+	else:
+		mag_nums = mof[mag_indices].get_atomic_numbers()
+		if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in spblock_metals+poor_metals for num in mag_nums):
+			skip_low_spin = True
 
 	return skip_low_spin
