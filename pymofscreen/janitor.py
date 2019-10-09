@@ -57,7 +57,7 @@ def manage_restart_files(file_path,dimer=False,neb=False,wavechg=True):
 		file_path (string): path restart files
 	"""
 
-	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
+	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR','PROCAR']
 	if wavechg:
 		files = ['WAVECAR','CHGCAR']
 	else:
