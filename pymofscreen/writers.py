@@ -23,7 +23,7 @@ def write_success(workflow,neb=False):
 	refcode = workflow.refcode
 	basepath = workflow.basepath
 	vasp_files = workflow.vasp_files
-	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR']
+	gzip_list = ['AECCAR0','AECCAR2','CHGCAR','DOSCAR','WAVECAR','PROCAR']
 	if not neb:
 		success_path = os.path.join(basepath,'results',refcode,acc_level,spin_label)
 	elif neb:
