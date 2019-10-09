@@ -2,7 +2,7 @@ import numpy as np
 import os
 from ase.io import read
 from copy import copy, deepcopy
-from pymofscreen.metal_types import mag_list, spblock_metals, dblock_metals, fblock_metals, poor_metals
+from pymofscreen.metal_types import mag_list, dblock_metals, fblock_metals
 from pymofscreen.writers import pprint
 
 def get_incar_magmoms(incarpath,poscarpath):
@@ -77,8 +77,6 @@ def set_initial_magmoms(mof,spin_level):
 						mof[mag_idx].magmom = 5.0
 					elif mag_number in fblock_metals:
 						mof[mag_idx].magmom = 7.0
-					elif mag_number in poor_metals:
-						mof[mag_idx].magmom = 0.1
 					else:
 						raise ValueError('Metal not properly classified')
 				elif spin_level == 'low':
@@ -111,8 +109,6 @@ def set_initial_magmoms(mof,spin_level):
 					mof[mag_idx].magmom = sign*5.0
 				elif mag_number in fblock_metals:
 					mof[mag_idx].magmom = sign*7.0
-				elif mag_number in poor_metals:
-					mof[mag_idx].magmom = sign*0.1
 				else:
 					raise ValueError('Metal not properly classified')
 		else:
@@ -279,8 +275,7 @@ def check_if_skip_low_spin(screener,mof,refcode,spin_label):
 	if not mag_indices:
 		skip_low_spin = True
 	else:
-		mag_nums = mof[mag_indices].get_atomic_numbers()
-		if np.sum(abs_magmoms < 0.1) == len(abs_magmoms) or all(num in spblock_metals+poor_metals for num in mag_nums):
+		if np.sum(abs_magmoms < 0.1) == len(abs_magmoms):
 			skip_low_spin = True
 
 	return skip_low_spin
