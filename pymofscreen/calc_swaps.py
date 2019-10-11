@@ -52,7 +52,7 @@ def update_calc(calc,calc_swaps):
 		elif swap == 'amin':
 			calc.float_params['amin'] = 0.01
 		
-		elif swap == 'pssyevx' or swap == 'eddrmm':
+		elif swap == 'pssyevx' or swap == 'eddrmm' or swap == 'zpotrf':
 			calc.string_params['algo'] = 'Normal'
 		
 		elif swap == 'zheev':
