@@ -29,7 +29,7 @@ def update_calc(calc,calc_swaps):
 		
 		elif swap == 'dentet' or swap == 'grad_not_orth':
 			calc.int_params['ismear'] = 0
-			calc.string_params['algo'] = 'Normal'
+			calc.string_params['algo'] = 'Fast'
 		
 		elif swap == 'edddav':
 			calc.string_params['algo'] = 'All'
@@ -53,7 +53,7 @@ def update_calc(calc,calc_swaps):
 			calc.float_params['amin'] = 0.01
 		
 		elif swap == 'pssyevx' or swap == 'eddrmm' or swap == 'zpotrf':
-			calc.string_params['algo'] = 'Normal'
+			calc.string_params['algo'] = 'Fast'
 		
 		elif swap == 'zheev':
 			calc.string_params['algo'] = 'Exact'
