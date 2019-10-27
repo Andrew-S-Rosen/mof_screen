@@ -52,7 +52,7 @@ class screener():
 			self.kppas = kppas
 		prep_paths(basepath)
 
-	def run_screen(self,cif_file,mode,niggli=True,spin_levels=None,nupdowns=None,acc_levels=None,calculators=None):
+	def run_screen(self,cif_file,mode,niggli=True,spin_levels=None,acc_levels=None,calculators=None,nupdowns=None):
 		"""
 		Run high-throughput ionic or volume relaxations
 		Args:
@@ -65,15 +65,15 @@ class screener():
 			
 			spin_levels (list of lists or list of strings): spin states to consider. If provided
 			as a list of lists, each sub-list represents the initial magmom for each atom
-			in cif_file. If a list of string, the strings must be 'high', 'low', or 'AFM_high'
-			to use pre-set initial magmoms (defaults to ['high','low']) 
-
-			nupdowns (list of ints): value to set NUPDOWN (defaults to None)
+			in cif_file. If a list of string, the strings must be 'high', 'low', 'all-#', 'mixed',
+			or 'AFM_high' to use pre-set initial magmoms (defaults to ['high','low']) 
 
 			acc_levels (list of strings): accuracy levels to consider
 
 			calculators (function): function to call respective calculator (defaults to
 			automatically importing from pymofscreen.default_calculators.calcs)
+
+			nupdowns (list of ints): value to set NUPDOWN (defaults to None)
 
 		Returns:
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized MOF
@@ -265,6 +265,8 @@ class screener():
 
 			calculators (function): function to call respective calculator (defaults to
 			automatically importing from pymofscreen.default_calculators.calcs)
+
+			nupdowns (list of ints): value to set NUPDOWN (defaults to None)
 						
 		Returns:
 			best_mof (ASE Atoms objects): ASE Atoms object for optimized

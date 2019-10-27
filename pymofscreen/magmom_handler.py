@@ -69,7 +69,17 @@ def set_initial_magmoms(mof,spin_level):
 		mag_indices = get_mag_indices(mof)
 		mof.set_initial_magnetic_moments(np.zeros(len(mof)))
 
-		if 'afm' not in spin_level:
+		if 'all-' in spin_level:
+			spinval = float(spin_level.split('-')[-1])
+			for idx in mof:
+				mof[idx].magmom = spinval
+		elif spin_level == 'mixed':
+			for idx in mof:
+				if idx in mag_indices:
+					mof[idx].magmom = 5.0
+				else:
+					mof[idx].magmom = 1.0
+		elif spin_level in ['high','low']:
 			for mag_idx in mag_indices:
 				mag_number = mof[mag_idx].number
 				if spin_level == 'high':
@@ -81,8 +91,6 @@ def set_initial_magmoms(mof,spin_level):
 						raise ValueError('Metal not properly classified')
 				elif spin_level == 'low':
 					mof[mag_idx].magmom = 0.1
-				else:
-					raise ValueError('Undefined spin level')
 		elif spin_level == 'afm_high':
 			AFM_cutoff = 5
 			Mi = mag_indices[0]
@@ -112,7 +120,7 @@ def set_initial_magmoms(mof,spin_level):
 				else:
 					raise ValueError('Metal not properly classified')
 		else:
-			raise ValueError('Undefined AFM spin level')
+			raise ValueError('Undefined spin level')
 
 	else:
 		raise TypeError('spin_level has wrong type')
