@@ -349,7 +349,7 @@ def calcs(calc_name):
 			potim=0,
 			iopt=7,
 			nsw=defaults['nsw']*2,
-			ediffg=defaults['ediffg_dimerhigh'],
+			ediffg=defaults['ediffg'],
 			lorbit=defaults['lorbit'],
 			isym=defaults['isym'],
 			symprec=defaults['symprec'],
