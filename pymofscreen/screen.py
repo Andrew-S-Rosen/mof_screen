@@ -248,15 +248,15 @@ class screener():
 		"""
 		Run high-throughput NEB (followed by dimer) calculation
 		Args:
-			name (string): name of CIF file
+			name (string): name of folder to store results
 
-			initial_atoms (ASE Atoms object): initial structure
+			initial_atoms (ASE Atoms object): initial Atoms object with energy (e.g. from OUTCAR) 
 
-			final_atoms (ASE Atoms object): final structure
+			final_atoms (ASE Atoms object): final Atoms object with energy (e.g. from OUTCAR) 
 
 			n_images (int): number of NEB images
 
-			cif_file (string): name of CIF file to generate kpoints if
+			cif_file (string): name of CIF file to generate kpoints from if
 			set to 'Auto'
 
 			spin_levels (list of strings): spin states to consider

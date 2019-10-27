@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from ase.io import read, write
 try:
 	import pymatgen as pm
 	from pymatgen.io.cif import CifParser
@@ -43,6 +44,12 @@ def get_kpts(screener,cif_file,level):
 		if '.cif' in cif_file:
 			parser = CifParser(filepath)
 			pm_mof = parser.get_structures(primitive=niggli)[0]
+		elif 'OUTCAR' in cif_file:
+			mof_temp = read(filepath)
+			write('pm_temp.cif',mof_temp)
+			parser = CifParser('pm_temp.cif')
+			pm_mof = parser.get_structures(primitive=niggli)[0]
+			os.remove('pm_temp.cif')	
 		else:
 			pm_mof = pm.Structure.from_file(filepath,primitive=niggli)
 		pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
@@ -54,6 +61,8 @@ def get_kpts(screener,cif_file,level):
 			gamma = None
 	elif kpts_path == 'Auto' and not has_pm:
 		raise ValueError('Pymatgen not installed. Please provide a kpts file.')
+	elif niggli and not has_pm:
+		raise ValueError('Pymatgen not installed: set niggli=False')
 	else:
 		old_cif_name = cif_file.split('.cif')[0].split('_')[0]
 		infile = open(kpts_path,'r')
