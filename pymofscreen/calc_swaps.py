@@ -126,6 +126,9 @@ def update_calc(calc,calc_swaps):
 			swap_val = swap.split('=')[-1].lower()
 			calc.float_params['nelect'] = float(swap.split('=')[-1])
 
+		elif swap == 'brions' or swap == 'too_few_bands':
+			pass
+			
 		else:
 			raise ValueError('Unknown calc swap')
 
