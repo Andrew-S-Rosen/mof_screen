@@ -21,6 +21,7 @@ class screener():
 			basepath (string): path to the base directory for the DFT screening
 
 			mofpath (string): path to the directory containing the CIF files
+			(defaults to `basepath/mofpath`)
 
 			kpts_path (string): can be either 'Auto' for an automatic generation
 			of the kpoints based on KPPAs or a string representing the path to a
@@ -36,9 +37,11 @@ class screener():
 			name of the Python job with a .out extension instead of .py)
 		"""
 		#Setup default parameters
-		self.mofpath = mofpath
-		self.basepath = basepath
 		pwd = os.getcwd()
+		self.basepath = basepath
+		if mofpath is None:
+			mofpath = os.path.join(basepath,'mofpath')
+		self.mofpath = mofpath
 		if submit_script is None:
 			submit_script = os.path.join(pwd,'sub_screen.job')
 		self.submit_script = submit_script
