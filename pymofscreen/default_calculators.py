@@ -18,10 +18,11 @@ defaults = {
 	'lorbit': 11,
 	'isym': 0,
 	'symprec': 1e-8,
-	'setups': {'base':'recommended','Li':'','W':'_sv'},
+	'setups': {'base':'recommended','Li':'','W':'_sv','Yb':'_3','Eu':'_3'},
 	'ldau_luj': None,
 	'lasph': False,
-	'nupdown': -1
+	'nupdown': -1,
+	'nedos': 2000
 	}
 
 def calcs(calc_name):

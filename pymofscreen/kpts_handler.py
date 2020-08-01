@@ -58,7 +58,7 @@ def get_kpts(screener,cif_file,level):
 		if pm_kpts.style.name == 'Gamma':
 			gamma = True
 		else:
-			gamma = None
+			gamma = False
 	elif kpts_path == 'Auto' and not has_pm:
 		raise ValueError('Pymatgen not installed. Please provide a kpts file.')
 	elif niggli and not has_pm:
