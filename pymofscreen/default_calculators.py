@@ -22,7 +22,7 @@ defaults = {
 	'ldau_luj': None,
 	'lasph': False,
 	'nupdown': -1,
-	'nedos': 2000
+	'nedos': 3000
 	}
 
 def calcs(calc_name):
@@ -243,7 +243,8 @@ def calcs(calc_name):
 			addgrid=False,
 			ldau_luj=defaults['ldau_luj'],
 			lasph=defaults['lasph'],
-			nupdown=defaults['nupdown']
+			nupdown=defaults['nupdown'],
+			nedos=defaults['nedos']
 			)
 	elif calc_name == 'cineb_lowacc':
 		calc = Vasp(

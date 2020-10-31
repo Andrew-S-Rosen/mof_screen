@@ -81,7 +81,7 @@ def choose_vasp_version(gpt_version,nprocs):
 	# parallel_cmd = 'export VASP_NPROCS='+str(nprocs)+' && '
 	# vasp_path = ''
 	# vasp_ex = [vasp_path+'vasp-vtst_3.2',vasp_path+'vasp_real-vtst_3.2']
-	# module_cmd = 'module load VASP/5.4.1'
+	# module_cmd = 'module load VASP/5.4.4'
 
 	#Setting up run_vasp.py
 	vasp_cmd = parallel_cmd+vasp_ex[0]
