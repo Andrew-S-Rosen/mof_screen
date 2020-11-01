@@ -124,7 +124,6 @@ class workflows():
 			if mof is not None:
 				write_success(self)
 			else:
-				pprint('^ VASP crashed')
 				write_errors(self,mof)
 		elif os.path.isfile(outcar_paths[self.run_i]):
 			pprint('COMPLETED: '+spin_label+', '+acc_level)
