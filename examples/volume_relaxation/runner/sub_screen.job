@@ -1,10 +1,8 @@
 #!/bin/bash
-#MSUB -N volume_relaxation
-#MSUB -l nodes=2:ppn=24
-#MSUB -l walltime=24:00:00
-#MSUB -q QUEUE_GOES_HERE
-#MSUB -A ACCOUNT_GOES_HERE
+#SBATCH --job-name="opt.py"
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=48
+#SBATCH -t 04:00:00
 
-cd $PBS_O_WORKDIR
 export VASP_SCRIPT=run_vasp.py
-python volume_relaxation.py > volume_relaxation.out
+python opt.py > opt.out
