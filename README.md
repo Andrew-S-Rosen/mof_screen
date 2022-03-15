@@ -1,3 +1,6 @@
+# Note
+This package is being superseded by [QuAcc](https://github.com/arosen93/quacc).
+
 # PyMOFScreen
 Python workflow for high-throughput DFT screening of MOFs using VASP. Relevant details for the code can be found in the following paper:
 
