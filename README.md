@@ -1,5 +1,5 @@
 # Note
-This package is being superseded by [QuAcc](https://github.com/arosen93/quacc), which has a QMOF "recipe" (i.e. `from quacc.recipes.vasp.qmof import QMOFJob`).
+This package is being superseded by [QuAcc](https://github.com/arosen93/quacc), which has a QMOF "recipe" (i.e. `from quacc.recipes.vasp.qmof import QMOFJob`). The current project should be considered deprecated and will not be maintained.
 
 # PyMOFScreen
 Python workflow for high-throughput DFT screening of MOFs using VASP. Relevant details for the code can be found in the following paper:
