@@ -1,5 +1,5 @@
 # Note
-This package is being superseded by [QuAcc](https://github.com/arosen93/quacc), which has a QMOF "recipe" (i.e. `from quacc.recipes.vasp.qmof import QMOFRelaxJob`). The current project should be considered deprecated and will not be maintained. Please see the guide [here](https://next-gen-docs.materialsproject.org/apps/mof-explorer/calculation-parameters/dft-workflow) for how to run the QMOF recipe via QuAcc.
+**This package has been superseded by [QuAcc](https://github.com/arosen93/quacc)**. Quacc has a QMOF "recipe" (i.e. `from quacc.recipes.vasp.qmof import qmof_relax_job`). The current project should be considered deprecated and will not be maintained.
 
 # PyMOFScreen
 Python workflow for high-throughput DFT screening of MOFs using VASP. Relevant details for the code can be found in the following paper:
