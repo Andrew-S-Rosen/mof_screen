@@ -31,7 +31,7 @@ def get_kpts(screener,cif_file,level):
 	kpts = None
 	if not mofpath:
 		mofpath = ''
-		
+
 	if kpts_path == 'Auto' and has_pm:
 
 		if level == 'low':
@@ -55,20 +55,15 @@ def get_kpts(screener,cif_file,level):
 		pm_kpts = Kpoints.automatic_density(pm_mof,kppa)
 		kpts = pm_kpts.kpts[0]
 
-		if pm_kpts.style.name == 'Gamma':
-			gamma = True
-		else:
-			gamma = False
-	elif kpts_path == 'Auto' and not has_pm:
+		gamma = pm_kpts.style.name == 'Gamma'
+	elif kpts_path == 'Auto':
 		raise ValueError('Pymatgen not installed. Please provide a kpts file.')
 	elif niggli and not has_pm:
 		raise ValueError('Pymatgen not installed: set niggli=False')
 	else:
 		old_cif_name = cif_file.split('.cif')[0].split('_')[0]
-		infile = open(kpts_path,'r')
-		lines = infile.read().splitlines()
-		infile.close()
-
+		with open(kpts_path,'r') as infile:
+			lines = infile.read().splitlines()
 		for i in range(len(lines)):
 			if old_cif_name in lines[i]:
 				if level == 'low':
@@ -82,13 +77,13 @@ def get_kpts(screener,cif_file,level):
 				break
 		kpts = np.squeeze(np.asarray(np.matrix(kpts))).tolist()
 		if not kpts or len(kpts) != 3:
-			raise ValueError('Error parsing k-points for '+cif_file)
+			raise ValueError(f'Error parsing k-points for {cif_file}')
 
 		if gamma == 'True':
 			gamma = True
 		elif gamma == 'False':
 			gamma = False
 		else:
-			raise ValueError('Error parsing gamma for '+cif_file)
+			raise ValueError(f'Error parsing gamma for {cif_file}')
 
 	return kpts, gamma
